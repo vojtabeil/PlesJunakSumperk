@@ -58,6 +58,7 @@ Copy `config/local.neon.example` to `config/local.neon` on the server and fill i
 | `bank` | `driver: fio`, `token: <Fio token>` (step 6); until then `driver: mock` is safe |
 | `setup.password` | **a new secret** for the first-run wizard (default `skaut-sumperk`) |
 | `cron.key` | a long random string, e.g. 40 letters and digits (step 7) |
+| `site.vipToken` | secret part of the VIP link `https://<site>/vip/<token>`: letters, digits, `-`, `_`, at least 16 characters; empty = no VIP sale |
 
 The release always runs in production mode (it contains the file `VERSION`): no debugger,
 no `/dev/*` pages, errors only in `var/log/`.
@@ -68,15 +69,30 @@ no `/dev/*` pages, errors only in `var/log/`.
    Until then the whole site (reservations, payments) is off.
 2. Enter the setup password from `config/local.neon` and create the first administrator.
 3. Add the other organizers in **Administrátoři**.
-4. In **Nastavení** fill in the event (date, venue, organizer), prices and limits, check the
-   bank account, and open the sale.
-5. The site starts in **tester mode**: visitors see "Připravujeme". Copy the tester link from
-   **Nastavení → Spuštění webu** and send it to the testers (it works for 30 days per browser;
-   "Vytvořit nový odkaz" invalidates it). Make a test reservation and check that the confirmation
-   e-mail arrives (incl. the QR code).
-6. Before the launch delete the test reservations (**Nastavení → Testovací rezervace**; their
-   seats become free and their bank payments are set aside as ignored - refund real ones by hand)
-   and switch the site to **Všichni - web je spuštěný**.
+4. In **Nastavení** fill in the event (date, venue, organizer), prices and limits, and check the
+   bank account.
+5. In **Stav webu** write the pages (HTML) that visitors see when they cannot buy, and check them
+   with "náhled stránky".
+
+## 5a. Stages of the site (admin -> Stav webu)
+
+| Stage | Who can buy | Everybody else sees |
+|---|---|---|
+| Testování (new installation) | testers with the tester link, logged-in organizers; reservations are test ones | page "Testování" |
+| VIP prodej | holders of the VIP link (`site.vipToken`), logged-in organizers; no ticket limit | page "VIP prodej" |
+| Veřejný prodej | anybody | - |
+| Prodej ukončen | nobody | page "Prodej ukončen" |
+| Po plese | nobody | page "Po plese", event facts hidden |
+
+The confirmation page with the payment QR code and the payment import keep working in every stage.
+
+1. **Testování**: send the tester link (works 30 days per browser; "Vytvořit nový testerský
+   odkaz" invalidates it). Make a test reservation and check the confirmation e-mail (incl. QR code).
+2. Delete the test reservations (their seats become free and their bank payments are set aside as
+   ignored - refund real ones by hand).
+3. **VIP prodej**: send the VIP link (it can be sent earlier; it works only in this stage).
+4. **Veřejný prodej**, later **Prodej ukončen** (seats being selected are freed), after the ball
+   **Po plese**.
 
 ## 6. Fio API token (payments)
 

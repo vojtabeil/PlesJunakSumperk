@@ -205,8 +205,8 @@ final class ReservationServiceTest extends DatabaseTestCase
 
 	public function testClosedSaleRejectsChanges(): void
 	{
-		$this->setSettings(['sale_open' => '0']);
-		$this->expectExceptionObject(new ReservationError('Prodej lístků je uzavřený.'));
+		$this->setSettings(['site_mode' => 'closed']);
+		$this->expectExceptionObject(new ReservationError('Prodej lístků je ukončený.'));
 		$this->reservations()->start(self::Alice, 'alice@example.com');
 	}
 

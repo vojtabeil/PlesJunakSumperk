@@ -8,9 +8,8 @@
 <div class="page-head">
 	<h1>Přehled</h1>
 	<p class="status-line">
-		<span n:class="'badge', $saleOpen ? 'badge--paid' : 'badge--cancelled'">Prodej {$saleOpen ? 'otevřený' : 'uzavřený'}</span>
-		<span n:if="$testersOnly" class="badge badge--partially_paid">Web vidí jen testeři</span>
-		<a n:href="Settings:default">změnit</a>
+		<span n:class="'badge', $siteMode->isSelling() ? 'badge--paid' : 'badge--cancelled'">{$siteMode->label()}</span>
+		<a n:href="Site:default">změnit</a>
 	</p>
 </div>
 
@@ -90,7 +89,7 @@
 					<td data-label="Rezervace">
 						{if $seat['reservation_id']}
 							<a n:href="Reservation:detail $seat['reservation_id']">č. {$seat['reservation_id']} {$seat['name']}</a>
-							<span n:if="$seat['is_test']" class="badge">test</span>
+							{include '../channelBadge.latte', channel: $seat['channel']}
 						{else}–{/if}
 					</td>
 					<td data-label="Poslední změna">
@@ -112,6 +111,7 @@
 	<a class="tile" n:href="Log:default"><strong>Log</strong><span>všechny události, filtr podle data, místa a typu</span></a>
 	<a class="tile" n:href="Export:guests"><strong>Seznam hostů</strong><span>CSV pro vstup (Excel)</span></a>
 	<a class="tile" n:href="User:default"><strong>Administrátoři</strong><span>účty organizátorů</span></a>
-	<a class="tile" n:href="Settings:default"><strong>Nastavení</strong><span>akce, ceny, prodej, testovací přístup</span></a>
+	<a class="tile" n:href="Site:default"><strong>Stav webu</strong><span>testování, VIP, prodej, konec; odkazy a texty stránek</span></a>
+	<a class="tile" n:href="Settings:default"><strong>Nastavení</strong><span>akce, ceny, limity, platby</span></a>
 </nav>
 {/block}

@@ -54,8 +54,7 @@ final class DashboardPresenter extends BasePresenter
 
 		$t = $this->template;
 		$t->stats = $stats;
-		$t->saleOpen = $this->settings->isSaleOpen();
-		$t->testersOnly = $this->settings->get('public_access') === 'testers';
+		$t->siteMode = $this->settings->mode();
 		$t->seatCounts = $counts;
 		$t->slices = PieChart::slices($counts);
 		$t->seatTotal = array_sum($counts);

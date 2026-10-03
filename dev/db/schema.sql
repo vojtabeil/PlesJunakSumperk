@@ -27,8 +27,8 @@ CREATE TABLE reservations (
     paid_at          DATETIME NULL,
     paid_amount      DECIMAL(12, 2) NOT NULL DEFAULT 0,
     note             VARCHAR(1000) NULL,
-    -- Created through the tester link while the site was not public yet.
-    is_test          TINYINT(1) NOT NULL DEFAULT 0,
+    -- Stage of the site when the reservation was started: test (tester link), vip (VIP link), public.
+    channel          ENUM('test', 'vip', 'public') NOT NULL DEFAULT 'public',
     KEY ix_reservations_email (email),
     KEY ix_reservations_session (session_id)
 ) ENGINE=InnoDB;

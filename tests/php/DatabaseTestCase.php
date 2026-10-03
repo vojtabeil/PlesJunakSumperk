@@ -38,7 +38,7 @@ abstract class DatabaseTestCase extends TestCase
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 1');
 
 		$this->setSettings([
-			'sale_open' => '1',
+			'site_mode' => 'public',
 			'event_name' => 'Testovací ples',
 			'max_ticket' => '10',
 			'hold_seconds' => '120',
@@ -47,7 +47,6 @@ abstract class DatabaseTestCase extends TestCase
 			'standing_capacity' => '5',
 			'bank_account' => '2501895120/2010',
 			'payment_vs_prefix' => '2026',
-			'public_access' => 'public',
 		]);
 		$this->db->exec("INSERT INTO hall_tables (id, label, x, y, width, height) VALUES (1, '1', 0, 0, 160, 40), (2, '2', 0, 100, 160, 40)");
 		$this->db->exec(

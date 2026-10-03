@@ -140,9 +140,11 @@ final class ReservationAdminTest extends DatabaseTestCase
 
 	public function testTesterReservationsAreMarkedLeftOutOfGuestListAndDeletable(): void
 	{
-		$this->setSettings(['public_access' => 'testers']);
+		$this->setSettings(['site_mode' => 'testing']);
 		$test = $this->confirmed('tester@example.com', [101, 102]);
-		$this->setSettings(['public_access' => 'public']);
+		$this->setSettings(['site_mode' => 'vip']);
+		$vip = $this->confirmed('vip@example.com', [103]);
+		$this->setSettings(['site_mode' => 'public']);
 		$real = $this->confirmed('alice@example.com', [201]);
 		$this->db->prepare(
 			"INSERT INTO bank_transactions (source, external_id, booked_on, amount, reservation_id, match_status)
@@ -150,12 +152,13 @@ final class ReservationAdminTest extends DatabaseTestCase
 		)->execute([$test]);
 
 		self::assertSame(1, $this->admin->testCount());
-		self::assertSame([$real], array_column($this->admin->guestList(), 'id'));
+		self::assertSame([$vip, $real], array_column($this->admin->guestList(), 'id'));
+		self::assertSame(['test' => 2, 'vip' => 1, 'public' => 1], $this->admin->ticketsByChannel());
 
 		self::assertSame(1, $this->admin->deleteTestReservations());
 		self::assertNull($this->admin->get($test));
 		self::assertNotNull($this->admin->get($real));
-		self::assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM seats WHERE state <> 'free'")->fetchColumn());
+		self::assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM seats WHERE state <> 'free'")->fetchColumn());
 		self::assertSame(
 			['reservation_id' => null, 'match_status' => 'ignored'],
 			$this->db->query('SELECT reservation_id, match_status FROM bank_transactions')->fetch(),

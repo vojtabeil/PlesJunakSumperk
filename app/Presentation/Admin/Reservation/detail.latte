@@ -11,7 +11,7 @@
 	<h1>Rezervace č. {$r['id']} <span class="muted">{$r['name']}</span></h1>
 	<p class="status-line">
 		<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
-		<span n:if="$r['is_test']" class="badge">testovací</span>
+		{include '../channelBadge.latte', channel: $r['channel']}
 	</p>
 </div>
 

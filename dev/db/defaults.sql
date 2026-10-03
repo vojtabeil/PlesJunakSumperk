@@ -1,12 +1,15 @@
 -- Default settings for a new installation (local and production).
--- The sale starts closed; organizers fill in the event and open it in the administration.
+-- The site starts in the testing stage; organizers switch the stages in the administration (Stav webu).
 
 INSERT INTO settings (name, value) VALUES
-    ('sale_open', '0'),
-    -- testers = only visitors with the tester link see the site (a new installation starts so).
-    ('public_access', 'testers'),
+    -- testing | vip | public | closed | after (App\Model\Reservation\SiteMode)
+    ('site_mode', 'testing'),
     ('tester_token', ''),
-    ('closed_message', 'Prodej lístků zatím nezačal.'),
+    -- Pages (HTML) for visitors who cannot buy in the given stage.
+    ('page_testing', '<h2>Připravujeme</h2>\n<p>Rezervace lístků na ples brzy spustíme. Zkuste to prosím později.</p>'),
+    ('page_vip', '<h2>Prodej lístků brzy začne</h2>\n<p>Veřejný prodej lístků spustíme v nejbližších dnech. Sledujte nás.</p>'),
+    ('page_closed', '<h2>Prodej lístků skončil</h2>\n<p>Lístky už jsou vyprodané nebo prodej skončil. Pokud máte rezervaci, platební údaje najdete v potvrzovacím e-mailu.</p>'),
+    ('page_after', '<h2>Děkujeme, že jste přišli!</h2>\n<p>Ples skončil. Těšíme se na vás zase příští rok.</p>'),
     ('event_name', 'Šumperský skautský ples'),
     ('event_intro', 'Šumperští skauti si vás dovolují pozvat do víru tance a zábavy. Chybět nebude ani tradičně vynikající občerstvení, klasická i skautská tombola a bohatý program.'),
     ('event_date', ''),

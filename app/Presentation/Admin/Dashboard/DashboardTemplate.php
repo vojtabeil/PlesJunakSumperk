@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Dashboard;
 
+use App\Model\Reservation\SiteMode;
 use App\Presentation\Admin\BaseTemplate;
 
 
@@ -12,9 +13,7 @@ final class DashboardTemplate extends BaseTemplate
 	/** @var array<string, int> */
 	public array $stats;
 
-	public bool $saleOpen;
-
-	public bool $testersOnly;
+	public SiteMode $siteMode;
 
 	/** @var array<string, int> */
 	public array $seatCounts;

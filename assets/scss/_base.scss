@@ -93,3 +93,21 @@ main {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+// Page of a stage without sale (HTML written by the organizers).
+.site-page {
+  overflow-wrap: anywhere;
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}

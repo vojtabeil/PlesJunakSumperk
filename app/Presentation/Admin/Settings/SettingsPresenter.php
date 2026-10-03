@@ -4,80 +4,21 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Settings;
 
-use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\Settings;
-use App\Model\Reservation\TesterAccess;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\UI\Form;
 
 
 /**
- * Who sees the site (tester mode), event info, prices, limits and the sale switch (table settings).
+ * Event info, prices, limits and payment details (table settings). The stage of the site is on the Site page.
  * @property-read SettingsTemplate $template
  */
 final class SettingsPresenter extends BasePresenter
 {
 	public function __construct(
 		private readonly Settings $settings,
-		private readonly TesterAccess $testerAccess,
-		private readonly ReservationAdmin $reservationAdmin,
 	) {
 		parent::__construct();
-	}
-
-
-	public function renderDefault(): void
-	{
-		$this->template->isPublic = $this->testerAccess->isPublic();
-		$this->template->testerLink = $this->link('//:Front:Tester:default', ['token' => $this->testerAccess->token()]);
-		$this->template->testCount = $this->reservationAdmin->testCount();
-	}
-
-
-	protected function createComponentAccessForm(): Form
-	{
-		$form = $this->formFactory->create();
-		$form->addRadioList('public_access', 'Kdo vidí web s rezervacemi', [
-			TesterAccess::Testers => 'Jen testeři (s odkazem níže) a přihlášení organizátoři – ostatní vidí „Připravujeme“',
-			TesterAccess::Public => 'Všichni – web je spuštěný',
-		])->setDefaultValue($this->testerAccess->isPublic() ? TesterAccess::Public : TesterAccess::Testers);
-		$form->addSubmit('save', 'Uložit');
-		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
-			if ($this->settings->save(['public_access' => (string) $data->public_access])) {
-				$this->flashMessage($data->public_access === TesterAccess::Public ? 'Web je spuštěný pro všechny.' : 'Web teď vidí jen testeři.', 'success');
-			}
-			$this->redirect('this');
-		};
-		return $form;
-	}
-
-
-	protected function createComponentRegenerateLinkForm(): Form
-	{
-		$form = $this->formFactory->create();
-		$form->addSubmit('regenerate', 'Vytvořit nový odkaz (starý přestane fungovat)')
-			->setHtmlAttribute('class', 'link-button');
-		$form->onSuccess[] = function (): void {
-			$this->testerAccess->regenerate();
-			$this->flashMessage('Odkaz pro testery je nový; testeři ho musí otevřít znovu.', 'success');
-			$this->redirect('this');
-		};
-		return $form;
-	}
-
-
-	protected function createComponentDeleteTestsForm(): Form
-	{
-		$form = $this->formFactory->create();
-		$form->addCheckbox('confirm', 'Opravdu smazat všechny testovací rezervace (místa se uvolní)')
-			->setRequired('Akci potvrďte zaškrtnutím.');
-		$form->addSubmit('delete', 'Smazat testovací rezervace');
-		$form->onSuccess[] = function (): void {
-			$count = $this->reservationAdmin->deleteTestReservations();
-			$this->flashMessage("Smazáno testovacích rezervací: $count.", 'success');
-			$this->redirect('this');
-		};
-		return $form;
 	}
 
 
@@ -86,8 +27,6 @@ final class SettingsPresenter extends BasePresenter
 		$form = $this->formFactory->create();
 
 		$form->addGroup('Prodej');
-		$form->addCheckbox('sale_open', 'Prodej lístků je otevřený');
-		$form->addTextArea('closed_message', 'Text při uzavřeném prodeji')->setMaxLength(1000);
 		$this->addNumber($form, 'max_ticket', 'Nejvýše lístků na rezervaci', 1, 100);
 		$this->addNumber($form, 'hold_seconds', 'Jak dlouho držet vybraná místa (sekundy)', 30, 3600);
 		$this->addNumber($form, 'price_seat', 'Cena lístku s místenkou (Kč)', 0, 100000);
@@ -116,15 +55,10 @@ final class SettingsPresenter extends BasePresenter
 		$form->setCurrentGroup(null);
 		$form->addSubmit('save', 'Uložit nastavení');
 
-		$defaults = $this->settings->all();
-		$defaults['sale_open'] = ($defaults['sale_open'] ?? '') === '1';
-		$form->setDefaults($defaults);
+		$form->setDefaults($this->settings->all());
 
 		$form->onSuccess[] = function (Form $form, array $data): void {
-			$values = array_map(
-				static fn($value): string => is_bool($value) ? ($value ? '1' : '0') : trim((string) $value),
-				$data,
-			);
+			$values = array_map(static fn($value): string => trim((string) $value), $data);
 			$changed = $this->settings->save($values);
 			if ($changed) {
 				$this->flashMessage('Nastavení je uložené.', 'success');

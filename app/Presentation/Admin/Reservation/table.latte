@@ -24,7 +24,7 @@
 				<td data-label="Cena" class="num">{(int) $r['total_price']|price}</td>
 				<td data-label="Stav">
 					<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
-					<span n:if="$r['is_test']" class="badge">test</span>
+					{include '../channelBadge.latte', channel: $r['channel']}
 				</td>
 			</tr>
 		</tbody>

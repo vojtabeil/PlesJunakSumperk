@@ -1,0 +1,67 @@
+{templateType App\Presentation\Admin\Site\SiteTemplate}
+
+{block title}Stav webu{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Stav webu</h1>
+	<a n:href=":Front:Home:default" target="_blank">otevřít web</a>
+</div>
+
+<p n:if="$testCount && $mode !== \App\Model\Reservation\SiteMode::Testing" class="flash flash--error">
+	Testování skončilo, ale testovací rezervace ({$testCount}) ještě drží místa. Smažte je níže.
+</p>
+
+<ol class="mode-list">
+	<li n:foreach="$modes as $m" n:class="mode, $m === $mode ? 'mode--current'">
+		<div>
+			<h2>{$m->label()} <span n:if="$m === $mode" class="badge badge--paid">teď</span></h2>
+			<p>{$m->description()}</p>
+			<p n:if="$m->pageKey()" class="muted">
+				<a n:href=":Front:Home:default, preview: $m->value" target="_blank">náhled stránky</a> · text upravíte níže
+			</p>
+		</div>
+		{if $m !== $mode}{control "modeForm-{$m->value}"}{/if}
+	</li>
+</ol>
+<p class="muted">Prodáno lístků: veřejně {$tickets['public']} · VIP {$tickets['vip']} · testovacích {$tickets['test']}.</p>
+
+<div class="columns">
+	<section class="card" aria-labelledby="tester-title">
+		<h2 id="tester-title">Testerský odkaz</h2>
+		<p class="muted">Platí jen ve stavu Testování. Kdo ho otevře, může 30 dní testovat nákup;
+			jeho rezervace jsou testovací a nejsou v seznamu hostů.</p>
+		<p class="copy-line"><input type="text" readonly value="{$testerLink}" aria-label="Testerský odkaz" onclick="this.select()"></p>
+		{control regenerateLinkForm}
+
+		<h3>Testovací rezervace</h3>
+		{if $testCount}
+			<p>Testovacích rezervací: <strong>{$testCount}</strong>. Před spuštěním prodeje je smažte;
+				místa se uvolní a jejich platby z banky se odloží jako ignorované.</p>
+			<div class="danger-zone">{control deleteTestsForm}</div>
+		{else}
+			<p class="muted">Žádné testovací rezervace.</p>
+		{/if}
+	</section>
+
+	<section class="card" aria-labelledby="vip-title">
+		<h2 id="vip-title">VIP odkaz</h2>
+		<p class="muted">Platí jen ve stavu VIP prodej (můžete ho rozeslat předem). VIP nemají limit lístků.</p>
+		{if $vipLink}
+			<p class="copy-line"><input type="text" readonly value="{$vipLink}" aria-label="VIP odkaz" onclick="this.select()"></p>
+			<p class="muted">Odkaz se mění v konfiguraci na serveru (<code>config/local.neon</code>, <code>site › vipToken</code>).</p>
+		{else}
+			<p class="error-text">VIP odkaz není nastavený. Doplňte <code>site › vipToken</code> (aspoň 16 znaků)
+				v <code>config/local.neon</code> na serveru.</p>
+		{/if}
+	</section>
+</div>
+
+<section class="card" aria-labelledby="pages-title">
+	<h2 id="pages-title">Stránky pro návštěvníky, kteří nemohou kupovat</h2>
+	<p class="muted">Píše se přímo v HTML (např. <code>&lt;h2&gt;Nadpis&lt;/h2&gt;</code>, <code>&lt;p&gt;odstavec&lt;/p&gt;</code>,
+		<code>&lt;a href="https://…"&gt;odkaz&lt;/a&gt;</code>) a zobrazí se pod záhlavím webu přesně tak, jak je napsané.
+		Po uložení si stránku zkontrolujte přes „náhled stránky“ výše.</p>
+	{control pagesForm}
+</section>
+{/block}

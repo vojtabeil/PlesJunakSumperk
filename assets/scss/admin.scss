@@ -768,3 +768,59 @@ h3 {
     margin-top: 0;
   }
 }
+
+// --- Stage of the site ----------------------------------------------------------
+
+.mode-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  h2 {
+    margin-bottom: 0.25rem;
+  }
+
+  p {
+    margin: 0.25rem 0;
+  }
+
+  > div {
+    flex: 1 1 24rem;
+  }
+
+  .form-fields {
+    display: block;
+  }
+
+  .button--primary {
+    width: auto;
+  }
+
+  &--current {
+    border: 2px solid var(--green);
+  }
+}
+
+.badge--vip {
+  color: #fff;
+  background: #6b3fa0;
+}
+
+.code-input {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.9rem;
+}

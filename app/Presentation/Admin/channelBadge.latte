@@ -1,0 +1,4 @@
+{* Badge of a reservation made by a tester or through the VIP link. Parameter: $channel *}
+{parameters ?string $channel}
+<span n:if="$channel === 'test'" class="badge">test</span>
+<span n:if="$channel === 'vip'" class="badge badge--vip">VIP</span>

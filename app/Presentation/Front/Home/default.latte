@@ -1,12 +1,12 @@
 {templateType App\Presentation\Front\Home\HomeTemplate}
 
 {block content}
-<section n:if="!$saleOpen" class="panel closed">
-	<h2>Prodej lístků je uzavřený</h2>
-	<p>{$settings['closed_message'] ?? ''}</p>
-</section>
+<p n:if="$preview" class="message">Náhled stránky ve stavu „{$preview->label()}“ – vidíte ji jen vy jako přihlášený organizátor.</p>
 
-<section n:if="$saleOpen" class="panel" id="reservation" aria-labelledby="reservation-title">
+{* Written in HTML by the organizers in the administration (Nastavení → Stav webu). *}
+<section n:if="!$canBuy" class="panel site-page">{$pageHtml|noescape}</section>
+
+<section n:if="$canBuy" class="panel" id="reservation" aria-labelledby="reservation-title">
 	<h2 id="reservation-title">Rezervace lístků</h2>
 
 	<ol class="steps">
@@ -31,7 +31,7 @@
 {/block}
 
 {block scripts}
-<script n:if="$saleOpen" src="{$basePath}/{asset('build/front.js')}" type="module"></script>
+<script n:if="$canBuy" src="{$basePath}/{asset('build/front.js')}" type="module"></script>
 {/block}
 
 {define hallPlan, array $layout}

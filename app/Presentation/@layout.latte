@@ -17,7 +17,7 @@
 	<div class="hero-text">
 		<h1><a href="{plink :Front:Home:default}"><span class="hero-town">Šumperský</span> Skautský ples</a></h1>
 		<p n:if="!empty($settings['event_intro'])" class="intro">{$settings['event_intro']}</p>
-		<ul class="event-facts">
+		<ul n:if="$siteMode !== \App\Model\Reservation\SiteMode::After" class="event-facts">
 			<li>
 				<img src="{$basePath}/img/icons/where.svg" alt="">
 				<span class="visually-hidden">Kde:</span>

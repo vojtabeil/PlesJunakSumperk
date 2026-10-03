@@ -30,7 +30,11 @@ final class EventFormatter
 				isset($d['email']) ? (string) $d['email'] : null,
 				isset($d['tickets']) ? "lístků {$d['tickets']}" : null,
 				isset($d['total']) ? $money($d['total']) : null,
-				!empty($d['test']) ? 'testovací' : null,
+				match ($d['channel'] ?? null) {
+					'test' => 'testovací',
+					'vip' => 'VIP',
+					default => null,
+				},
 			],
 			'reservation.paid_manually' => [isset($d['amount']) ? $money($d['amount']) . ' hotově' : null],
 			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.unmatched', 'payment.assigned', 'payment.ignored' => [
@@ -46,6 +50,7 @@ final class EventFormatter
 				isset($d['to']) ? "na {$d['to']}" : null,
 				isset($d['error']) ? "chyba: {$d['error']}" : null,
 			],
+			'site.mode_changed' => [isset($d['from'], $d['to']) ? "{$d['from']} → {$d['to']}" : null],
 			'settings.changed' => [isset($d['changed']) && is_array($d['changed']) ? 'změněno: ' . implode(', ', $d['changed']) : null],
 			'admin.created', 'admin.updated', 'admin.password', 'admin.unlocked', 'admin.deleted', 'admin.setup', 'admin.login_failed', 'admin.locked'
 				=> [isset($d['login']) ? "účet {$d['login']}" : null],

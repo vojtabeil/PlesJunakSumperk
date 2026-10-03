@@ -12,6 +12,9 @@ parameters:
 	cron:
 		# Secret for GET /cron/payments?key=...; empty = the endpoint does not exist.
 		key: ''
+	site:
+		# Secret part of the VIP link /vip/<token> (at least 16 characters); empty = no VIP link.
+		vipToken: ''
 
 
 application:

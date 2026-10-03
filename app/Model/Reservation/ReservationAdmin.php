@@ -53,6 +53,22 @@ final class ReservationAdmin
 	}
 
 
+	/** @return array{test: int, vip: int, public: int} tickets of finished reservations by channel */
+	public function ticketsByChannel(): array
+	{
+		$result = ['test' => 0, 'vip' => 0, 'public' => 0];
+		$rows = $this->db->query(
+			"SELECT r.channel, COALESCE(SUM(r.standing_tickets), 0) + (SELECT COUNT(*) FROM seats s JOIN reservations x ON x.id = s.reservation_id
+				WHERE x.channel = r.channel AND x.status IN (" . ReservationService::FinishedStatuses . ")) AS tickets
+			FROM reservations r WHERE r.status IN (" . ReservationService::FinishedStatuses . ") GROUP BY r.channel",
+		)->fetchAll();
+		foreach ($rows as $row) {
+			$result[(string) $row['channel']] = (int) $row['tickets'];
+		}
+		return $result;
+	}
+
+
 	/** Problem filters of the reservation list (key => Czech label). */
 	public const Problems = [
 		'email' => 'Neodeslaný potvrzovací e-mail',
@@ -210,7 +226,7 @@ final class ReservationAdmin
 
 	public function testCount(): int
 	{
-		return (int) $this->db->query('SELECT COUNT(*) FROM reservations WHERE is_test = 1')->fetchColumn();
+		return (int) $this->db->query("SELECT COUNT(*) FROM reservations WHERE channel = 'test'")->fetchColumn();
 	}
 
 
@@ -223,7 +239,7 @@ final class ReservationAdmin
 	{
 		$this->db->beginTransaction();
 		try {
-			$rows = $this->db->query('SELECT id, name, email FROM reservations WHERE is_test = 1 ORDER BY id FOR UPDATE')->fetchAll();
+			$rows = $this->db->query("SELECT id, name, email FROM reservations WHERE channel = 'test' ORDER BY id FOR UPDATE")->fetchAll();
 			foreach ($rows as $row) {
 				$id = (int) $row['id'];
 				// Logged first, so the event keeps the freed seats.
@@ -262,7 +278,7 @@ final class ReservationAdmin
 			"SELECT r.id, r.name, r.email, r.phone, r.status, r.standing_tickets, r.total_price, r.paid_amount, r.paid_at, r.note,
 				GROUP_CONCAT(s.label ORDER BY s.id SEPARATOR ', ') AS seat_labels, COUNT(s.id) AS seat_count
 			FROM reservations r LEFT JOIN seats s ON s.reservation_id = r.id
-			WHERE r.status IN (" . ReservationService::FinishedStatuses . ") AND r.is_test = 0
+			WHERE r.status IN (" . ReservationService::FinishedStatuses . ") AND r.channel <> 'test'
 			GROUP BY r.id
 			ORDER BY r.name, r.id",
 		)->fetchAll();

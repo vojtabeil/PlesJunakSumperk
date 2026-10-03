@@ -97,7 +97,7 @@ final class ReservationService
 		}
 
 		return [
-			'sale_open' => $this->settings->isSaleOpen(),
+			'sale_open' => $this->settings->mode()->isSelling(),
 			'reservation' => $reservation,
 			'taken' => $taken,
 			'mine' => $mine,
@@ -167,9 +167,10 @@ final class ReservationService
 					->execute([$email, $current['id']]);
 				return;
 			}
-			// Before the site is public every reservation comes from a tester.
-			$this->db->prepare('INSERT INTO reservations (email, session_id, is_test) VALUES (?, ?, ?)')
-				->execute([$email, $owner, $this->settings->isPublic() ? 0 : 1]);
+			// Who may buy in the current stage is checked by the entry point (VisitorGate);
+			// the stage decides the channel (test / vip / public).
+			$this->db->prepare('INSERT INTO reservations (email, session_id, channel) VALUES (?, ?, ?)')
+				->execute([$email, $owner, $this->settings->mode()->channel()]);
 		});
 	}
 
@@ -292,7 +293,7 @@ final class ReservationService
 				'tickets' => $seats + $standing,
 				'standing' => $standing,
 				'total' => $total,
-				'test' => (bool) ($draft['is_test'] ?? false),
+				'channel' => $draft['channel'] ?? 'public',
 			]);
 			return $draftId;
 		});
@@ -330,8 +331,8 @@ final class ReservationService
 
 	private function assertSaleOpen(): void
 	{
-		if (!$this->settings->isSaleOpen()) {
-			throw new ReservationError('Prodej lístků je uzavřený.');
+		if (!$this->settings->mode()->isSelling()) {
+			throw new ReservationError('Prodej lístků je ukončený.');
 		}
 	}
 

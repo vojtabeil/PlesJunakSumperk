@@ -27,7 +27,7 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | Path | Purpose |
 |---|---|
 | `app/Bootstrap.php` | Nette configurator (debug mode only on localhost, Tracy logs in `var/log`). |
-| `app/Core/RouterFactory.php` | Routes: `/` reservation, `/hotovo/<id>` confirmation, `/api/<op>` JSON, `/tester/<token>` tester link, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`. |
+| `app/Core/RouterFactory.php` | Routes: `/` reservation, `/hotovo/<id>` confirmation, `/api/<op>` JSON, `/tester/<token>` and `/vip/<token>` secret links, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`. |
 | `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout + per-request DB check (`Authenticator` as `IdentityHandler`), `SetupConfig`. |
 | `app/Core/SetupGuard.php` | No administrator = site not configured: every presenter except the setup wizard is disabled (pages redirect, API 503). |
 | `app/Model/Payment/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, `Fio/FioApiSource` in production, chosen by `bank.driver`; both `RewindableSource`), `PaymentImporter` (fetch -> store -> match -> e-mail; manual button or cron), `PaymentMatcher` (partial payments add up), `VariableSymbol` (VS = prefix + id, e.g. 20260003), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
@@ -35,9 +35,9 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | `app/Presentation/Front/Cron/` | `GET /cron/payments?key=` for a scheduler; 404 while `cron.key` is empty. |
 | `app/Model/Log/` | Event log of everything that happens (`EventLog::record`, actor from `Actor`: customer/admin/cron/system), `EventTypes` (Czech labels, categories), `EventLogRepository` (filters by date, seat, type, actor, reservation), `EventFormatter`. |
 | `app/Model/Clock/` | `Clock` interface (`SystemClock`; `tests/php/FrozenClock` in tests). |
-| `app/Presentation/Admin/` | Administration: Setup (first-run wizard), Sign, Dashboard (seat pie chart, to-do list, table of all seats), Reservation, Customer (reservations grouped by e-mail), Payment (filters, resolving in the row), Log, Search (header search box), Settings (incl. tester mode), User (administrators), Export (CSV), Account (own password). |
+| `app/Presentation/Admin/` | Administration: Setup (first-run wizard), Sign, Dashboard (seat pie chart, to-do list, table of all seats), Reservation, Customer (reservations grouped by e-mail), Payment (filters, resolving in the row), Site (stage of the site, secret links, pages for visitors who cannot buy), Log, Search (header search box), Settings (event, prices, payments), User (administrators), Export (CSV), Account (own password). |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
-| `app/Model/` | Business logic: `Reservation/` (ReservationService = all reservation rules, ReservationAdmin, SeatOverview, Settings, TesterAccess, ReservationSession), `Mail/` (MailSender interface, SMTP implementation, ReservationMailer + Latte e-mail templates), `Database/` (PDO factory). |
+| `app/Model/` | Business logic: `Reservation/` (ReservationService = all reservation rules, ReservationAdmin, SeatOverview, Settings, SiteMode, SiteAccess, ReservationSession), `Mail/` (MailSender interface, SMTP implementation, ReservationMailer + Latte e-mail templates), `Database/` (PDO factory). |
 | `app/Presentation/` | Presenters + Latte templates (`Front/`, `Error/`, `Dev/`), typed template classes (`*Template.php`), `@layout.latte`, `Accessory/TemplateExtension.php` (filters `price`, `seatLabel`, function `asset`). |
 | `config/` | `common.neon`, `services.neon` (interfaces -> implementations), `local.neon` (git-ignored, from `local.neon.example`), `test.neon` (PHPUnit database). |
 | `assets/ts/` | TypeScript: `front.tsx` entry, `seat-picker/` (types, pure logic, API client, signals store, components). |
@@ -102,7 +102,7 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   a deleted account or a changed password (`session_version`) logs the user out everywhere.
   After changing one's own account, re-login with `Authenticator::identity()`.
 - Deny by default: `tests/php/Presentation/PresenterAccessTest` fails for any presenter that is
-  reachable without login and not on its allowlist. Public by design: Front (Home, Done, Api, Tester),
+  reachable without login and not on its allowlist. Public by design: Front (Home, Done, Api, Access),
   Error, Admin Sign/Setup and `Dev:*` (debug mode only; must be excluded from the release build).
 - Admin: every presenter extends `Admin\BasePresenter` (login required unless `isPublic()`).
   State changes go only through POST forms from `FormFactory` (CSRF token) - never GET links -
@@ -119,15 +119,20 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   are `foreign` (not a problem, never matched). Keep the VS prefix stable during a sale.
 - Payments may be imported only manually (no cron on the hosting): keep the dashboard button and
   the "last import" information working.
-- Secrets (Fio token, cron key, setup password, tester token) never appear in exceptions, logs or the event log.
+- Secrets (Fio token, cron key, setup password, tester and VIP tokens) never appear in exceptions, logs or the event log.
 - Event log: every reservation, payment, e-mail and admin action is logged **in the model**
   (`EventLog::record`), never in presenters. Entry points set the actor (`Actor::asAdmin/asCustomer/asCron`).
   Seat clicks and holds are not logged (only reservation-level events). A new action needs an entry
   in `EventTypes::Types`.
-- Tester mode (`public_access` = `testers`, the default of a new installation): the public pages show
-  "Připravujeme" and the API answers 503, except for browsers with the tester cookie (set by
-  `/tester/<token>`, `Front\TesterGate`) and logged-in administrators. Reservations made in this mode
-  are `is_test = 1`, left out of the guest list, and can be deleted in Settings.
+- Stages of the site (`SiteMode`, setting `site_mode`, switched by hand in admin -> Stav webu):
+  testing (default) -> vip -> public -> closed -> after. `Front\VisitorGate::canBuy()` decides who may
+  buy: testing = tester cookie (`/tester/<token>`, token in the DB), vip = VIP cookie (`/vip/<token>`,
+  token `site.vipToken` in the configuration, min. 16 characters), public = anybody, closed/after =
+  nobody; logged-in administrators in every selling stage. Others see the stage's page
+  (`page_<stage>` settings, HTML written by organizers and printed unescaped - trusted content).
+  The API answers 503; `ReservationService` also refuses changes when the stage does not sell.
+  Reservations store their `channel` (test/vip/public); test ones are left out of the guest list
+  and can be deleted. The Done page (payment details) works in every stage.
 - Database data files: `dev/db/schema.sql` + `defaults.sql` + `hall.sql` are also the production
   installation; `seed.sql` is local test data only.
 - Do not depend on `bcmath` (may be missing on the hosting).

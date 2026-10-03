@@ -28,13 +28,13 @@ final class SeatOverview
 
 	/**
 	 * @return list<array{id: int, label: string, table: string, status: string, reservation_id: ?int,
-	 *     name: ?string, is_test: bool, changed_at: string}>
+	 *     name: ?string, channel: ?string, changed_at: string}>
 	 */
 	public function seats(?string $status = null, string $query = ''): array
 	{
 		$rows = $this->db->query(
 			"SELECT s.id, s.label, t.label AS table_label, s.state, s.updated_at,
-				r.id AS reservation_id, r.name, r.status, r.is_test, r.updated_at AS reservation_updated_at
+				r.id AS reservation_id, r.name, r.status, r.channel, r.updated_at AS reservation_updated_at
 			FROM seats s
 			LEFT JOIN hall_tables t ON t.id = s.table_id
 			LEFT JOIN reservations r ON r.id = s.reservation_id
@@ -54,7 +54,7 @@ final class SeatOverview
 				// Drafts (seat being selected) are not shown as reservations.
 				'reservation_id' => $isFinished ? (int) $row['reservation_id'] : null,
 				'name' => $isFinished ? $row['name'] : null,
-				'is_test' => $isFinished && (bool) $row['is_test'],
+				'channel' => $isFinished ? (string) $row['channel'] : null,
 				'changed_at' => max((string) $row['updated_at'], $isFinished ? (string) $row['reservation_updated_at'] : ''),
 			];
 			if ($status !== null && $item['status'] !== $status) {

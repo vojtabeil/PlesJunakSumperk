@@ -38,6 +38,7 @@ final class EventTypes
 		'payments.imported' => ['payment', 'Načtení plateb z banky'],
 		'payments.rewound' => ['payment', 'Nové stažení pohybů od data'],
 
+		'site.mode_changed' => ['admin', 'Změna stavu webu'],
 		'settings.changed' => ['admin', 'Změna nastavení'],
 		'tester.link_regenerated' => ['admin', 'Nový odkaz pro testery'],
 		'admin.setup' => ['admin', 'Nastavení webu (první účet)'],

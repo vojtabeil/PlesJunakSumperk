@@ -11,8 +11,8 @@ use PDO;
 /** Key/value settings from the `settings` table (event info, prices, limits, sale switch). */
 final class Settings
 {
-	/** Values that are secrets: their changes are logged without the value. */
-	private const Secret = ['tester_token'];
+	/** Values not copied into the log: secrets and long HTML pages (only their names are logged). */
+	private const NotLogged = ['tester_token', 'page_testing', 'page_vip', 'page_closed', 'page_after'];
 
 	/** @var array<string, string>|null */
 	private ?array $values = null;
@@ -61,7 +61,7 @@ final class Settings
 			}
 		}
 		if ($changed) {
-			$visible = array_diff_key($changed, array_flip(self::Secret));
+			$visible = array_diff_key($changed, array_flip(self::NotLogged));
 			$this->eventLog->record('settings.changed', details: ['changed' => array_keys($changed), 'values' => $visible]);
 		}
 		return $changed;
@@ -76,15 +76,9 @@ final class Settings
 	}
 
 
-	/** False while only testers with the tester link may see the site (see TesterAccess). */
-	public function isPublic(): bool
+	/** Stage of the site (see SiteAccess); an unknown value counts as testing, the safest one. */
+	public function mode(): SiteMode
 	{
-		return $this->get('public_access', 'testers') === 'public';
-	}
-
-
-	public function isSaleOpen(): bool
-	{
-		return $this->get('sale_open') === '1';
+		return SiteMode::tryFrom($this->get('site_mode')) ?? SiteMode::Testing;
 	}
 }

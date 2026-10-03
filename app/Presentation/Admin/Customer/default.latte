@@ -35,7 +35,7 @@
 							<li n:foreach="$c['reservations'] as $r">
 								<a n:href="Reservation:detail $r['id']">č. {$r['id']}</a>
 								<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
-								<span n:if="$r['is_test']" class="badge">test</span>
+								{include '../channelBadge.latte', channel: $r['channel']}
 								<span class="muted">{$r['seat_labels'] ?? ''}</span>
 							</li>
 						</ul>
