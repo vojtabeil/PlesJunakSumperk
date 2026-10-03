@@ -90,12 +90,6 @@ h2 {
   }
 }
 
-.admin-user {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.9rem;
-}
-
 .admin-main {
   max-width: 1200px;
   margin: 0 auto;
@@ -437,5 +431,340 @@ fieldset {
   &--overdue {
     border-color: var(--orange);
     border-left: 4px solid var(--orange);
+  }
+}
+
+// --- Seat status colours (pie chart, legend, badges) ---------------------------
+
+$seat-colors: (
+  free: #d9e7d6,
+  held: #9ec5e8,
+  unpaid: #f29a1d,
+  partial: #f6d38f,
+  paid: #287234,
+);
+
+@each $status, $color in $seat-colors {
+  .slice--#{$status} {
+    fill: $color;
+    background: $color;
+  }
+
+  .badge--seat-#{$status} {
+    background: $color;
+    @if $status == paid {
+      color: #fff;
+    }
+  }
+}
+
+// --- Header search and user menu ----------------------------------------------
+
+.admin-search input {
+  width: min(22rem, 100%);
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: var(--radius-small);
+}
+
+.admin-user {
+  position: relative;
+  font-size: 0.9rem;
+
+  summary {
+    cursor: pointer;
+  }
+}
+
+.admin-user-menu {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  min-width: 13rem;
+  margin-top: 0.4rem;
+  padding: 0.4rem 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+
+  .admin-header & a {
+    padding: 0.4rem 1rem;
+    color: var(--text);
+    text-decoration: none;
+
+    &:hover {
+      background: var(--surface-alt);
+    }
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// --- Dashboard ------------------------------------------------------------------
+
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: 0 1.5rem;
+}
+
+.chart {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.pie {
+  width: 11rem;
+  height: 11rem;
+  flex: none;
+
+  .slice {
+    stroke: var(--surface);
+    stroke-width: 0.01;
+  }
+}
+
+.legend-list {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 3px;
+}
+
+.todo {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+
+  .muted {
+    display: block;
+    font-size: 0.9rem;
+  }
+}
+
+.all-good {
+  font-weight: 700;
+  color: var(--green);
+}
+
+.import-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+
+  .form-fields {
+    display: block;
+  }
+
+  .button--primary {
+    width: auto;
+  }
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+}
+
+.tile {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  strong {
+    color: var(--green);
+  }
+
+  span {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  &:hover {
+    border-color: var(--green);
+  }
+}
+
+// --- Lists, filters, pager, tabs ----------------------------------------------
+
+.filter-form--wide {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 0.2rem 0;
+  }
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  a {
+    padding: 0.4rem 0.9rem;
+    color: var(--text);
+    text-decoration: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+
+    &.is-current {
+      color: #fff;
+      background: var(--green);
+      border-color: var(--green);
+    }
+  }
+}
+
+.tab-count {
+  margin-left: 0.25rem;
+  opacity: 0.75;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+
+  input {
+    width: 7rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .button {
+    padding: 0.35rem 0.8rem;
+  }
+}
+
+// --- Tables as cards on phones --------------------------------------------------
+
+@include below($breakpoint-phone) {
+  .data-table--cards {
+    thead {
+      display: none;
+    }
+
+    tr {
+      display: block;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.2rem 0;
+      border: none;
+
+      &.num {
+        text-align: left;
+      }
+
+      &[data-label]::before {
+        content: attr(data-label);
+        flex: none;
+        width: 7rem;
+        color: var(--muted);
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+.copy-line input {
+  width: 100%;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+// Every filter: label above its field, fields only as wide as needed.
+.filter-form label {
+  display: grid;
+  gap: 0.25rem;
+
+  input,
+  select {
+    width: auto;
+    min-width: 9rem;
+    margin-top: 0;
   }
 }

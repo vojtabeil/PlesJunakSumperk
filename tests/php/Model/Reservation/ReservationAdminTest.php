@@ -106,6 +106,67 @@ final class ReservationAdminTest extends DatabaseTestCase
 	}
 
 
+	public function testProblemsFindUnsentEmailsAndOverdueReservations(): void
+	{
+		$sent = $this->confirmed('alice@example.com', [101]);
+		$unsent = $this->confirmed('bob@example.com', [102]);
+		$this->db->prepare('UPDATE reservations SET email_sent_at = NOW() WHERE id = ?')->execute([$sent]);
+		$this->db->prepare('UPDATE reservations SET email_sent_at = NOW(), confirmed_at = NOW() - INTERVAL 8 DAY WHERE id = ?')->execute([$unsent]);
+		$late = $this->confirmed('carol@example.com', [103]);
+
+		self::assertSame(['email' => 1, 'overdue' => 1], $this->admin->problemCounts());
+		self::assertSame([$late], array_column($this->admin->search(null, '', 'email'), 'id'));
+		self::assertSame([$unsent], array_column($this->admin->search(null, '', 'overdue'), 'id'));
+		self::assertCount(3, $this->admin->search(null, '', 'unknown'), 'Unknown problem is ignored');
+	}
+
+
+	public function testCustomersGroupReservationsByEmail(): void
+	{
+		$first = $this->confirmed('alice@example.com', [101], name: 'Alice');
+		$this->confirmed('alice@example.com', [102, 103], name: 'Alice Nováková');
+		$this->confirmed('bob@example.com', [201], name: 'Bob');
+		$this->admin->markPaid($first);
+
+		$customers = $this->admin->customers('');
+		self::assertSame(['alice@example.com', 'bob@example.com'], array_column($customers, 'email'));
+		self::assertSame(3, $customers[0]['tickets']);
+		self::assertSame(1050, $customers[0]['total']);
+		self::assertSame(350, $customers[0]['paid']);
+		self::assertCount(2, $customers[0]['reservations']);
+		self::assertSame(['bob@example.com'], array_column($this->admin->customers('BOB'), 'email'));
+	}
+
+
+	public function testTesterReservationsAreMarkedLeftOutOfGuestListAndDeletable(): void
+	{
+		$this->setSettings(['public_access' => 'testers']);
+		$test = $this->confirmed('tester@example.com', [101, 102]);
+		$this->setSettings(['public_access' => 'public']);
+		$real = $this->confirmed('alice@example.com', [201]);
+		$this->db->prepare(
+			"INSERT INTO bank_transactions (source, external_id, booked_on, amount, reservation_id, match_status)
+			VALUES ('mock', 'x1', CURDATE(), 700, ?, 'matched')",
+		)->execute([$test]);
+
+		self::assertSame(1, $this->admin->testCount());
+		self::assertSame([$real], array_column($this->admin->guestList(), 'id'));
+
+		self::assertSame(1, $this->admin->deleteTestReservations());
+		self::assertNull($this->admin->get($test));
+		self::assertNotNull($this->admin->get($real));
+		self::assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM seats WHERE state <> 'free'")->fetchColumn());
+		self::assertSame(
+			['reservation_id' => null, 'match_status' => 'ignored'],
+			$this->db->query('SELECT reservation_id, match_status FROM bank_transactions')->fetch(),
+		);
+		$seats = $this->db->query(
+			"SELECT s.seat_id FROM event_log e JOIN event_log_seats s ON s.event_id = e.id WHERE e.action = 'reservation.test_deleted' ORDER BY s.seat_id",
+		)->fetchAll(\PDO::FETCH_COLUMN);
+		self::assertSame([101, 102], array_map('intval', $seats), 'The log keeps the freed seats');
+	}
+
+
 	/** @param list<int> $seats */
 	private function confirmed(string $email, array $seats, int $standing = 0, string $name = 'Test Host'): int
 	{

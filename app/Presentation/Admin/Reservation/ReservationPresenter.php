@@ -23,6 +23,10 @@ final class ReservationPresenter extends BasePresenter
 	#[Persistent]
 	public string $q = '';
 
+	/** One of ReservationAdmin::Problems ('' = none), used by the dashboard links. */
+	#[Persistent]
+	public string $problem = '';
+
 	/** @var array<string, mixed> */
 	private array $reservation;
 
@@ -38,7 +42,8 @@ final class ReservationPresenter extends BasePresenter
 
 	public function renderDefault(): void
 	{
-		$this->template->reservations = $this->reservationAdmin->search($this->status ?: null, $this->q);
+		$this->template->reservations = $this->reservationAdmin->search($this->status ?: null, $this->q, $this->problem ?: null);
+		$this->template->problemLabel = ReservationAdmin::Problems[$this->problem] ?? null;
 	}
 
 
@@ -70,7 +75,7 @@ final class ReservationPresenter extends BasePresenter
 			->setDefaultValue($this->q);
 		$form->addSubmit('filter', 'Filtrovat');
 		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
-			$this->redirect('default', ['status' => (string) $data->status, 'q' => trim((string) $data->q)]);
+			$this->redirect('default', ['status' => (string) $data->status, 'q' => trim((string) $data->q), 'problem' => '']);
 		};
 		return $form;
 	}

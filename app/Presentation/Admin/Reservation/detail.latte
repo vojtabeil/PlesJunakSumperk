@@ -4,40 +4,62 @@
 
 {block content}
 {var $r = $reservation}
+{var $open = in_array($r['status'], ['confirmed', 'partially_paid'], true)}
+{var $remaining = (int) $r['total_price'] - (int) $r['paid_amount']}
 <p><a n:href="default">← Zpět na seznam</a></p>
 <div class="page-head">
-	<h1>Rezervace č. {$r['id']}</h1>
-	<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
+	<h1>Rezervace č. {$r['id']} <span class="muted">{$r['name']}</span></h1>
+	<p class="status-line">
+		<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
+		<span n:if="$r['is_test']" class="badge">testovací</span>
+	</p>
 </div>
+
+{* One sentence that says what is going on and what to do. *}
+<p n:class="'flash', $open ? 'flash--info'">
+	{if $r['status'] === 'paid'}
+		Zaplaceno {(int) $r['paid_amount']|price}{if $r['paid_at']} dne {$r['paid_at']|date:'j. n. Y'}{/if}. Není potřeba nic dělat.
+	{elseif $open}
+		Čeká na platbu {$remaining|price} na VS <strong>{$r['variable_symbol']}</strong>{if (int) $r['paid_amount'] > 0} (už zaplaceno {(int) $r['paid_amount']|price}){/if}.
+		Platba z banky se spáruje sama; zaplatil-li host hotově, označte rezervaci jako zaplacenou.
+	{elseif $r['status'] === 'cancelled'}
+		Rezervace je zrušená, její místa jsou volná.
+	{else}
+		Host rezervaci ještě nedokončil (vybírá místa).
+	{/if}
+	<span n:if="!$r['email_sent_at'] && $r['status'] !== 'draft' && $r['status'] !== 'cancelled'" class="error-text">
+		Potvrzovací e-mail nebyl odeslán{if $r['email_error']} ({$r['email_error']}){/if}.
+	</span>
+</p>
 
 <div class="columns">
 	<section class="card">
 		<h2>Údaje</h2>
 		<dl class="details">
 			<dt>Jméno</dt><dd>{$r['name'] ?? '–'}</dd>
-			<dt>E-mail</dt><dd><a href="mailto:{$r['email']}">{$r['email']}</a></dd>
+			<dt>E-mail</dt><dd><a href="mailto:{$r['email']}">{$r['email']}</a> · <a n:href="Customer:default, q: $r['email']">všechny rezervace</a></dd>
 			<dt>Telefon</dt><dd>{$r['phone'] ?? '–'}</dd>
-			<dt>Místa</dt><dd>{$r['seats'] ? implode('; ', array_map(fn($l) => ($l|seatLabel), $r['seats'])) : '–'}</dd>
+			<dt>Místa</dt>
+			<dd>
+				{foreach $r['seats'] as $label}
+					<a n:href="Log:default, seat: $label, reservation: ''" title="Historie místa">{$label|seatLabel}</a>{sep}; {/sep}
+				{else}–{/foreach}
+			</dd>
 			<dt>Bez místenky</dt><dd>{$r['standing_tickets']}</dd>
 			<dt>Cena</dt><dd>{(int) $r['total_price']|price}</dd>
 			<dt>Zaplaceno</dt><dd>{(int) $r['paid_amount']|price}</dd>
 			<dt>Variabilní symbol</dt><dd>{$r['variable_symbol']}</dd>
-			<dt>Vytvořeno</dt><dd>{$r['created_at']|date:'j. n. Y H:i'}</dd>
 			<dt>Potvrzeno</dt><dd>{if $r['confirmed_at']}{$r['confirmed_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
-			<dt>Zaplaceno dne</dt><dd>{if $r['paid_at']}{$r['paid_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
 			<dt>Potvrzovací e-mail</dt>
-			<dd>
-				{if $r['email_sent_at']}odeslán {$r['email_sent_at']|date:'j. n. Y H:i'}{else}neodeslán{/if}
-				<span n:if="$r['email_error']" class="error-text">({$r['email_error']})</span>
-			</dd>
+			<dd>{if $r['email_sent_at']}odeslán {$r['email_sent_at']|date:'j. n. Y H:i'}{else}neodeslán{/if}</dd>
 		</dl>
 	</section>
 
 	<section class="card">
-		<h2>Akce</h2>
+		<h2>Co můžete udělat</h2>
 		<div class="actions">
-			{if in_array($r['status'], ['confirmed', 'partially_paid'], true)}{control markPaidForm}{/if}
-			{if in_array($r['status'], ['confirmed', 'partially_paid', 'paid'], true)}{control resendForm}{/if}
+			{if $open}{control markPaidForm}{/if}
+			{if $r['status'] !== 'draft' && $r['status'] !== 'cancelled'}{control resendForm}{/if}
 			{if $r['status'] !== 'cancelled'}
 				<div class="danger-zone">{control cancelForm}</div>
 			{/if}
@@ -55,18 +77,23 @@
 			<span class="muted">({$p['match_status']|matchLabel})</span>
 		</li>
 	</ul>
-	<p n:if="!$payments" class="muted">Zatím žádná platba z banky.</p>
+	<p n:if="!$payments" class="muted">Zatím žádná platba z banky. Platbu bez VS přiřadíte na stránce <a n:href="Payment:default, filter: problems">Platby</a>.</p>
 </section>
 
 <section class="card">
-	<h2>Historie změn</h2>
+	<div class="page-head">
+		<h2>Historie</h2>
+		<a n:href="Log:default, reservation: (string) $r['id'], seat: ''">celý log rezervace</a>
+	</div>
 	<ul class="activity" n:if="$activity">
 		<li n:foreach="$activity as $entry">
 			<time>{$entry['created_at']|date:'j. n. Y H:i'}</time>
-			{$entry['action']|eventLabel}
-			<span class="muted">– {$entry['admin_name'] ?? 'systém'}</span>
+			<strong>{$entry['action']|eventLabel}</strong>
+			{var $details = ($entry|eventDetails)}
+			<span n:if="$details">– {$details}</span>
+			<span class="muted">({$entry['admin_name'] ?? ($entry['actor_type']|actorLabel)})</span>
 		</li>
 	</ul>
-	<p n:if="!$activity" class="muted">Zatím žádné změny.</p>
+	<p n:if="!$activity" class="muted">Zatím žádné události.</p>
 </section>
 {/block}

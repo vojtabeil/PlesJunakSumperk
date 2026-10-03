@@ -9,4 +9,9 @@ use App\Presentation\Admin\BaseTemplate;
 
 final class SettingsTemplate extends BaseTemplate
 {
+	public bool $isPublic;
+
+	public string $testerLink;
+
+	public int $testCount;
 }

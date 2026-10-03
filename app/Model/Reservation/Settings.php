@@ -76,6 +76,13 @@ final class Settings
 	}
 
 
+	/** False while only testers with the tester link may see the site (see TesterAccess). */
+	public function isPublic(): bool
+	{
+		return $this->get('public_access', 'testers') === 'public';
+	}
+
+
 	public function isSaleOpen(): bool
 	{
 		return $this->get('sale_open') === '1';

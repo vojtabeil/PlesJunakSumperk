@@ -1,0 +1,66 @@
+{templateType App\Presentation\Admin\Log\LogTemplate}
+
+{block title}Log{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Log</h1>
+	<p class="muted">Vše, co se stalo s rezervacemi, platbami, e-maily a v administraci.</p>
+</div>
+
+<form class="filter-form filter-form--wide" method="get" action="{link this, page: 1}">
+	<label>Od <input type="date" name="from" value="{$presenter->from}"></label>
+	<label>Do <input type="date" name="to" value="{$presenter->to}"></label>
+	<label>Typ
+		<select name="category">
+			<option value="">vše</option>
+			<option n:foreach="$categories as $key => $label" value="{$key}" selected="{$presenter->category === $key}">{$label}</option>
+		</select>
+	</label>
+	<label>Kdo
+		<select name="actorType">
+			<option value="">kdokoli</option>
+			<option n:foreach="$actors as $key => $label" value="{$key}" selected="{$presenter->actorType === $key}">{$label}</option>
+		</select>
+	</label>
+	<label>Místo <input type="text" name="seat" value="{$presenter->seat}" placeholder="3/5" size="6"></label>
+	<label>Rezervace / VS <input type="text" name="reservation" value="{$presenter->reservation}" placeholder="12 nebo 20260012" size="10"></label>
+	<button class="button">Filtrovat</button>
+	<a n:if="$filterActive" n:href="this, from: '', to: '', category: '', actorType: '', seat: '', reservation: '', page: 1">zrušit filtr</a>
+</form>
+
+<p n:if="$unknownReference" class="flash flash--error">Takové místo nebo rezervace neexistuje (místo zadejte jako „stůl/místo“, např. 3/5).</p>
+
+<section class="card">
+	<p class="muted">Záznamů: {$total}</p>
+	<div class="table-scroll" n:if="$events">
+		<table class="data-table data-table--cards">
+			<thead>
+				<tr><th scope="col">Kdy</th><th scope="col">Událost</th><th scope="col">Rezervace / místa</th><th scope="col">Kdo</th></tr>
+			</thead>
+			<tbody>
+				<tr n:foreach="$events as $e">
+					<td data-label="Kdy" class="nowrap">{$e['created_at']|date:'j. n. Y H:i:s'}</td>
+					<td data-label="Událost">
+						<strong>{$e['action']|eventLabel}</strong><br>
+						<span class="muted">{$e|eventDetails}</span>
+					</td>
+					<td data-label="Rezervace / místa">
+						{if $e['reservation_id']}<a n:href="Reservation:detail $e['reservation_id']">č. {$e['reservation_id']} {$e['reservation_name']}</a>{/if}
+						<span n:if="$e['seat_labels']" class="muted">místa {$e['seat_labels']}</span>
+						{if !$e['reservation_id'] && !$e['seat_labels']}–{/if}
+					</td>
+					<td data-label="Kdo">{$e['actor_type']|actorLabel}{if $e['admin_name']} – {$e['admin_name']}{/if}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<p n:if="!$events" class="muted">Žádné záznamy.</p>
+
+	<nav n:if="$pages > 1" class="pager" aria-label="Stránky">
+		<a n:if="$page > 1" n:href="this, page: $page - 1">← novější</a>
+		<span>strana {$page} z {$pages}</span>
+		<a n:if="$page < $pages" n:href="this, page: $page + 1">starší →</a>
+	</nav>
+</section>
+{/block}

@@ -53,17 +53,29 @@ final class ReservationAdmin
 	}
 
 
+	/** Problem filters of the reservation list (key => Czech label). */
+	public const Problems = [
+		'email' => 'Neodeslaný potvrzovací e-mail',
+		'overdue' => 'Nezaplacené déle než ' . self::OverdueDays . ' dní',
+	];
+
+	public const OverdueDays = 7;
+
+
 	/**
 	 * Finished and cancelled reservations (drafts only when asked for), newest first.
 	 * @return list<array<string, mixed>>
 	 */
-	public function search(?string $status = null, string $query = ''): array
+	public function search(?string $status = null, string $query = '', ?string $problem = null): array
 	{
 		$where = ["r.status <> 'draft'"];
 		$params = [];
 		if ($status !== null && in_array($status, self::Statuses, true)) {
 			$where = ['r.status = ?'];
 			$params[] = $status;
+		}
+		if ($problem !== null && isset(self::Problems[$problem])) {
+			$where[] = self::problemCondition($problem);
 		}
 		$query = trim($query);
 		if ($query !== '') {
@@ -81,6 +93,58 @@ final class ReservationAdmin
 		);
 		$stmt->execute($params);
 		return $stmt->fetchAll();
+	}
+
+
+	/** @return array<string, int> problem => number of reservations (for "Co je potřeba udělat") */
+	public function problemCounts(): array
+	{
+		$counts = [];
+		foreach (array_keys(self::Problems) as $problem) {
+			$counts[$problem] = (int) $this->db->query(
+				'SELECT COUNT(*) FROM reservations r WHERE ' . self::problemCondition($problem),
+			)->fetchColumn();
+		}
+		return $counts;
+	}
+
+
+	/**
+	 * Customers = people grouped by e-mail (one e-mail may have several reservations).
+	 * @return list<array{email: string, names: string, reservations: list<array<string, mixed>>,
+	 *     tickets: int, total: int, paid: int}>
+	 */
+	public function customers(string $query = ''): array
+	{
+		$customers = [];
+		foreach ($this->search(null, $query) as $r) {
+			$email = (string) $r['email'];
+			$customers[$email] ??= ['email' => $email, 'names' => [], 'reservations' => [], 'tickets' => 0, 'total' => 0, 'paid' => 0];
+			$c = &$customers[$email];
+			$c['names'][(string) $r['name']] = true;
+			$c['reservations'][] = $r;
+			if ($r['status'] !== 'cancelled') {
+				$c['tickets'] += (int) $r['seat_count'] + (int) $r['standing_tickets'];
+				$c['total'] += (int) $r['total_price'];
+				$c['paid'] += (int) $r['paid_amount'];
+			}
+			unset($c);
+		}
+		ksort($customers);
+		return array_values(array_map(static function (array $c): array {
+			$c['names'] = implode(', ', array_keys($c['names']));
+			return $c;
+		}, $customers));
+	}
+
+
+	private static function problemCondition(string $problem): string
+	{
+		return match ($problem) {
+			'email' => "r.status IN ('confirmed', 'partially_paid', 'paid') AND r.email_sent_at IS NULL",
+			'overdue' => "r.status IN ('confirmed', 'partially_paid') AND r.confirmed_at < NOW() - INTERVAL " . self::OverdueDays . ' DAY',
+			default => throw new \InvalidArgumentException("Unknown problem '$problem'."),
+		};
 	}
 
 
@@ -144,6 +208,41 @@ final class ReservationAdmin
 	}
 
 
+	public function testCount(): int
+	{
+		return (int) $this->db->query('SELECT COUNT(*) FROM reservations WHERE is_test = 1')->fetchColumn();
+	}
+
+
+	/**
+	 * Removes all reservations made by testers: their seats become free and their bank payments
+	 * are set aside as ignored (a real payment of a tester has to be refunded by hand).
+	 * @return int number of deleted reservations
+	 */
+	public function deleteTestReservations(): int
+	{
+		$this->db->beginTransaction();
+		try {
+			$rows = $this->db->query('SELECT id, name, email FROM reservations WHERE is_test = 1 ORDER BY id FOR UPDATE')->fetchAll();
+			foreach ($rows as $row) {
+				$id = (int) $row['id'];
+				// Logged first, so the event keeps the freed seats.
+				$this->eventLog->record('reservation.test_deleted', $id, ['name' => $row['name'], 'email' => $row['email']]);
+				$this->db->prepare("UPDATE seats SET state = 'free', reservation_id = NULL, booked_at = NULL WHERE reservation_id = ?")
+					->execute([$id]);
+				$this->db->prepare("UPDATE bank_transactions SET reservation_id = NULL, match_status = 'ignored' WHERE reservation_id = ?")
+					->execute([$id]);
+				$this->db->prepare('DELETE FROM reservations WHERE id = ?')->execute([$id]);
+			}
+			$this->db->commit();
+			return count($rows);
+		} catch (Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
+	}
+
+
 	public function saveNote(int $id, string $note): void
 	{
 		$note = trim($note);
@@ -163,7 +262,7 @@ final class ReservationAdmin
 			"SELECT r.id, r.name, r.email, r.phone, r.status, r.standing_tickets, r.total_price, r.paid_amount, r.paid_at, r.note,
 				GROUP_CONCAT(s.label ORDER BY s.id SEPARATOR ', ') AS seat_labels, COUNT(s.id) AS seat_count
 			FROM reservations r LEFT JOIN seats s ON s.reservation_id = r.id
-			WHERE r.status IN (" . ReservationService::FinishedStatuses . ")
+			WHERE r.status IN (" . ReservationService::FinishedStatuses . ") AND r.is_test = 0
 			GROUP BY r.id
 			ORDER BY r.name, r.id",
 		)->fetchAll();

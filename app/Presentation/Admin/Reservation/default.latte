@@ -14,6 +14,10 @@
 	<button n:name="filter" class="button">Filtrovat</button>
 </form>
 
+<p n:if="$problemLabel" class="flash flash--info">
+	Zobrazeny jen rezervace: <strong>{$problemLabel}</strong> · <a n:href="this, problem: ''">zobrazit všechny</a>
+</p>
+
 <section class="card">
 	<p class="muted">Počet: {count($reservations)}</p>
 	{include 'table.latte', reservations: $reservations}

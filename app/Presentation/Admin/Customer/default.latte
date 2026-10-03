@@ -1,0 +1,52 @@
+{templateType App\Presentation\Admin\Customer\CustomerTemplate}
+
+{block title}Zákazníci{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Zákazníci</h1>
+	<p class="muted">Lidé podle e-mailu. Jeden e-mail může mít více rezervací.</p>
+</div>
+
+<form class="filter-form" method="get" action="{link this}">
+	<label>Hledat <input type="search" name="q" value="{$presenter->q}" placeholder="e-mail nebo jméno"></label>
+	<button class="button">Hledat</button>
+	<a n:if="$presenter->q !== ''" n:href="this, q: ''">zrušit</a>
+</form>
+
+<section class="card">
+	<p class="muted">Zákazníků: {count($customers)}</p>
+	<div class="table-scroll" n:if="$customers">
+		<table class="data-table data-table--cards">
+			<thead>
+				<tr>
+					<th scope="col">Zákazník</th>
+					<th scope="col">Rezervace</th>
+					<th scope="col" class="num">Lístků</th>
+					<th scope="col" class="num">Cena</th>
+					<th scope="col" class="num">Zaplaceno</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr n:foreach="$customers as $c">
+					<td data-label="Zákazník"><strong>{$c['names']}</strong><br><a href="mailto:{$c['email']}">{$c['email']}</a></td>
+					<td data-label="Rezervace">
+						<ul class="plain-list">
+							<li n:foreach="$c['reservations'] as $r">
+								<a n:href="Reservation:detail $r['id']">č. {$r['id']}</a>
+								<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
+								<span n:if="$r['is_test']" class="badge">test</span>
+								<span class="muted">{$r['seat_labels'] ?? ''}</span>
+							</li>
+						</ul>
+					</td>
+					<td data-label="Lístků" class="num">{$c['tickets']}</td>
+					<td data-label="Cena" class="num">{$c['total']|price}</td>
+					<td data-label="Zaplaceno" class="num">{$c['paid']|price}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<p n:if="!$customers" class="muted">Žádní zákazníci.</p>
+</section>
+{/block}

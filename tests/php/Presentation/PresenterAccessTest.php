@@ -34,6 +34,7 @@ final class PresenterAccessTest extends DatabaseTestCase
 		'App\Presentation\Front\Done\DonePresenter',    // confirmation, bound to the visitor's session
 		'App\Presentation\Front\Api\ApiPresenter',      // JSON API of the seat picker
 		'App\Presentation\Front\Cron\CronPresenter',    // protected by the cron key instead of a login
+		'App\Presentation\Front\Tester\TesterPresenter', // tester link, protected by its secret token
 		'App\Presentation\Error\Error4xx\Error4xxPresenter',
 		'App\Presentation\Error\Error5xx\Error5xxPresenter',
 		'App\Presentation\Admin\Sign\SignPresenter',

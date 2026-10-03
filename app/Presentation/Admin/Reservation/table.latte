@@ -1,7 +1,7 @@
 {* Reservation table, shared by the list and the dashboard. Parameter: $reservations *}
 {parameters array $reservations}
 <div class="table-scroll" n:if="$reservations">
-	<table class="data-table">
+	<table class="data-table data-table--cards">
 		<thead>
 			<tr>
 				<th scope="col">Č.</th>
@@ -14,15 +14,18 @@
 		</thead>
 		<tbody>
 			<tr n:foreach="$reservations as $r">
-				<td><a n:href="Reservation:detail $r['id']">{$r['id']}</a></td>
-				<td>
+				<td data-label="Číslo"><a n:href="Reservation:detail $r['id']">{$r['id']}</a></td>
+				<td data-label="Jméno">
 					<a n:href="Reservation:detail $r['id']">{$r['name'] ?? '–'}</a><br>
 					<span class="muted">{$r['email']}</span>
 				</td>
-				<td>{$r['seat_labels'] ?? '–'}</td>
-				<td class="num">{$r['standing_tickets']}</td>
-				<td class="num">{(int) $r['total_price']|price}</td>
-				<td><span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span></td>
+				<td data-label="Místa">{$r['seat_labels'] ?? '–'}</td>
+				<td data-label="Bez místenky" class="num">{$r['standing_tickets']}</td>
+				<td data-label="Cena" class="num">{(int) $r['total_price']|price}</td>
+				<td data-label="Stav">
+					<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
+					<span n:if="$r['is_test']" class="badge">test</span>
+				</td>
 			</tr>
 		</tbody>
 	</table>

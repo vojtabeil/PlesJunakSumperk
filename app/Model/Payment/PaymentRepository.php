@@ -20,13 +20,35 @@ final class PaymentRepository
 	}
 
 
+	/** Filters of the Payments page: key => [Czech label, SQL condition]. */
+	public const Filters = [
+		'' => ['Vše', '1 = 1'],
+		'problems' => ['K vyřešení', "match_status IN ('unknown_vs', 'no_vs', 'underpaid', 'overpaid')"],
+		'matched' => ['Spárované s rezervací', 'reservation_id IS NOT NULL'],
+		'foreign' => ['Nesouvisí s plesem', "match_status = 'foreign'"],
+		'other' => ['Odchozí a ignorované', "match_status IN ('outgoing', 'ignored')"],
+	];
+
+
 	/** @return list<array<string, mixed>> newest first */
-	public function search(bool $problemsOnly = false): array
+	public function search(string $filter = ''): array
 	{
-		$where = $problemsOnly
-			? "WHERE match_status IN ('" . implode("', '", self::ProblemStatuses) . "')"
-			: '';
-		return $this->db->query("SELECT * FROM bank_transactions $where ORDER BY booked_on DESC, id DESC LIMIT 500")->fetchAll();
+		$condition = self::Filters[$filter][1] ?? self::Filters[''][1];
+		return $this->db->query(
+			"SELECT * FROM bank_transactions WHERE $condition ORDER BY booked_on DESC, id DESC LIMIT 500",
+		)->fetchAll();
+	}
+
+
+	/** @return array<string, array{count: int, amount: float}> filter => number and sum of payments */
+	public function summary(): array
+	{
+		$result = [];
+		foreach (self::Filters as $key => [, $condition]) {
+			$row = $this->db->query("SELECT COUNT(*) AS c, COALESCE(SUM(amount), 0) AS a FROM bank_transactions WHERE $condition")->fetch();
+			$result[$key] = ['count' => (int) $row['c'], 'amount' => (float) $row['a']];
+		}
+		return $result;
 	}
 
 
@@ -36,30 +58,6 @@ final class PaymentRepository
 		$stmt = $this->db->prepare('SELECT * FROM bank_transactions WHERE reservation_id = ? ORDER BY id');
 		$stmt->execute([$reservationId]);
 		return $stmt->fetchAll();
-	}
-
-
-	/**
-	 * Payments that can still be assigned by hand (id => label for a select box).
-	 * @return array<int, string>
-	 */
-	public function unassigned(): array
-	{
-		$rows = $this->db->query(
-			"SELECT id, booked_on, amount, variable_symbol, counter_name FROM bank_transactions
-			WHERE reservation_id IS NULL AND match_status IN ('unknown_vs', 'no_vs') ORDER BY id DESC",
-		)->fetchAll();
-		$options = [];
-		foreach ($rows as $row) {
-			$options[(int) $row['id']] = sprintf(
-				'%s · %s Kč · VS %s · %s',
-				date('j. n.', (int) strtotime((string) $row['booked_on'])),
-				number_format((float) $row['amount'], 0, ',', ' '),
-				$row['variable_symbol'] ?? '–',
-				$row['counter_name'] ?? '?',
-			);
-		}
-		return $options;
 	}
 
 

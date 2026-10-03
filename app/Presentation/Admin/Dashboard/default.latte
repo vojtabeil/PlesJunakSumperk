@@ -3,69 +3,115 @@
 {block title}Přehled{/block}
 
 {block content}
+{var $problems = $paymentProblems + array_sum($reservationProblems) + ($importOverdue ? 1 : 0)}
+
 <div class="page-head">
 	<h1>Přehled</h1>
-	<p n:class="'badge', $saleOpen ? 'badge--paid' : 'badge--cancelled'">
-		Prodej {$saleOpen ? 'je otevřený' : 'je uzavřený'}
-		· <a n:href="Settings:default">změnit</a>
+	<p class="status-line">
+		<span n:class="'badge', $saleOpen ? 'badge--paid' : 'badge--cancelled'">Prodej {$saleOpen ? 'otevřený' : 'uzavřený'}</span>
+		<span n:if="$testersOnly" class="badge badge--partially_paid">Web vidí jen testeři</span>
+		<a n:href="Settings:default">změnit</a>
 	</p>
 </div>
 
-<section n:class="'card', 'import-card', $importOverdue ? 'import-card--overdue'" aria-label="Platby z banky">
-	<div>
-		<strong>Platby z banky</strong> –
-		naposledy načteno {if $lastImportAt}{$lastImportAt|date:'j. n. Y H:i'}{else}zatím nikdy{/if}.
-		<span n:if="$importOverdue">Rezervace čekají na platbu a platby se déle než den nenačítaly – načtěte je prosím.</span>
-		<span n:if="!$importOverdue" class="muted">Bez automatického načítání (cron) je načtěte tlačítkem.</span>
-	</div>
-	{control importForm}
-</section>
-
-<section class="stats" aria-label="Souhrn">
-	<div class="stat">
-		<span class="stat-value">{$stats['reserved']} / {$stats['total']}</span>
-		<span class="stat-label">rezervovaných míst</span>
-		<span class="stat-note">volných {$stats['free']}{if $stats['held']}, právě vybíraných {$stats['held']}{/if}</span>
-	</div>
-	<div class="stat">
-		<span class="stat-value">{$stats['standing']} / {$stats['standing_capacity']}</span>
-		<span class="stat-label">lístků bez místenky</span>
-	</div>
-	<div class="stat">
-		<span class="stat-value">{$stats['paid']}</span>
-		<span class="stat-label">zaplacených rezervací</span>
-		<span class="stat-note">{$stats['paid_amount']|price}</span>
-	</div>
-	<div class="stat stat--warning">
-		<span class="stat-value">{$stats['confirmed']}</span>
-		<span class="stat-label">čeká na platbu</span>
-		<span class="stat-note">{$stats['unpaid_amount']|price}{if $stats['partially_paid']}, z toho částečně zaplaceno {$stats['partially_paid']}{/if}</span>
-	</div>
-	<a n:if="$paymentProblems" class="stat stat--problem" n:href="Payment:default, problems: true">
-		<span class="stat-value">{$paymentProblems}</span>
-		<span class="stat-label">plateb k vyřešení</span>
-		<span class="stat-note">neznámý VS, nedoplatek, přeplatek</span>
-	</a>
-</section>
-
-<div class="columns">
-	<section class="card">
-		<h2>Poslední rezervace</h2>
-		{include '../Reservation/table.latte', reservations: $recentReservations}
-		<p><a n:href="Reservation:default">Všechny rezervace →</a></p>
+<div class="overview">
+	{* 1. Chart of all seats by status *}
+	<section class="card chart-card" aria-labelledby="chart-title">
+		<h2 id="chart-title">Místa v sále</h2>
+		<div class="chart">
+			<svg class="pie" viewBox="-1 -1 2 2" role="img"
+				aria-label="Graf stavu míst: {foreach $slices as $s}{$s['key']|seatStatus} {$s['value']}{sep}, {/sep}{/foreach}">
+				{foreach $slices as $s}
+					<circle n:if="$s['path'] === null" r="1" class="slice slice--{$s['key']}"/>
+					<path n:if="$s['path'] !== null" d="{$s['path']}" class="slice slice--{$s['key']}"/>
+				{/foreach}
+			</svg>
+			<ul class="legend-list">
+				<li n:foreach="$seatCounts as $status => $count">
+					<a n:href="this, seats: $status" n:class="$seatFilter === $status ? 'is-current'">
+						<span class="swatch slice--{$status}"></span>
+						{$status|seatStatus}
+						<strong>{$count}</strong>
+						<span class="muted">({$seatTotal ? round($count / $seatTotal * 100) : 0} %)</span>
+					</a>
+				</li>
+			</ul>
+		</div>
+		<p class="muted">
+			Lístky bez místenky: {$stats['standing']} z {$stats['standing_capacity']} ·
+			Zaplaceno {$stats['paid_amount']|price} · čeká na platbu {$stats['unpaid_amount']|price}
+		</p>
 	</section>
 
-	<section class="card">
-		<h2>Poslední změny</h2>
-		<ul class="activity" n:if="$activity">
-			<li n:foreach="$activity as $entry">
-				<time>{$entry['created_at']|date:'j. n. H:i'}</time>
-				{$entry['action']|eventLabel}
-				<a n:if="$entry['reservation_id']" n:href="Reservation:detail $entry['reservation_id']">č. {$entry['reservation_id']}</a>
-				<span class="muted">– {$entry['admin_name'] ?? 'systém'}</span>
+	{* What needs attention *}
+	<section class="card todo-card" aria-labelledby="todo-title">
+		<h2 id="todo-title">Co je potřeba udělat</h2>
+		<ul class="todo">
+			<li n:if="$paymentProblems">
+				<a n:href="Payment:default, filter: problems">Platby k vyřešení: <strong>{$paymentProblems}</strong></a>
+				<span class="muted">bez VS, neznámý VS, nedoplatek nebo přeplatek</span>
 			</li>
+			<li n:if="$reservationProblems['email']">
+				<a n:href="Reservation:default, problem: email">Neodeslané potvrzovací e-maily: <strong>{$reservationProblems['email']}</strong></a>
+			</li>
+			<li n:if="$reservationProblems['overdue']">
+				<a n:href="Reservation:default, problem: overdue">Nezaplacené déle než {=\App\Model\Reservation\ReservationAdmin::OverdueDays} dní: <strong>{$reservationProblems['overdue']}</strong></a>
+			</li>
+			<li n:if="$importOverdue">Platby se déle než den nenačítaly a rezervace čekají na platbu.</li>
 		</ul>
-		<p n:if="!$activity" class="muted">Zatím žádné změny.</p>
+		<p n:if="!$problems" class="all-good">Vše v pořádku.</p>
+		<div class="import-line">
+			<span class="muted">Platby z banky naposledy načteny {if $lastImportAt}{$lastImportAt|date:'j. n. H:i'}{else}zatím nikdy{/if}.</span>
+			{control importForm}
+		</div>
 	</section>
 </div>
+
+{* 2. Table of all seats *}
+<section class="card" aria-labelledby="seats-title">
+	<div class="page-head">
+		<h2 id="seats-title">Všechna místa{if $seatFilter} – {$seatFilter|seatStatus}{/if}</h2>
+		<form class="filter-form" method="get" action="{link this}">
+			<input type="hidden" name="seats" value="{$seatFilter}">
+			<label>Hledat <input type="search" name="seatSearch" value="{$presenter->seatSearch}" placeholder="místo (3/5) nebo jméno"></label>
+			<button class="button">Hledat</button>
+			<a n:if="$seatFilter || $presenter->seatSearch" n:href="this, seats: '', seatSearch: ''">zrušit filtr</a>
+		</form>
+	</div>
+	<div class="table-scroll">
+		<table class="data-table data-table--cards">
+			<thead>
+				<tr><th scope="col">Místo</th><th scope="col">Stav</th><th scope="col">Rezervace</th><th scope="col">Poslední změna</th></tr>
+			</thead>
+			<tbody>
+				<tr n:foreach="$seatRows as $seat">
+					<td data-label="Místo"><strong>{$seat['label']}</strong> <span class="muted">stůl {$seat['table']}</span></td>
+					<td data-label="Stav"><span class="badge badge--seat-{$seat['status']}">{$seat['status']|seatStatus}</span></td>
+					<td data-label="Rezervace">
+						{if $seat['reservation_id']}
+							<a n:href="Reservation:detail $seat['reservation_id']">č. {$seat['reservation_id']} {$seat['name']}</a>
+							<span n:if="$seat['is_test']" class="badge">test</span>
+						{else}–{/if}
+					</td>
+					<td data-label="Poslední změna">
+						{$seat['changed_at']|date:'j. n. Y H:i'}
+						<a n:href="Log:default, seat: $seat['label']" class="muted">historie</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<p n:if="!$seatRows" class="muted">Žádná místa neodpovídají filtru.</p>
+</section>
+
+{* 3. Other sections *}
+<nav class="tiles" aria-label="Další části administrace">
+	<a class="tile" n:href="Reservation:default"><strong>Rezervace</strong><span>seznam, hledání, detail a zásahy</span></a>
+	<a class="tile" n:href="Customer:default"><strong>Zákazníci</strong><span>lidé podle e-mailu a jejich rezervace</span></a>
+	<a class="tile" n:href="Payment:default"><strong>Platby z Fio</strong><span>všechny platby, spárované i k vyřešení</span></a>
+	<a class="tile" n:href="Log:default"><strong>Log</strong><span>všechny události, filtr podle data, místa a typu</span></a>
+	<a class="tile" n:href="Export:guests"><strong>Seznam hostů</strong><span>CSV pro vstup (Excel)</span></a>
+	<a class="tile" n:href="User:default"><strong>Administrátoři</strong><span>účty organizátorů</span></a>
+	<a class="tile" n:href="Settings:default"><strong>Nastavení</strong><span>akce, ceny, prodej, testovací přístup</span></a>
+</nav>
 {/block}

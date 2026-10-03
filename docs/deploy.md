@@ -70,7 +70,13 @@ no `/dev/*` pages, errors only in `var/log/`.
 3. Add the other organizers in **Administrátoři**.
 4. In **Nastavení** fill in the event (date, venue, organizer), prices and limits, check the
    bank account, and open the sale.
-5. Make a test reservation and check that the confirmation e-mail arrives (incl. the QR code).
+5. The site starts in **tester mode**: visitors see "Připravujeme". Copy the tester link from
+   **Nastavení → Spuštění webu** and send it to the testers (it works for 30 days per browser;
+   "Vytvořit nový odkaz" invalidates it). Make a test reservation and check that the confirmation
+   e-mail arrives (incl. the QR code).
+6. Before the launch delete the test reservations (**Nastavení → Testovací rezervace**; their
+   seats become free and their bank payments are set aside as ignored - refund real ones by hand)
+   and switch the site to **Všichni - web je spuštěný**.
 
 ## 6. Fio API token (payments)
 

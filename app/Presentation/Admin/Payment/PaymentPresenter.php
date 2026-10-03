@@ -15,20 +15,23 @@ use App\Presentation\Admin\BasePresenter;
 use App\Presentation\Admin\ImportPaymentsForm;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Form;
+use Nette\Application\UI\Multiplier;
+use Nette\Forms\Controls\SubmitButton;
 use PDO;
 use Throwable;
 
 
 /**
- * Bank payments: import from the bank, overview, manual assignment of unmatched payments.
+ * All payments from the bank: import, filters, and resolving unmatched ones right in their row.
  * @property-read PaymentTemplate $template
  */
 final class PaymentPresenter extends BasePresenter
 {
 	use ImportPaymentsForm;
 
+	/** One of PaymentRepository::Filters. */
 	#[Persistent]
-	public bool $problems = false;
+	public string $filter = '';
 
 
 	public function __construct(
@@ -45,13 +48,16 @@ final class PaymentPresenter extends BasePresenter
 
 	public function renderDefault(): void
 	{
-		$this->template->problems = $this->problems;
-		$this->template->payments = $this->payments->search($this->problems);
-		$this->template->problemCount = $this->payments->problemCount();
-		$this->template->bankName = $this->bankSource->name();
-		$this->template->waitSeconds = $this->importer->secondsUntilNextImport();
-		$this->template->canRewind = $this->importer->canRewind();
-		$this->template->lastImportAt = $this->importer->lastImportAt();
+		$filter = isset(PaymentRepository::Filters[$this->filter]) ? $this->filter : '';
+		$t = $this->template;
+		$t->filter = $filter;
+		$t->filters = array_map(static fn(array $f): string => $f[0], PaymentRepository::Filters);
+		$t->summary = $this->payments->summary();
+		$t->payments = $this->payments->search($filter);
+		$t->bankName = $this->bankSource->name();
+		$t->waitSeconds = $this->importer->secondsUntilNextImport();
+		$t->canRewind = $this->importer->canRewind();
+		$t->lastImportAt = $this->importer->lastImportAt();
 	}
 
 
@@ -87,41 +93,36 @@ final class PaymentPresenter extends BasePresenter
 	}
 
 
-	protected function createComponentAssignForm(): Form
+	/** Small form in the row of an unmatched payment: assign it to a reservation, or mark it as not ours. */
+	/** @return Multiplier<Form> */
+	protected function createComponentResolve(): Multiplier
 	{
-		$form = $this->formFactory->create();
-		$form->addSelect('transaction', 'Platba', $this->payments->unassigned())
-			->setPrompt('– vyberte platbu –')
-			->setRequired('Vyberte platbu.');
-		$form->addInteger('reservation', 'Číslo rezervace')
-			->setRequired('Zadejte číslo rezervace.')
-			->addRule($form::Min, 'Zadejte číslo rezervace.', 1);
-		$form->addSubmit('assign', 'Přiřadit k rezervaci');
-		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
-			$this->inTransaction(function () use ($data): void {
-				$change = $this->matcher->assign((int) $data->transaction, (int) $data->reservation);
-				$this->notify($change);
-				$this->flashMessage("Platba je přiřazená k rezervaci č. {$change->reservationId}.", 'success');
-			});
-		};
-		return $form;
-	}
-
-
-	protected function createComponentIgnoreForm(): Form
-	{
-		$form = $this->formFactory->create();
-		$form->addSelect('transaction', 'Platba', $this->payments->unassigned())
-			->setPrompt('– vyberte platbu –')
-			->setRequired('Vyberte platbu.');
-		$form->addSubmit('ignore', 'Ignorovat (nepatří k plesu)');
-		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
-			$this->inTransaction(function () use ($data): void {
-				$this->matcher->ignore((int) $data->transaction);
-				$this->flashMessage('Platba je označená jako ignorovaná.', 'success');
-			});
-		};
-		return $form;
+		return new Multiplier(function (string $transactionId): Form {
+			$form = $this->formFactory->create();
+			$form->addInteger('reservation', 'Číslo rezervace')
+				->setHtmlAttribute('placeholder', 'č. rezervace')
+				->addCondition($form::Filled)
+				->addRule($form::Min, 'Zadejte číslo rezervace.', 1);
+			$assign = $form->addSubmit('assign', 'Přiřadit');
+			$form->addSubmit('ignore', 'Nepatří k plesu')->setValidationScope([]);
+			$form->onSuccess[] = function (Form $form, \stdClass $data) use ($transactionId, $assign): void {
+				$id = (int) $transactionId;
+				$this->inTransaction(function () use ($id, $data, $form, $assign): void {
+					if ($form->isSubmitted() === $assign) {
+						if (!$data->reservation) {
+							throw new PaymentError('Zadejte číslo rezervace.');
+						}
+						$change = $this->matcher->assign($id, (int) $data->reservation);
+						$this->notify($change);
+						$this->flashMessage("Platba je přiřazená k rezervaci č. {$change->reservationId}.", 'success');
+					} else {
+						$this->matcher->ignore($id);
+						$this->flashMessage('Platba je označená jako nesouvisející s plesem.', 'success');
+					}
+				});
+			};
+			return $form;
+		});
 	}
 
 

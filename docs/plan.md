@@ -55,7 +55,7 @@ app/
     Payment/Fio/      FioApiSource, FioResponseParser
     Payment/Mock/     MockBankSource, MockBankRepository
     Mail/             MailSender (interface), SmtpMailSender, MailTemplates (Latte)
-    Admin/            AdminUserRepository, Authenticator, AuditLog
+    Admin/            AdminUserRepository, Authenticator (event log in Log/)
   Presentation/
     Front/            Home (reservation page), Done, Api (JSON for the seat picker)
     Admin/            Sign, Dashboard, Reservation, Payment, Settings, Export

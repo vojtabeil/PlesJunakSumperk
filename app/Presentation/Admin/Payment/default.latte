@@ -4,58 +4,62 @@
 
 {block content}
 <div class="page-head">
-	<h1>Platby</h1>
+	<h1>Platby z banky</h1>
 	<div class="inline-actions">
 		{control importForm}
-		<a n:if="$bankName === 'mock'" class="button" href="{plink :Dev:Bank:default}">Zkušební banka</a>
+		<a n:if="$bankName === 'mock'" class="button button--secondary" href="{plink :Dev:Bank:default}">Zkušební banka</a>
 	</div>
 </div>
 <p class="muted">
-	Zdroj: {$bankName === 'fio' ? 'Fio banka (API)' : 'zkušební banka (jen pro testování)'}.
-	Naposledy načteno: {if $lastImportAt}{$lastImportAt|date:'j. n. Y H:i'}{else}zatím nikdy{/if}.
-	{if $waitSeconds}Další načtení je možné za {$waitSeconds} s.{/if}
-	Pokud na hostingu neběží automatické načítání (cron), načtěte platby tlačítkem.</p>
+	Zdroj: {$bankName === 'fio' ? 'Fio banka' : 'zkušební banka (jen pro testování)'} ·
+	naposledy načteno {if $lastImportAt}{$lastImportAt|date:'j. n. Y H:i'}{else}zatím nikdy{/if}{if $waitSeconds} · další načtení za {$waitSeconds} s{/if}.
+	Bez automatického načítání (cron) načtěte platby tlačítkem.
+</p>
 
-<div class="columns" n:if="$problemCount">
-	<section class="card">
-		<h2>Přiřadit platbu ručně</h2>
-		<p class="muted">Pro platby bez variabilního symbolu nebo s neznámým číslem rezervace.</p>
-		{control assignForm}
-	</section>
-	<section class="card">
-		<h2>Platba nepatří k plesu</h2>
-		{control ignoreForm}
-	</section>
-</div>
+<nav class="tabs" aria-label="Filtr plateb">
+	<a n:foreach="$filters as $key => $label" n:href="this, filter: $key" n:class="$filter === $key ? 'is-current'">
+		{$label} <span class="tab-count">{$summary[$key]['count']}</span>
+	</a>
+</nav>
 
 <section class="card">
-	<div class="page-head">
-		<h2>Pohyby na účtu</h2>
-		<p>
-			<a n:href="this, problems: false" n:class="!$problems ? 'is-current'">všechny</a> ·
-			<a n:href="this, problems: true" n:class="$problems ? 'is-current'">k vyřešení ({$problemCount})</a>
-		</p>
-	</div>
+	<p class="muted">
+		{$summary[$filter]['count']} plateb, celkem {number_format($summary[$filter]['amount'], 2, ',', ' ')} Kč
+		{if $filter === 'problems' && $summary['problems']['count']} – u každé platby zadejte číslo rezervace, nebo ji označte jako nesouvisející.{/if}
+	</p>
 	<div class="table-scroll" n:if="$payments">
-		<table class="data-table">
+		<table class="data-table data-table--cards">
 			<thead>
 				<tr>
 					<th scope="col">Datum</th>
 					<th scope="col" class="num">Částka</th>
-					<th scope="col">VS</th>
-					<th scope="col">Plátce / zpráva</th>
-					<th scope="col">Rezervace</th>
+					<th scope="col">Plátce / VS / zpráva</th>
 					<th scope="col">Stav</th>
+					<th scope="col">Rezervace</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr n:foreach="$payments as $p">
-					<td>{$p['booked_on']|date:'j. n. Y'}</td>
-					<td class="num">{number_format((float) $p['amount'], 2, ',', ' ')} Kč</td>
-					<td>{$p['variable_symbol'] ?? '–'}</td>
-					<td>{$p['counter_name'] ?? '–'}<br><span class="muted">{$p['counter_account']} {$p['message']}</span></td>
-					<td>{if $p['reservation_id']}<a n:href="Reservation:detail $p['reservation_id']">č. {$p['reservation_id']}</a>{else}–{/if}</td>
-					<td><span n:class="'badge', in_array($p['match_status'], \App\Model\Payment\PaymentRepository::ProblemStatuses, true) ? 'badge--problem' : ($p['match_status'] === 'matched' ? 'badge--paid' : '')">{$p['match_status']|matchLabel}</span></td>
+					<td data-label="Datum" class="nowrap">{$p['booked_on']|date:'j. n. Y'}</td>
+					<td data-label="Částka" class="num nowrap"><strong>{number_format((float) $p['amount'], 2, ',', ' ')} Kč</strong></td>
+					<td data-label="Plátce">
+						{$p['counter_name'] ?? '–'}<br>
+						<span class="muted">VS {$p['variable_symbol'] ?? '–'}{if $p['message']} · {$p['message']}{/if}</span>
+					</td>
+					<td data-label="Stav">
+						<span n:class="'badge', in_array($p['match_status'], \App\Model\Payment\PaymentRepository::ProblemStatuses, true) ? 'badge--problem' : ($p['reservation_id'] ? 'badge--paid' : '')">{$p['match_status']|matchLabel}</span>
+					</td>
+					<td data-label="Rezervace">
+						{if $p['reservation_id']}
+							<a n:href="Reservation:detail $p['reservation_id']">č. {$p['reservation_id']}</a>
+						{elseif in_array($p['match_status'], ['unknown_vs', 'no_vs'], true)}
+							<form n:name="'resolve-' . $p['id']" class="inline-form">
+								<input n:name="reservation" size="6">
+								<button n:name="assign" class="button">Přiřadit</button>
+								<button n:name="ignore" class="link-button">nepatří k plesu</button>
+							</form>
+						{else}–{/if}
+					</td>
 				</tr>
 			</tbody>
 		</table>

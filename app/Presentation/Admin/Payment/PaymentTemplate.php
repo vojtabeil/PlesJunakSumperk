@@ -12,10 +12,13 @@ final class PaymentTemplate extends BaseTemplate
 	/** @var list<array<string, mixed>> */
 	public array $payments;
 
-	public int $problemCount;
+	public string $filter;
 
-	/** Only payments to resolve are listed. */
-	public bool $problems;
+	/** @var array<string, string> */
+	public array $filters;
+
+	/** @var array<string, array{count: int, amount: float}> */
+	public array $summary;
 
 	public string $bankName;
 

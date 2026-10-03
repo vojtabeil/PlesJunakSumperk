@@ -12,6 +12,8 @@ final class ReservationTemplate extends BaseTemplate
 	/** @var list<array<string, mixed>> */
 	public array $reservations;
 
+	public ?string $problemLabel;
+
 	/** @var array<string, mixed> */
 	public array $reservation;
 

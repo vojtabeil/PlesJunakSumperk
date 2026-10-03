@@ -9,6 +9,7 @@ use App\Model\Mail\ReservationMailer;
 use App\Model\Reservation\ReservationError;
 use App\Model\Reservation\ReservationService;
 use App\Model\Reservation\ReservationSession;
+use App\Presentation\Front\TesterGate;
 use Nette\Application\Responses\JsonResponse;
 use Nette\Application\UI\Presenter;
 use Nette\Http\IResponse;
@@ -35,6 +36,7 @@ final class ApiPresenter extends Presenter
 		private readonly ReservationSession $reservationSession,
 		private readonly ReservationMailer $mailer,
 		private readonly ILogger $logger,
+		private readonly TesterGate $testerGate,
 		Actor $actor,
 	) {
 		parent::__construct();
@@ -45,6 +47,9 @@ final class ApiPresenter extends Presenter
 	public function actionDefault(string $op): void
 	{
 		$this->getHttpResponse()->setHeader('Cache-Control', 'no-store');
+		if (!$this->testerGate->allows()) {
+			$this->respond(IResponse::S503_ServiceUnavailable, ['ok' => false, 'error' => 'Rezervace zatím nejsou spuštěné.']);
+		}
 		$owner = $this->reservationSession->owner();
 
 		try {

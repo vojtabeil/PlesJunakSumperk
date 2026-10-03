@@ -167,8 +167,9 @@ final class ReservationService
 					->execute([$email, $current['id']]);
 				return;
 			}
-			$this->db->prepare('INSERT INTO reservations (email, session_id) VALUES (?, ?)')
-				->execute([$email, $owner]);
+			// Before the site is public every reservation comes from a tester.
+			$this->db->prepare('INSERT INTO reservations (email, session_id, is_test) VALUES (?, ?, ?)')
+				->execute([$email, $owner, $this->settings->isPublic() ? 0 : 1]);
 		});
 	}
 

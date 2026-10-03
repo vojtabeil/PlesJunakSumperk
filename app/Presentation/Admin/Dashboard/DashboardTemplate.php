@@ -14,13 +14,25 @@ final class DashboardTemplate extends BaseTemplate
 
 	public bool $saleOpen;
 
-	/** @var list<array<string, mixed>> */
-	public array $recentReservations;
+	public bool $testersOnly;
+
+	/** @var array<string, int> */
+	public array $seatCounts;
+
+	/** @var list<array{key: string, value: int, percent: float, path: ?string}> */
+	public array $slices;
+
+	public int $seatTotal;
 
 	/** @var list<array<string, mixed>> */
-	public array $activity;
+	public array $seatRows;
+
+	public ?string $seatFilter;
 
 	public int $paymentProblems;
+
+	/** @var array<string, int> */
+	public array $reservationProblems;
 
 	public ?\DateTimeImmutable $lastImportAt;
 

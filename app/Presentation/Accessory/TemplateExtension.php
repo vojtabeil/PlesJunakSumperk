@@ -6,6 +6,7 @@ namespace App\Presentation\Accessory;
 
 use App\Model\Log\EventFormatter;
 use App\Model\Log\EventTypes;
+use App\Model\Reservation\SeatOverview;
 use Latte\Extension;
 
 
@@ -25,6 +26,7 @@ final class TemplateExtension extends Extension
 			'seatLabel' => self::formatSeatLabel(...),
 			'statusLabel' => self::formatStatus(...),
 			'matchLabel' => self::formatMatchStatus(...),
+			'seatStatus' => static fn(string $status): string => SeatOverview::Statuses[$status] ?? $status,
 			'eventLabel' => EventTypes::label(...),
 			'eventDetails' => EventFormatter::details(...),
 			'actorLabel' => static fn(string $type): string => EventTypes::Actors[$type] ?? $type,

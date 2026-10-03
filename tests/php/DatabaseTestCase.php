@@ -47,6 +47,7 @@ abstract class DatabaseTestCase extends TestCase
 			'standing_capacity' => '5',
 			'bank_account' => '2501895120/2010',
 			'payment_vs_prefix' => '2026',
+			'public_access' => 'public',
 		]);
 		$this->db->exec("INSERT INTO hall_tables (id, label, x, y, width, height) VALUES (1, '1', 0, 0, 160, 40), (2, '2', 0, 100, 160, 40)");
 		$this->db->exec(

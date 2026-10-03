@@ -8,20 +8,35 @@ use App\Model\Payment\PaymentImporter;
 use App\Model\Payment\PaymentRepository;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
+use App\Model\Reservation\SeatOverview;
 use App\Model\Reservation\Settings;
+use App\Presentation\Accessory\PieChart;
 use App\Presentation\Admin\BasePresenter;
 use App\Presentation\Admin\ImportPaymentsForm;
+use Nette\Application\Attributes\Persistent;
 
 
-/** @property-read DashboardTemplate $template */
+/**
+ * Start page of the administration: what needs attention, chart of all seats,
+ * table of all seats, links to the other sections.
+ * @property-read DashboardTemplate $template
+ */
 final class DashboardPresenter extends BasePresenter
 {
 	use ImportPaymentsForm;
+
+	/** Seat table filter: one of SeatOverview::Statuses, '' = all. */
+	#[Persistent]
+	public string $seats = '';
+
+	#[Persistent]
+	public string $seatSearch = '';
 
 
 	public function __construct(
 		private readonly ReservationAdmin $reservationAdmin,
 		private readonly ReservationService $reservations,
+		private readonly SeatOverview $seatOverview,
 		private readonly Settings $settings,
 		private readonly PaymentRepository $payments,
 		private readonly PaymentImporter $importer,
@@ -34,15 +49,23 @@ final class DashboardPresenter extends BasePresenter
 	{
 		$this->reservations->releaseExpiredHolds();
 		$stats = $this->reservationAdmin->stats();
-		$this->template->stats = $stats;
-		$this->template->saleOpen = $this->settings->isSaleOpen();
-		$this->template->recentReservations = array_slice($this->reservationAdmin->search(), 0, 8);
-		$this->template->activity = $this->events->recent(10);
-		$this->template->paymentProblems = $this->payments->problemCount();
-		$this->template->lastImportAt = $this->importer->lastImportAt();
+		$counts = $this->seatOverview->counts();
+		$filter = isset(SeatOverview::Statuses[$this->seats]) ? $this->seats : null;
+
+		$t = $this->template;
+		$t->stats = $stats;
+		$t->saleOpen = $this->settings->isSaleOpen();
+		$t->testersOnly = $this->settings->get('public_access') === 'testers';
+		$t->seatCounts = $counts;
+		$t->slices = PieChart::slices($counts);
+		$t->seatTotal = array_sum($counts);
+		$t->seatRows = $this->seatOverview->seats($filter, $this->seatSearch);
+		$t->seatFilter = $filter;
+		$t->paymentProblems = $this->payments->problemCount();
+		$t->reservationProblems = $this->reservationAdmin->problemCounts();
+		$t->lastImportAt = $this->importer->lastImportAt();
 		// Without a cron job someone has to press the button; remind when payments are waiting.
-		$this->template->importOverdue = $this->importer->isStale()
-			&& ($stats['confirmed'] + $stats['partially_paid']) > 0;
+		$t->importOverdue = $this->importer->isStale() && ($stats['confirmed'] + $stats['partially_paid']) > 0;
 	}
 
 

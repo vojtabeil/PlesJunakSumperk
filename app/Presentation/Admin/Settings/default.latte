@@ -4,7 +4,33 @@
 
 {block content}
 <h1>Nastavení</h1>
+
+<section class="card card--form" aria-labelledby="access-title">
+	<h2 id="access-title">Spuštění webu</h2>
+	{control accessForm}
+
+	<h3>Odkaz pro testery</h3>
+	<p class="muted">Kdo ho otevře, uvidí web 30 dní i před spuštěním. Rezervace testerů jsou označené jako testovací
+		a nejsou v seznamu hostů.</p>
+	<p class="copy-line">
+		<input type="text" readonly value="{$testerLink}" aria-label="Odkaz pro testery" onclick="this.select()">
+	</p>
+	{control regenerateLinkForm}
+
+	<h3>Testovací rezervace</h3>
+	{if $testCount}
+		<p>Testovacích rezervací: <strong>{$testCount}</strong> –
+			<a n:href="Reservation:default, status: '', q: '', problem: ''">najdete je v seznamu rezervací</a> (štítek „test“).
+			Před spuštěním webu je smažte.</p>
+		<div class="danger-zone">{control deleteTestsForm}</div>
+	{else}
+		<p class="muted">Žádné testovací rezervace.</p>
+	{/if}
+	<p n:if="$isPublic && $testCount" class="error-text">Web už je spuštěný, ale testovací rezervace ještě drží místa.</p>
+</section>
+
 <section class="card card--form">
+	<h2>Akce, prodej a platby</h2>
 	{control settingsForm}
 </section>
 {/block}

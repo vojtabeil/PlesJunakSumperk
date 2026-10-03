@@ -12,18 +12,29 @@
 <body>
 <header class="admin-header">
 	<a class="admin-brand" n:href="Dashboard:default">Administrace plesu</a>
-	<nav n:if="$user->isLoggedIn()" class="admin-nav" aria-label="Hlavní menu">
-		<a n:href="Dashboard:default" n:class="$presenter->isLinkCurrent('Dashboard:*') ? 'is-current'">Přehled</a>
-		<a n:href="Reservation:default" n:class="$presenter->isLinkCurrent('Reservation:*') ? 'is-current'">Rezervace</a>
-		<a n:href="Payment:default" n:class="$presenter->isLinkCurrent('Payment:*') ? 'is-current'">Platby</a>
-		<a n:href="Settings:default" n:class="$presenter->isLinkCurrent('Settings:*') ? 'is-current'">Nastavení</a>
-		<a n:href="User:default" n:class="$presenter->isLinkCurrent('User:*') ? 'is-current'">Administrátoři</a>
-		<a n:href="Export:guests">Export hostů (CSV)</a>
-	</nav>
-	<div n:if="$user->isLoggedIn()" class="admin-user">
-		<a n:href="Account:default">{$adminName}</a>
-		<a n:href="Sign:out">Odhlásit</a>
-	</div>
+	{if $user->isLoggedIn()}
+		<nav class="admin-nav" aria-label="Hlavní menu">
+			<a n:href="Dashboard:default" n:class="$presenter->isLinkCurrent('Dashboard:*') ? 'is-current'">Přehled</a>
+			<a n:href="Reservation:default" n:class="$presenter->isLinkCurrent('Reservation:*') ? 'is-current'">Rezervace</a>
+			<a n:href="Customer:default" n:class="$presenter->isLinkCurrent('Customer:*') ? 'is-current'">Zákazníci</a>
+			<a n:href="Payment:default" n:class="$presenter->isLinkCurrent('Payment:*') ? 'is-current'">Platby</a>
+			<a n:href="Log:default" n:class="$presenter->isLinkCurrent('Log:*') ? 'is-current'">Log</a>
+		</nav>
+		<form class="admin-search" method="get" action="{plink Search:default}" role="search">
+			<label for="admin-search" class="visually-hidden">Hledat</label>
+			<input id="admin-search" type="search" name="q" placeholder="Hledat: jméno, e-mail, č. rezervace, VS, místo 3/5">
+		</form>
+		<details class="admin-user">
+			<summary>{$adminName}</summary>
+			<div class="admin-user-menu">
+				<a n:href="Settings:default">Nastavení</a>
+				<a n:href="User:default">Administrátoři</a>
+				<a n:href="Export:guests">Seznam hostů (CSV)</a>
+				<a n:href="Account:default">Můj účet</a>
+				<a n:href="Sign:out">Odhlásit</a>
+			</div>
+		</details>
+	{/if}
 </header>
 
 <main class="admin-main">
