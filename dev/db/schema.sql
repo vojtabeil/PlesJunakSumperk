@@ -1,10 +1,11 @@
 -- Database schema (greenfield project: edit this file directly, then run init-db.cmd).
 -- Based on the reconstruction in docs/legacy-backend.md. Must work on MariaDB and MySQL 8.
 
--- Key/value configuration (event info, prices, limits, sale switch).
+-- Key/value configuration (event info, prices, limits, stage of the site, pages in HTML).
+-- TEXT: the pages for visitors who cannot buy may be long (up to 20000 characters).
 CREATE TABLE settings (
-    name  VARCHAR(64)   NOT NULL PRIMARY KEY,
-    value VARCHAR(1000) NOT NULL
+    name  VARCHAR(64) NOT NULL PRIMARY KEY,
+    value TEXT        NOT NULL
 ) ENGINE=InnoDB;
 
 -- Reservations. One e-mail may have several (e.g. tickets bought for different groups).
@@ -29,7 +30,8 @@ CREATE TABLE reservations (
     note             VARCHAR(1000) NULL,
     -- Stage of the site when the reservation was started: test (tester link), vip (VIP link), public.
     channel          ENUM('test', 'vip', 'public') NOT NULL DEFAULT 'public',
-    KEY ix_reservations_email (email),
+    -- The draft of a browser, looked up on every API call. (No index on email: it is only
+    -- searched with LIKE '%...%' in the administration, and the table stays small.)
     KEY ix_reservations_session (session_id)
 ) ENGINE=InnoDB;
 
@@ -55,8 +57,12 @@ CREATE TABLE seats (
     reservation_id INT UNSIGNED NULL,
     booked_at      DATETIME NULL,
     updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    -- Seat labels ("3/5") are unique; the admin search and the log filter look seats up by label.
+    UNIQUE KEY uq_seats_label (label),
+    -- Expired holds (every API call).
     KEY ix_seats_state (state, booked_at),
-    KEY ix_seats_reservation (reservation_id),
+    -- Seats of a reservation, and its held seats (reservation_id = ? AND state = 'book').
+    KEY ix_seats_reservation (reservation_id, state),
     CONSTRAINT fk_seats_table FOREIGN KEY (table_id) REFERENCES hall_tables (id),
     CONSTRAINT fk_seats_reservation FOREIGN KEY (reservation_id)
         REFERENCES reservations (id) ON DELETE SET NULL
@@ -88,8 +94,10 @@ CREATE TABLE event_log (
     action         VARCHAR(64)  NOT NULL,
     reservation_id INT UNSIGNED NULL,
     details        VARCHAR(2000) NULL,
+    -- The log page is ordered by id (= time); these serve its filters.
     KEY ix_event_log_created (created_at),
-    KEY ix_event_log_action (action),
+    KEY ix_event_log_action (action, created_at),
+    KEY ix_event_log_actor (actor_type),
     KEY ix_event_log_reservation (reservation_id),
     CONSTRAINT fk_event_log_admin FOREIGN KEY (admin_user_id) REFERENCES admin_users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
@@ -121,7 +129,12 @@ CREATE TABLE bank_transactions (
     reservation_id  INT UNSIGNED NULL,
     match_status    ENUM('matched', 'underpaid', 'overpaid', 'unknown_vs', 'no_vs', 'foreign', 'outgoing', 'ignored') NOT NULL,
     UNIQUE KEY uq_bank_transactions_external (source, external_id),
-    KEY ix_bank_transactions_reservation (reservation_id),
+    -- Payments of a reservation (matching sums by status).
+    KEY ix_bank_transactions_reservation (reservation_id, match_status),
+    -- The shared scout account brings many unrelated movements: the Payments page filters by
+    -- status and orders by date, the dashboard and cron count problems.
+    KEY ix_bank_transactions_status (match_status, booked_on),
+    KEY ix_bank_transactions_booked (booked_on),
     CONSTRAINT fk_bank_transactions_reservation FOREIGN KEY (reservation_id) REFERENCES reservations (id)
 ) ENGINE=InnoDB;
 

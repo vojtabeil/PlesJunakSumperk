@@ -104,6 +104,16 @@ final class ReservationAdminTest extends DatabaseTestCase
 	}
 
 
+	public function testLongPageIsStoredWhole(): void
+	{
+		$html = '<p>' . str_repeat('Připravujeme ples. ', 1000) . '</p>'; // ~19000 characters
+		$this->settings()->save(['page_testing' => $html]);
+
+		self::assertSame($html, $this->settings()->get('page_testing'));
+		self::assertStringNotContainsString('Připravujeme', (string) $this->db->query('SELECT details FROM event_log')->fetchColumn(), 'Pages are not copied into the log');
+	}
+
+
 	public function testGuestListCsvIsExcelFriendlyAndSafe(): void
 	{
 		$id = $this->confirmed('alice@example.com', [101], name: '=HYPERLINK("x")');
