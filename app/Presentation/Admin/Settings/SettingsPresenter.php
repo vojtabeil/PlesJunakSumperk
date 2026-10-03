@@ -35,6 +35,15 @@ final class SettingsPresenter extends BasePresenter
 		$this->addNumber($form, 'price_standing', 'Cena lístku bez místenky (Kč)', 0, 100000);
 		$this->addNumber($form, 'standing_capacity', 'Počet lístků bez místenky', 0, 10000);
 
+		$form->addGroup('Platby');
+		$form->addText('bank_account', 'Číslo účtu pro platby')
+			->setRequired('Zadejte číslo účtu.')
+			->addRule($form::Pattern, 'Zadejte číslo účtu ve tvaru 123456789/2010 (případně s předčíslím 19-123456789/0800).', '(\d{1,6}-)?\d{2,10}/\d{4}');
+		$form->addText('payment_vs_prefix', 'Předčíslí variabilního symbolu')
+			->setOption('description', 'VS = předčíslí + číslo rezervace na 4 místa (např. 2026 → 20260003). Platby s jiným VS se považují za nesouvisející s plesem. Neměňte během prodeje.')
+			->setRequired('Zadejte předčíslí.')
+			->addRule($form::Pattern, 'Předčíslí: 1–6 číslic, nesmí začínat nulou.', '[1-9]\d{0,5}');
+
 		$form->addGroup('Akce');
 		$form->addText('event_name', 'Název akce')->setRequired('Vyplňte název akce.')->setMaxLength(255);
 		$form->addTextArea('event_intro', 'Úvodní text')->setMaxLength(1000);

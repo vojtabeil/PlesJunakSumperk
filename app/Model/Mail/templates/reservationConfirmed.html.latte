@@ -32,7 +32,7 @@
 	<table style="border-collapse:collapse;margin:8px 0 16px">
 		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Částka</td><td style="padding:4px 0;font-weight:bold">{(int) $reservation['total_price']|price}</td></tr>
 		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Číslo účtu</td><td style="padding:4px 0;font-weight:bold">{$account}</td></tr>
-		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Variabilní symbol</td><td style="padding:4px 0;font-weight:bold">{$reservation['id']}</td></tr>
+		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Variabilní symbol</td><td style="padding:4px 0;font-weight:bold">{$reservation['variable_symbol']}</td></tr>
 	</table>
 	<p><img src="cid:{$qrCid}" alt="QR platba" width="220" height="220" style="display:block"></p>
 	<p style="color:#5c5c57;font-size:14px">Bez správného variabilního symbolu platbu nedokážeme přiřadit. Až platba dorazí, pošleme vám potvrzení.</p>

@@ -21,8 +21,8 @@ final class SetupGuard
 	/** Presenters that work without any administrator. */
 	private const Allowed = ['Admin:Setup', 'Error:Error4xx'];
 
-	/** Presenters answering JSON. */
-	private const Json = ['Front:Api'];
+	/** Presenters for machines (JSON API, cron) answer 503 instead of a redirect. */
+	private const Json = ['Front:Api', 'Front:Cron'];
 
 
 	public function __construct(

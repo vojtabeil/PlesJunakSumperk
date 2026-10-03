@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Model\Payment\Mock;
 
 use App\Model\Payment\BankTransaction;
-use App\Model\Payment\BankTransactionSource;
+use App\Model\Payment\RewindableSource;
+use DateTimeImmutable;
 use PDO;
 use Throwable;
 
 
 /** Reads the fake bank (mock_bank_transactions) the same way FioApiSource reads the Fio API. */
-final class MockBankSource implements BankTransactionSource
+final class MockBankSource implements RewindableSource
 {
 	public function __construct(
 		private readonly PDO $db,
@@ -28,6 +29,14 @@ final class MockBankSource implements BankTransactionSource
 	public function minIntervalSeconds(): int
 	{
 		return 0;
+	}
+
+
+	/** Like Fio "set-last-date": movements from that day on will be delivered again. */
+	public function rewind(DateTimeImmutable $since): void
+	{
+		$this->db->prepare('UPDATE mock_bank_transactions SET fetched = 0 WHERE booked_on >= ?')
+			->execute([$since->format('Y-m-d')]);
 	}
 
 

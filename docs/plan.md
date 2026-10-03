@@ -1,6 +1,6 @@
 # Implementation plan: Nette, admin, payments, frontend build
 
-Status: phases 1-4 and 3b (first run, administrator management) done; next is phase 5 (Fio API, deployment). Decisions were made in discussion with the
+Status: all phases (1-5, 3b) implemented. Not verified against the real Fio API (no token yet) nor on the Lebeda hosting; see docs/deploy.md. Decisions were made in discussion with the
 project owner on 2026-10-03; this file is the reference for the next steps.
 
 ## 1. Decisions

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Reservation;
 
+use App\Model\Payment\VariableSymbol;
 use PDO;
 use Throwable;
 
@@ -28,6 +29,7 @@ final class ReservationService
 	public function __construct(
 		private readonly PDO $db,
 		private readonly Settings $settings,
+		private readonly VariableSymbol $variableSymbol,
 	) {
 	}
 
@@ -125,6 +127,7 @@ final class ReservationService
 		$seats = $this->db->prepare('SELECT label FROM seats WHERE reservation_id = ? ORDER BY id');
 		$seats->execute([$id]);
 		$reservation['seat_labels'] = $seats->fetchAll(PDO::FETCH_COLUMN);
+		$reservation['variable_symbol'] = $this->variableSymbol->forReservation($id);
 		return $reservation;
 	}
 

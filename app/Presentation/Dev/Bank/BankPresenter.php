@@ -7,6 +7,7 @@ namespace App\Presentation\Dev\Bank;
 use App\Model\Payment\BankTransactionSource;
 use App\Model\Payment\Mock\MockBank;
 use App\Model\Payment\Mock\MockBankSource;
+use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationAdmin;
 use App\Presentation\Accessory\FormFactory;
 use Nette\Application\UI\Form;
@@ -31,6 +32,7 @@ final class BankPresenter extends Presenter
 		private readonly BankTransactionSource $source,
 		private readonly ReservationAdmin $reservationAdmin,
 		private readonly FormFactory $formFactory,
+		private readonly VariableSymbol $variableSymbol,
 	) {
 		parent::__construct();
 	}
@@ -84,6 +86,7 @@ final class BankPresenter extends Presenter
 		}
 		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
 			$reservation = $this->reservations[(int) $data->reservation];
+			$vs = $this->variableSymbol->forReservation((int) $reservation['id']);
 			$id = (int) $reservation['id'];
 			$remaining = ((int) $reservation['total_price'] - (int) $reservation['paid_amount']) * 100;
 			$name = (string) $reservation['name'];
@@ -91,11 +94,11 @@ final class BankPresenter extends Presenter
 			$scenario = $button instanceof \Nette\Forms\Controls\SubmitButton ? $button->getName() : 'exact';
 
 			match ($scenario) {
-				'less' => $this->bank->addPayment(max(100, intdiv($remaining, 2)), (string) $id, $name),
-				'more' => $this->bank->addPayment($remaining + 10000, (string) $id, $name),
-				'twice' => [$this->bank->addPayment($remaining, (string) $id, $name), $this->bank->addPayment($remaining, (string) $id, $name)],
+				'less' => $this->bank->addPayment(max(100, intdiv($remaining, 2)), $vs, $name),
+				'more' => $this->bank->addPayment($remaining + 10000, $vs, $name),
+				'twice' => [$this->bank->addPayment($remaining, $vs, $name), $this->bank->addPayment($remaining, $vs, $name)],
 				'noVs' => $this->bank->addPayment($remaining, null, $name, message: "Ples rezervace $id"),
-				default => $this->bank->addPayment($remaining, (string) $id, $name),
+				default => $this->bank->addPayment($remaining, $vs, $name),
 			};
 			$this->flashMessage('Platba je v bance. Načtěte ji v administraci tlačítkem „Načíst platby z banky“.');
 			$this->redirect('this');

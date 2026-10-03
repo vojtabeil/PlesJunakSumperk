@@ -30,7 +30,9 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | `app/Core/RouterFactory.php` | Routes: `/` reservation, `/hotovo/<id>` confirmation, `/api/<op>` JSON, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`. |
 | `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout + per-request DB check (`Authenticator` as `IdentityHandler`), `AuditLog`, `SetupConfig`. |
 | `app/Core/SetupGuard.php` | No administrator = site not configured: every presenter except the setup wizard is disabled (pages redirect, API 503). |
-| `app/Model/Payment/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, Fio in phase 5, chosen by `bank.driver`), `PaymentImporter` (fetch -> store -> match -> e-mail), `PaymentMatcher` (VS = reservation id, partial payments add up), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
+| `app/Model/Payment/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, `Fio/FioApiSource` in production, chosen by `bank.driver`; both `RewindableSource`), `PaymentImporter` (fetch -> store -> match -> e-mail; manual button or cron), `PaymentMatcher` (partial payments add up), `VariableSymbol` (VS = prefix + id, e.g. 20260003), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
+| `app/Model/Http/` | `HttpClient` interface + `CurlHttpClient` (tests use `tests/php/FakeHttpClient`; no test calls a real service). |
+| `app/Presentation/Front/Cron/` | `GET /cron/payments?key=` for a scheduler; 404 while `cron.key` is empty. |
 | `app/Model/Clock/` | `Clock` interface (`SystemClock`; `tests/php/FrozenClock` in tests). |
 | `app/Presentation/Admin/` | Administration: Setup (first-run wizard), Sign, Dashboard, Reservation, Payment, Settings, User (administrators), Export (CSV), Account (own password). |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
@@ -57,6 +59,7 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | `stop.cmd` | Stops everything (MariaDB is shut down cleanly). |
 | `build.cmd` | Type check + bundle + SCSS into `www/build`. |
 | `check.cmd` | `tsc`, `bun test`, PHPUnit, PHPStan (level 6). Run before every commit. |
+| `release.cmd` | Release package `dist/ples-<version>/` (+ ZIP): `web/` to upload (no dev tools, tests, sources, maps, dev dependencies or local config) and `install/` (SQL + `docs/deploy.md`). Verifies the package locally in production mode first. |
 | `init-db.cmd` | Recreates `ples` (schema + seed). `-Test` recreates `ples_test`, `-NoSeed`, `-Import dump.sql`, `-Clean` (wipe data dir). |
 | `php.cmd`, `composer.cmd`, `bun.cmd`, `tsc.cmd`, `sass.cmd` | Run the portable tools with the project environment. |
 
@@ -107,6 +110,14 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   before matching. Reservation statuses: draft -> confirmed -> partially_paid -> paid, or cancelled;
   "finished" = `ReservationService::FinishedStatuses`.
 - Dev-only pages (`/dev/*`) check `Debugger::$productionMode`; `/dev/bank` also requires the mock bank.
+  The release build leaves `app/Presentation/Dev` out and always runs in production mode (file `VERSION`).
+- The bank account is the scout group's main account: payments whose VS lacks the ball prefix
+  are `foreign` (not a problem, never matched). Keep the VS prefix stable during a sale.
+- Payments may be imported only manually (no cron on the hosting): keep the dashboard button and
+  the "last import" information working.
+- Secrets (Fio token, cron key, setup password) never appear in exceptions, logs or the audit log.
+- Database data files: `dev/db/schema.sql` + `defaults.sql` + `hall.sql` are also the production
+  installation; `seed.sql` is local test data only.
 - Do not depend on `bcmath` (may be missing on the hosting).
 - E-mails are sent after the reservation is committed; a failure is logged and stored in
   `reservations.email_error`, it never rolls back the reservation.

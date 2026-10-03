@@ -9,7 +9,8 @@ use PDO;
 
 
 /**
- * Matches stored bank transactions to reservations (variable symbol = reservation id).
+ * Matches stored bank transactions to reservations (variable symbol = prefix + reservation id,
+ * see VariableSymbol; other variable symbols belong to other payments of the account).
  * All incoming payments of a reservation are summed, so paying in parts works.
  * Callers run it inside a DB transaction.
  */
@@ -21,6 +22,7 @@ final class PaymentMatcher
 
 	public function __construct(
 		private readonly PDO $db,
+		private readonly VariableSymbol $variableSymbol,
 	) {
 	}
 
@@ -34,12 +36,17 @@ final class PaymentMatcher
 			return null;
 		}
 
-		$vs = ltrim(trim((string) $tx['variable_symbol']), '0');
-		if ($vs === '') {
+		if (ltrim(trim((string) $tx['variable_symbol']), '0') === '') {
 			$this->setStatus($transactionId, 'no_vs');
 			return null;
 		}
-		$reservation = ctype_digit($vs) ? $this->lockReservation((int) $vs) : null;
+		$reservationId = $this->variableSymbol->reservationId($tx['variable_symbol']);
+		if ($reservationId === null) {
+			// Another payment to the scout group's account (membership fee etc.), not a problem.
+			$this->setStatus($transactionId, 'foreign');
+			return null;
+		}
+		$reservation = $this->lockReservation($reservationId);
 		if ($reservation === null) {
 			$this->setStatus($transactionId, 'unknown_vs');
 			return null;

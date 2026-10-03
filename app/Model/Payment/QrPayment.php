@@ -55,7 +55,7 @@ final class QrPayment
 	}
 
 
-	public function spayd(int $amountCzk, int $variableSymbol, string $message): string
+	public function spayd(int $amountCzk, string $variableSymbol, string $message): string
 	{
 		$message = Strings::upper(Strings::toAscii($message));
 		$message = Strings::truncate(str_replace('*', '', $message), 60, '');

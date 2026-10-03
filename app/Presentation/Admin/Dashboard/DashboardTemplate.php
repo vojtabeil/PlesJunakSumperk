@@ -21,4 +21,8 @@ final class DashboardTemplate extends BaseTemplate
 	public array $activity;
 
 	public int $paymentProblems;
+
+	public ?\DateTimeImmutable $lastImportAt;
+
+	public bool $importOverdue;
 }

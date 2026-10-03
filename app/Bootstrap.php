@@ -13,8 +13,11 @@ final class Bootstrap
 		$rootDir = dirname(__DIR__);
 		$configurator = new Configurator;
 
-		// Debug mode only for requests from localhost (Nette's detection); never on the hosting.
-		$configurator->setDebugMode(Configurator::detectDebugMode());
+		// Debug mode only for requests from localhost (Nette's detection). Never in a release build
+		// (it contains the file VERSION) - not even when a proxy makes visitors look local.
+		// APP_ENV=production forces production mode too.
+		$production = is_file($rootDir . '/VERSION') || getenv('APP_ENV') === 'production';
+		$configurator->setDebugMode(!$production && Configurator::detectDebugMode());
 		if ($tracy) {
 			$configurator->enableTracy($rootDir . '/var/log');
 		}

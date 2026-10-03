@@ -341,13 +341,16 @@ FLUSH PRIVILEGES;
     Invoke-DbSql $bootstrap | Out-Null
 }
 
-# Recreates the application database: schema + seed data, or a raw SQL dump.
+# Recreates the application database: schema + defaults + demo hall (+ test data), or a raw SQL dump.
+# schema.sql, defaults.sql and hall.sql are also what a new production installation imports.
 function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
     Reset-Database $DbName
     if ($Import) {
         Import-DbFile $Import $DbName
     } else {
-        Import-DbFile (Join-Path $PSScriptRoot 'db\schema.sql') $DbName
+        foreach ($file in @('schema.sql', 'defaults.sql', 'hall.sql')) {
+            Import-DbFile (Join-Path $PSScriptRoot "db\$file") $DbName
+        }
         if (-not $NoSeed) { Import-DbFile (Join-Path $PSScriptRoot 'db\seed.sql') $DbName }
     }
     Write-Ok 'Database ready'
@@ -445,5 +448,69 @@ function Stop-Watchers {
             $proc.WaitForExit(5000) | Out-Null
         }
         Remove-Item $w.Pid -Force -ErrorAction SilentlyContinue
+    }
+}
+
+# --- Release verification -------------------------------------------------------
+# Serves the package from a separate PHP server in production mode (APP_ENV=production)
+# against the local database and checks what the hosting would serve.
+function Test-ReleasePackage([string]$Web) {
+    $port = 8099
+    if (Test-PortInUse $port) { throw "Port $port is already used by another program." }
+    if (-not (Test-DbRunning)) { throw 'MariaDB must be running for the verification (start.cmd).' }
+
+    $config = Join-Path $Web 'config\local.neon'
+    Copy-Item (Join-Path $Root 'config\local.neon') $config
+    $router = Join-Path $TmpDir 'release-router.php'
+    Write-Utf8NoBom $router @'
+<?php
+// Emulates www/.htaccess of the release for the PHP built-in server.
+$www = $_SERVER['DOCUMENT_ROOT'];
+$path = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/');
+if ($path !== '/' && is_file($www . $path) && !str_contains($path, '/.') && !str_ends_with($path, '.php')) {
+    return false;
+}
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+require $www . '/index.php';
+'@
+
+    $env:APP_ENV = 'production'
+    $proc = Start-Process -FilePath $PhpExe -WindowStyle Hidden -PassThru `
+        -ArgumentList "-c `"$PhpIni`" -S 127.0.0.1:$port -t `"$(Join-Path $Web 'www')`" `"$router`"" `
+        -RedirectStandardOutput (Join-Path $LogDir 'release-check.out.log') `
+        -RedirectStandardError (Join-Path $LogDir 'release-check.log')
+    $env:APP_ENV = $null
+    try {
+        for ($i = 0; $i -lt 20 -and -not (Test-PortInUse $port); $i++) { Start-Sleep -Milliseconds 250 }
+        $base = "http://127.0.0.1:$port"
+        $checks = @(
+            @{ Path = '/'; Status = 200; Expect = 'class="hero"'; Forbid = 'tracy-debug' },
+            @{ Path = '/build/front.css'; Status = 200 },
+            @{ Path = '/build/front.js'; Status = 200 },
+            @{ Path = '/api/state'; Status = 200; Expect = '"ok":true' },
+            @{ Path = '/admin/'; Status = 302 },
+            @{ Path = '/dev/bank'; Status = 404; Forbid = 'tracy-debug' },
+            @{ Path = '/dev/status'; Status = 404 },
+            @{ Path = '/cron/payments'; Status = 404 },
+            @{ Path = '/neexistuje'; Status = 404; Forbid = 'tracy-debug' }
+        )
+        $failed = @()
+        foreach ($check in $checks) {
+            $r = Invoke-Native 'curl.exe' @('-s', '-o', '-', '-w', "`n%{http_code}", "$base$($check.Path)")
+            $lines = $r.Output -split "`n"
+            $status = [int]$lines[-1]
+            $body = ($lines[0..($lines.Length - 2)]) -join "`n"
+            $ok = $status -eq $check.Status
+            if ($check.Expect -and -not $body.Contains($check.Expect)) { $ok = $false }
+            if ($check.Forbid -and $body.Contains($check.Forbid)) { $ok = $false }
+            if ($ok) { Write-Ok "$($check.Path) -> $status" } else { $failed += "$($check.Path) -> $status"; Write-Host "    FAILED $($check.Path) -> $status" -ForegroundColor Red }
+        }
+        if ($failed) { throw "Release verification failed: $($failed -join ', ')" }
+    } finally {
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        $proc.WaitForExit(5000) | Out-Null
+        Remove-Item $config -Force
+        Remove-Item (Join-Path $Web 'var\temp\*') -Recurse -Force -ErrorAction SilentlyContinue
+        Get-ChildItem (Join-Path $Web 'var\log') -Exclude '.htaccess' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
     }
 }

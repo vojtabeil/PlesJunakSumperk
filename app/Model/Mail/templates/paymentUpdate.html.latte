@@ -18,7 +18,7 @@
 		<p>k rezervaci č. <strong>{$reservation['id']}</strong> jsme přijali platbu, celkem zatím <strong>{$paid|price}</strong>
 			z <strong>{(int) $reservation['total_price']|price}</strong>.</p>
 		<p>Doplaťte prosím <strong>{$remaining|price}</strong> na účet <strong>{$account}</strong>
-			s variabilním symbolem <strong>{$reservation['id']}</strong>.</p>
+			s variabilním symbolem <strong>{$reservation['variable_symbol']}</strong>.</p>
 	{/if}
 	<p>Těšíme se na vás!{if !empty($settings['organizer'])}<br>{$settings['organizer']}, organizátor{/if}</p>
 </div>

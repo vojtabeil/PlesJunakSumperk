@@ -32,9 +32,9 @@ final class QrPaymentTest extends DatabaseTestCase
 		$this->setSettings(['bank_account' => '2501895120/2010']);
 		$qr = new QrPayment($this->settings());
 
-		$spayd = $qr->spayd(950, 12, 'Šumperský skautský ples *2026*');
+		$spayd = $qr->spayd(950, '20260012', 'Šumperský skautský ples *2026*');
 
-		self::assertSame('SPD*1.0*ACC:CZ4720100000002501895120*AM:950.00*CC:CZK*X-VS:12*MSG:SUMPERSKY SKAUTSKY PLES 2026', $spayd);
+		self::assertSame('SPD*1.0*ACC:CZ4720100000002501895120*AM:950.00*CC:CZK*X-VS:20260012*MSG:SUMPERSKY SKAUTSKY PLES 2026', $spayd);
 		self::assertStringStartsWith("\x89PNG", $qr->png($spayd));
 		self::assertStringStartsWith('data:image/png;base64,', $qr->pngDataUri($spayd));
 	}

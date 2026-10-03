@@ -12,8 +12,9 @@
 </div>
 <p class="muted">
 	Zdroj: {$bankName === 'fio' ? 'Fio banka (API)' : 'zkušební banka (jen pro testování)'}.
+	Naposledy načteno: {if $lastImportAt}{$lastImportAt|date:'j. n. Y H:i'}{else}zatím nikdy{/if}.
 	{if $waitSeconds}Další načtení je možné za {$waitSeconds} s.{/if}
-</p>
+	Pokud na hostingu neběží automatické načítání (cron), načtěte platby tlačítkem.</p>
 
 <div class="columns" n:if="$problemCount">
 	<section class="card">
@@ -61,4 +62,11 @@
 	</div>
 	<p n:if="!$payments" class="muted">Žádné platby.</p>
 </section>
+
+<details n:if="$canRewind" class="card">
+	<summary><strong>Chybí platby?</strong> Stáhnout pohyby z banky znovu od určitého data</summary>
+	<p class="muted">Banka posílá každý pohyb jen jednou. Pokud se načítání přerušilo, nechte si pohyby poslat znovu
+		(nejvýš 90 dní zpět). Už uložené platby se nezdvojí.</p>
+	{control rewindForm}
+</details>
 {/block}

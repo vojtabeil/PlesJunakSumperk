@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Model\Reservation;
 
+use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\GuestListCsv;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationError;
@@ -18,7 +19,7 @@ final class ReservationAdminTest extends DatabaseTestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->admin = new ReservationAdmin($this->db, $this->settings());
+		$this->admin = new ReservationAdmin($this->db, $this->settings(), new VariableSymbol($this->settings()));
 	}
 
 

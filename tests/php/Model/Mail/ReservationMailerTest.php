@@ -31,7 +31,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 		self::assertStringContainsString('stůl 1, místo 1', $message->text);
 		self::assertStringContainsString("600\u{A0}Kč", $message->text);
 		self::assertStringContainsString('Jana Nováková', $message->html);
-		self::assertStringContainsString('Variabilní symbol: ' . $id, $message->text);
+		self::assertStringContainsString('Variabilní symbol: ' . sprintf('2026%04d', $id), $message->text);
 		self::assertStringContainsString('2501895120/2010', $message->text);
 		self::assertStringContainsString('cid:qr-platba', $message->html);
 		self::assertStringStartsWith("\x89PNG", $message->inlineImages['qr-platba'] ?? '');

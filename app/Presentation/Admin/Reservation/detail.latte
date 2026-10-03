@@ -21,7 +21,7 @@
 			<dt>Bez místenky</dt><dd>{$r['standing_tickets']}</dd>
 			<dt>Cena</dt><dd>{(int) $r['total_price']|price}</dd>
 			<dt>Zaplaceno</dt><dd>{(int) $r['paid_amount']|price}</dd>
-			<dt>Variabilní symbol</dt><dd>{$r['id']}</dd>
+			<dt>Variabilní symbol</dt><dd>{$r['variable_symbol']}</dd>
 			<dt>Vytvořeno</dt><dd>{$r['created_at']|date:'j. n. Y H:i'}</dd>
 			<dt>Potvrzeno</dt><dd>{if $r['confirmed_at']}{$r['confirmed_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
 			<dt>Zaplaceno dne</dt><dd>{if $r['paid_at']}{$r['paid_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>

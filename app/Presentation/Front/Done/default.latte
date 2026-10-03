@@ -28,11 +28,11 @@
 			<dl class="totals">
 				<dt>Částka</dt><dd><strong>{$remaining|price}</strong></dd>
 				<dt>Číslo účtu</dt><dd>{$account}</dd>
-				<dt>Variabilní symbol</dt><dd><strong>{$reservation['id']}</strong></dd>
+				<dt>Variabilní symbol</dt><dd><strong>{$reservation['variable_symbol']}</strong></dd>
 			</dl>
 			<p class="prices">Bez správného variabilního symbolu platbu nedokážeme přiřadit.</p>
 		</div>
-		<img class="payment-qr" src="{$qrCode|nocheck}" alt="QR kód pro platbu {$remaining|price} na účet {$account}, variabilní symbol {$reservation['id']}" width="240" height="240">
+		<img class="payment-qr" src="{$qrCode|nocheck}" alt="QR kód pro platbu {$remaining|price} na účet {$account}, variabilní symbol {$reservation['variable_symbol']}" width="240" height="240">
 	</div>
 	<p n:if="!$qrCode" class="message">Rezervace je zaplacená. Děkujeme!</p>
 

@@ -102,7 +102,7 @@ CREATE TABLE bank_transactions (
     raw             TEXT NULL,
     imported_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reservation_id  INT UNSIGNED NULL,
-    match_status    ENUM('matched', 'underpaid', 'overpaid', 'unknown_vs', 'no_vs', 'outgoing', 'ignored') NOT NULL,
+    match_status    ENUM('matched', 'underpaid', 'overpaid', 'unknown_vs', 'no_vs', 'foreign', 'outgoing', 'ignored') NOT NULL,
     UNIQUE KEY uq_bank_transactions_external (source, external_id),
     KEY ix_bank_transactions_reservation (reservation_id),
     CONSTRAINT fk_bank_transactions_reservation FOREIGN KEY (reservation_id) REFERENCES reservations (id)

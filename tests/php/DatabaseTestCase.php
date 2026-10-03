@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests;
 
 use App\Bootstrap;
+use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationService;
 use App\Model\Reservation\Settings;
 use Nette\DI\Container;
@@ -41,6 +42,7 @@ abstract class DatabaseTestCase extends TestCase
 			'price_standing' => '250',
 			'standing_capacity' => '5',
 			'bank_account' => '2501895120/2010',
+			'payment_vs_prefix' => '2026',
 		]);
 		$this->db->exec("INSERT INTO hall_tables (id, label, x, y, width, height) VALUES (1, '1', 0, 0, 160, 40), (2, '2', 0, 100, 160, 40)");
 		$this->db->exec(
@@ -64,7 +66,7 @@ abstract class DatabaseTestCase extends TestCase
 	/** Fresh services per test, so cached settings never leak between tests. */
 	protected function reservations(): ReservationService
 	{
-		return new ReservationService($this->db, $this->settings());
+		return new ReservationService($this->db, $this->settings(), new VariableSymbol($this->settings()));
 	}
 
 

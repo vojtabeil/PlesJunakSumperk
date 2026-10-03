@@ -23,6 +23,8 @@ services:
 
 	- App\Model\Clock\SystemClock
 
+	- App\Model\Http\CurlHttpClient
+
 	# Bank movements: mock bank locally, Fio API in production (parameter bank.driver).
 	bankSource:
 		type: App\Model\Payment\BankTransactionSource
@@ -32,8 +34,12 @@ services:
 	- App\Model\Payment\PaymentImporter
 	- App\Model\Payment\PaymentRepository
 	- App\Model\Payment\QrPayment
+	- App\Model\Payment\VariableSymbol
 
 	- App\Presentation\Accessory\FormFactory
+
+	# Presenter with a scalar argument has to be configured explicitly.
+	- App\Presentation\Front\Cron\CronPresenter(%cron%)
 
 	mailSender:
 		type: App\Model\Mail\MailSender

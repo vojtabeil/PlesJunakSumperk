@@ -40,7 +40,7 @@ final class DonePresenter extends BasePresenter
 		$this->template->qrCode = $this->template->remaining > 0
 			? $this->qrPayment->pngDataUri($this->qrPayment->spayd(
 				$this->template->remaining,
-				$id,
+				(string) $reservation['variable_symbol'],
 				$this->settings->get('event_name', 'Skautský ples'),
 			))
 			: null;

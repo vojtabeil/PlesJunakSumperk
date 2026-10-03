@@ -103,7 +103,7 @@ final class ReservationMailer
 	/** @param array<string, mixed> $reservation */
 	private function spayd(array $reservation): string
 	{
-		return $this->qrPayment->spayd((int) $reservation['total_price'], (int) $reservation['id'], $this->eventName());
+		return $this->qrPayment->spayd((int) $reservation['total_price'], (string) $reservation['variable_symbol'], $this->eventName());
 	}
 
 

@@ -22,8 +22,15 @@ parameters:
 		replyTo: ''
 
 	# Bank movements. mock = fake bank for testing (/dev/bank), fio = Fio API (production).
+	# Production: driver: fio and the read-only token ("Sledování účtu") from Fio internet banking.
 	bank:
 		driver: mock
+		token: ''
+
+	# Automatic payment import: GET https://<site>/cron/payments?key=<key> every 10 minutes.
+	# Use a long random string; empty = disabled.
+	cron:
+		key: ''
 
 	# Password of the first-run wizard (/admin/setup), used only while no administrator exists.
 	# Change it on the hosting before uploading.

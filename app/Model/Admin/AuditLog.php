@@ -25,6 +25,7 @@ final class AuditLog
 		'reservation.note' => 'Změna poznámky',
 		'settings.changed' => 'Změna nastavení',
 		'payments.imported' => 'Načtení plateb z banky',
+		'payments.rewound' => 'Nové stažení pohybů od data',
 		'payment.assigned' => 'Platba přiřazena ručně',
 		'payment.ignored' => 'Platba ignorována',
 	];

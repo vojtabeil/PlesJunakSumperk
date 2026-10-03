@@ -55,7 +55,9 @@ final class PaymentImporter
 			}
 			$result->stored++;
 			if ($change === null) {
-				$result->unmatched += $transaction->amountHalers > 0 ? 1 : 0;
+				$status = $this->statusOf($id);
+				$result->unmatched += in_array($status, PaymentRepository::ProblemStatuses, true) ? 1 : 0;
+				$result->foreign += $status === 'foreign' ? 1 : 0;
 				continue;
 			}
 			$result->matched++;
@@ -64,6 +66,48 @@ final class PaymentImporter
 			}
 		}
 		return $result;
+	}
+
+
+	/** When the bank was asked last (by the cron job or an organizer); null = never. */
+	public function lastImportAt(): ?DateTimeImmutable
+	{
+		$last = $this->settings->get('bank_last_fetch_at');
+		return $last === '' ? null : new DateTimeImmutable($last);
+	}
+
+
+	/** True when nobody imported payments for a day (e.g. no cron job on the hosting). */
+	public function isStale(int $maxAgeSeconds = 24 * 3600): bool
+	{
+		$last = $this->lastImportAt();
+		return $last === null || $this->clock->now()->getTimestamp() - $last->getTimestamp() > $maxAgeSeconds;
+	}
+
+
+	public function canRewind(): bool
+	{
+		return $this->source instanceof RewindableSource;
+	}
+
+
+	/**
+	 * Makes the bank deliver movements from the given day again (after an interrupted import).
+	 * Movements stored before are skipped as duplicates by the next import.
+	 */
+	public function rewind(DateTimeImmutable $since): void
+	{
+		if (!$this->source instanceof RewindableSource) {
+			throw new PaymentError('Tento zdroj plateb neumí stáhnout pohyby znovu.');
+		}
+		$today = $this->clock->now()->setTime(0, 0);
+		$oldest = $today->modify('-' . RewindableSource::MaxRewindDays . ' days');
+		if ($since > $today || $since < $oldest) {
+			throw new PaymentError(sprintf('Zvolte datum mezi %s a dneškem.', $oldest->format('j. n. Y')));
+		}
+		$this->guardInterval();
+		$this->settings->save(['bank_last_fetch_at' => $this->clock->now()->format('Y-m-d H:i:s')]);
+		$this->source->rewind($since);
 	}
 
 
@@ -85,6 +129,14 @@ final class PaymentImporter
 		if ($wait > 0) {
 			throw new PaymentError("Banka dovoluje stahovat pohyby nejvýš jednou za {$this->source->minIntervalSeconds()} sekund. Zkuste to znovu za $wait s.");
 		}
+	}
+
+
+	private function statusOf(int $transactionId): string
+	{
+		$stmt = $this->db->prepare('SELECT match_status FROM bank_transactions WHERE id = ?');
+		$stmt->execute([$transactionId]);
+		return (string) $stmt->fetchColumn();
 	}
 
 

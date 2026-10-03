@@ -20,4 +20,8 @@ final class PaymentTemplate extends BaseTemplate
 	public string $bankName;
 
 	public int $waitSeconds;
+
+	public bool $canRewind;
+
+	public ?\DateTimeImmutable $lastImportAt;
 }

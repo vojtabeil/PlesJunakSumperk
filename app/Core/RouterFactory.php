@@ -15,9 +15,13 @@ final class RouterFactory
 		$router->withModule('Admin')
 			->addRoute('admin/<presenter=Dashboard>/<action=default>[/<id \d+>]');
 		$router->addRoute('api/<op>', 'Front:Api:default');
+		$router->addRoute('cron/payments', 'Front:Cron:payments');
 		$router->addRoute('hotovo/<id \d+>', 'Front:Done:default');
-		$router->addRoute('dev/status', 'Dev:Status:default');
-		$router->addRoute('dev/bank', 'Dev:Bank:default');
+		// Dev tools are not part of the release build (dev/release.ps1 leaves app/Presentation/Dev out).
+		if (class_exists(\App\Presentation\Dev\Status\StatusPresenter::class)) {
+			$router->addRoute('dev/status', 'Dev:Status:default');
+			$router->addRoute('dev/bank', 'Dev:Bank:default');
+		}
 		$router->addRoute('', 'Front:Home:default');
 		return $router;
 	}

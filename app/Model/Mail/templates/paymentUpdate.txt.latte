@@ -15,7 +15,7 @@ Kde: {$settings['venue'] ?? ''}
 {else}
 k rezervaci č. {$reservation['id']} jsme přijali platbu, celkem zatím {$paid|price} z {(int) $reservation['total_price']|price}.
 
-Doplaťte prosím {$remaining|price} na účet {$account} s variabilním symbolem {$reservation['id']}.
+Doplaťte prosím {$remaining|price} na účet {$account} s variabilním symbolem {$reservation['variable_symbol']}.
 {/if}
 
 Těšíme se na vás!

@@ -18,6 +18,8 @@ final class ImportResult
 		public int $matched = 0,
 		/** Incoming payments that need the organizer's attention. */
 		public int $unmatched = 0,
+		/** Other payments to the account (different variable symbol). */
+		public int $foreign = 0,
 	) {
 	}
 
@@ -31,6 +33,9 @@ final class ImportResult
 		$text = "Staženo pohybů: {$this->fetched}, spárováno s rezervacemi: {$this->matched}.";
 		if ($this->unmatched > 0) {
 			$text .= " K ručnímu přiřazení: {$this->unmatched}.";
+		}
+		if ($this->foreign > 0) {
+			$text .= " Ostatní platby na účet (nesouvisí s plesem): {$this->foreign}.";
 		}
 		return $text;
 	}

@@ -11,6 +11,16 @@
 	</p>
 </div>
 
+<section n:class="'card', 'import-card', $importOverdue ? 'import-card--overdue'" aria-label="Platby z banky">
+	<div>
+		<strong>Platby z banky</strong> –
+		naposledy načteno {if $lastImportAt}{$lastImportAt|date:'j. n. Y H:i'}{else}zatím nikdy{/if}.
+		<span n:if="$importOverdue">Rezervace čekají na platbu a platby se déle než den nenačítaly – načtěte je prosím.</span>
+		<span n:if="!$importOverdue" class="muted">Bez automatického načítání (cron) je načtěte tlačítkem.</span>
+	</div>
+	{control importForm}
+</section>
+
 <section class="stats" aria-label="Souhrn">
 	<div class="stat">
 		<span class="stat-value">{$stats['reserved']} / {$stats['total']}</span>

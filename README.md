@@ -8,6 +8,7 @@ Registration and ticket payment site for the Šumperk scout ball.
 2. `start.cmd` - starts everything (incl. asset watchers) and opens http://127.0.0.1:8000/
 3. `stop.cmd` - stops everything.
 4. `check.cmd` - type check, frontend tests, PHPUnit, PHPStan.
+5. `release.cmd` - package for the hosting; see [docs/deploy.md](docs/deploy.md).
 
 Outgoing e-mails are never delivered locally; they are captured by Mailpit at http://127.0.0.1:8025/.
 

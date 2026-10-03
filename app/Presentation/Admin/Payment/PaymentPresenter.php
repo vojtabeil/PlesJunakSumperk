@@ -12,6 +12,7 @@ use App\Model\Payment\PaymentImporter;
 use App\Model\Payment\PaymentMatcher;
 use App\Model\Payment\PaymentRepository;
 use App\Presentation\Admin\BasePresenter;
+use App\Presentation\Admin\ImportPaymentsForm;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Form;
 use PDO;
@@ -24,6 +25,8 @@ use Throwable;
  */
 final class PaymentPresenter extends BasePresenter
 {
+	use ImportPaymentsForm;
+
 	#[Persistent]
 	public bool $problems = false;
 
@@ -47,18 +50,35 @@ final class PaymentPresenter extends BasePresenter
 		$this->template->problemCount = $this->payments->problemCount();
 		$this->template->bankName = $this->bankSource->name();
 		$this->template->waitSeconds = $this->importer->secondsUntilNextImport();
+		$this->template->canRewind = $this->importer->canRewind();
+		$this->template->lastImportAt = $this->importer->lastImportAt();
 	}
 
 
-	protected function createComponentImportForm(): Form
+	protected function paymentImporter(): PaymentImporter
+	{
+		return $this->importer;
+	}
+
+
+	/** Recovery after an interrupted import: the bank delivers movements from the given day again. */
+	protected function createComponentRewindForm(): Form
 	{
 		$form = $this->formFactory->create();
-		$form->addSubmit('import', 'Načíst platby z banky');
-		$form->onSuccess[] = function (): void {
+		$form->addDate('since', 'Stáhnout znovu pohyby od')
+			->setRequired('Zadejte datum.')
+			->setDefaultValue(new \DateTimeImmutable('-7 days'));
+		$form->addSubmit('rewind', 'Připravit nové stažení');
+		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
 			try {
-				$result = $this->importer->import();
-				$this->auditLog->record($this->adminId(), 'payments.imported', null, (array) $result);
-				$this->flashMessage($result->summary(), $result->unmatched ? 'info' : 'success');
+				$since = \DateTimeImmutable::createFromInterface($data->since);
+				$this->importer->rewind($since);
+				$this->auditLog->record($this->adminId(), 'payments.rewound', null, ['since' => $since->format('Y-m-d')]);
+				$this->flashMessage(sprintf(
+					'Banka pošle pohyby od %s znovu. Klikněte na „Načíst platby z banky“%s; už uložené platby se nezdvojí.',
+					$since->format('j. n. Y'),
+					$this->importer->secondsUntilNextImport() > 0 ? ' za ' . $this->importer->secondsUntilNextImport() . ' s' : '',
+				), 'success');
 			} catch (PaymentError $e) {
 				$this->flashMessage($e->getMessage(), 'error');
 			}
