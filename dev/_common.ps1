@@ -31,6 +31,37 @@ $Versions = @{
         Sha256  = '0dd6ec909a6f5b2b66682b22d82abce97ab793e30766bf2f642b691e70a4a16b'
         Urls    = @('https://github.com/axllent/mailpit/releases/download/v1.31.4/mailpit-windows-amd64.zip')
     }
+    Composer = @{
+        Version = '2.10.3'
+        File    = 'composer-2.10.3.phar'
+        Sha256  = '7a2d379d5b8ffdaa028580ef26494c36d2feef4b178d3dd1473a4dbc5e17c8d6'
+        Urls    = @('https://getcomposer.org/download/2.10.3/composer.phar')
+    }
+    # The regular build needs a CPU with AVX2; setup falls back to the baseline build otherwise.
+    Bun = @{
+        Version = '1.4.2'
+        File    = 'bun-1.4.2-windows-x64.zip'
+        Sha256  = 'ce4c17497b2f29712a99d3d53f028de28cd42e3bacb8589599e7f000e49b6405'
+        Urls    = @('https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-windows-x64.zip')
+    }
+    BunBaseline = @{
+        Version = '1.4.2-baseline'
+        File    = 'bun-1.4.2-windows-x64-baseline.zip'
+        Sha256  = '78c221c2376f79731ccf4e4af0b3bb46d81fefa3296c5abee09ad8a1b21e68c6'
+        Urls    = @('https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-windows-x64-baseline.zip')
+    }
+    TypeScript = @{
+        Version = '7.0.2'
+        File    = 'typescript-7.0.2-win32-x64.tgz'
+        Sha256  = '61fc4e141d2bc687db580e71bbfa63b9c209f0310645d82ca1b457eb3a24fd19'
+        Urls    = @('https://github.com/microsoft/typescript-go/releases/download/typescript/v7.0.2/typescript-win32-x64.tgz')
+    }
+    Sass = @{
+        Version = '1.105.1'
+        File    = 'dart-sass-1.105.1-windows-x64.zip'
+        Sha256  = '3f76ae65dd7b494cc25cd2257f3be608e074b2d33b7328d9ba565bd60ba54f7e'
+        Urls    = @('https://github.com/sass/dart-sass/releases/download/1.105.1/dart-sass-1.105.1-windows-x64.zip')
+    }
     Adminer = @{
         Version = '6.1.1'
         File    = 'adminer-6.1.1-mysql.php'
@@ -47,6 +78,10 @@ $PhpDir     = Join-Path $ToolsDir 'php'
 $MariaDbDir = Join-Path $ToolsDir 'mariadb'
 $AdminerDir = Join-Path $ToolsDir 'adminer'
 $MailpitDir = Join-Path $ToolsDir 'mailpit'
+$ComposerDir = Join-Path $ToolsDir 'composer'
+$BunDir     = Join-Path $ToolsDir 'bun'
+$TsDir      = Join-Path $ToolsDir 'typescript'
+$SassDir    = Join-Path $ToolsDir 'sass'
 
 $DataDir    = Join-Path $Root '.devdata'
 $DbDataDir  = Join-Path $DataDir 'mariadb'
@@ -64,6 +99,11 @@ $MariaDbCli = Join-Path $MariaDbDir 'bin\mariadb.exe'
 $MariaAdmin = Join-Path $MariaDbDir 'bin\mariadb-admin.exe'
 $MariaInst  = Join-Path $MariaDbDir 'bin\mariadb-install-db.exe'
 $MailpitExe = Join-Path $MailpitDir 'mailpit.exe'
+$ComposerPhar = Join-Path $ComposerDir 'composer.phar'
+$BunExe     = Join-Path $BunDir 'bun.exe'
+$TscExe     = Join-Path $TsDir 'lib\tsc.exe'
+$DartExe    = Join-Path $SassDir 'src\dart.exe'
+$SassSnapshot = Join-Path $SassDir 'src\sass.snapshot'
 
 $DbPort   = 3307
 $WebPort  = 8000
@@ -77,10 +117,14 @@ $DbPidFile  = Join-Path $RunDir 'mariadb.pid'
 $WebPidFile = Join-Path $RunDir 'php.pid'
 $MailPidFile = Join-Path $RunDir 'mailpit.pid'
 
-# Every process started from these scripts inherits this, so temporary files stay in .devdata/tmp.
+# Environment shared with the root *.cmd wrappers (caches and temp files inside .devdata).
+# Every process started from these scripts inherits it.
+foreach ($line in Get-Content (Join-Path $PSScriptRoot 'env.cmd')) {
+    if ($line -match '^@set "(\w+)=(.*)"$' -and $Matches[1] -ne 'ROOT') {
+        Set-Item "env:$($Matches[1])" ($Matches[2] -replace '%ROOT%', $Root)
+    }
+}
 New-Item -ItemType Directory -Force $TmpDir | Out-Null
-$env:TEMP = $TmpDir
-$env:TMP = $TmpDir
 
 # --- Output --------------------------------------------------------------------
 function Write-Step([string]$Text) { Write-Host "==> $Text" -ForegroundColor Cyan }

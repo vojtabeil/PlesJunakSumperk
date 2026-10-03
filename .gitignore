@@ -1,3 +1,9 @@
 .tools/
 .devdata/
 config.local.php
+
+# Dependencies and build output (phase 2+)
+/vendor/
+/node_modules/
+/www/build/
+/dist/

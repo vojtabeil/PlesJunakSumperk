@@ -31,14 +31,16 @@ lebedahosting.cz (skautIS login), support at podpora@skaut.cz.
 | `dev/` | Local development environment scripts. |
 | `dev/db/schema.sql`, `dev/db/seed.sql` | Database schema and local test data. |
 | `original/` | Recovered files of the old site + `OBNOVA.md` (reverse-engineered API notes). |
-| `.tools/` | Portable PHP, MariaDB, Mailpit, Adminer (git-ignored, created by setup). |
-| `.devdata/` | Local DB data, captured e-mails, logs, PID files, sessions, temp files (git-ignored). |
+| `.tools/` | Portable PHP, MariaDB, Mailpit, Adminer, Composer, Bun, TypeScript 7, Dart Sass (git-ignored, created by setup). |
+| `.devdata/` | Local DB data, captured e-mails, logs, PID files, sessions, temp files, Composer and Bun caches (git-ignored). |
+| `dev/env.cmd` | Environment for all tools (caches and temp inside `.devdata/`); also parsed by `dev/_common.ps1`. |
+| `php.cmd`, `composer.cmd`, `bun.cmd`, `tsc.cmd`, `sass.cmd` | Wrappers that run the portable tools with that environment; use them instead of globally installed tools. |
 
 ## Local environment (Windows, nothing installed system-wide)
 
 | Command | What it does |
 |---|---|
-| `setup.cmd` | Downloads PHP 8.4, MariaDB 11.8, Mailpit 1.31 and Adminer (SHA256-verified), generates `php.ini`, initializes the DB. Idempotent; never deletes existing data. `-Force` re-extracts tools. |
+| `setup.cmd` | Downloads PHP 8.4, MariaDB 11.8, Mailpit 1.31, Adminer, Composer 2.10, Bun 1.4, TypeScript 7.0 and Dart Sass 1.105 (SHA256-verified), generates `php.ini`, runs `composer install` / `bun install` when manifests exist, initializes the DB. Idempotent; never deletes existing data. `-Force` re-extracts tools. |
 | `start.cmd` | Starts MariaDB (127.0.0.1:3307), Mailpit (SMTP 127.0.0.1:1025, web 127.0.0.1:8025) and the PHP built-in server (127.0.0.1:8000) in the background. `-NoBrowser` skips opening the browser. |
 | `stop.cmd` | Stops PHP and Mailpit and shuts MariaDB down cleanly. |
 | `init-db.cmd` | Drops and recreates database `ples` from `dev/db/*.sql`. `-Import dump.sql` loads a dump instead, `-NoSeed` skips test data, `-Clean` wipes the whole data directory. |
@@ -48,7 +50,10 @@ server `127.0.0.1:3307`), recovered old site `/original/`, diagnostics `/status.
 captured e-mails http://127.0.0.1:8025/.
 
 The environment is fully portable: everything lives in `.tools/` and `.devdata/`,
-including temp files (`.devdata/tmp` via `TEMP`/`TMP`, `sys_temp_dir`, MariaDB `tmpdir`).
+including temp files (`.devdata/tmp` via `TEMP`/`TMP`, `sys_temp_dir`, MariaDB `tmpdir`)
+and package caches (`COMPOSER_HOME`, `COMPOSER_CACHE_DIR`, `BUN_INSTALL*`; `DO_NOT_TRACK=1`).
+New tools must follow the same rule: download + SHA256 in `dev/_common.ps1`, install in
+`dev/setup.ps1`, caches redirected in `dev/env.cmd`, wrapper in the repo root.
 All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailpit.
 
 All scripts are safe to run repeatedly. Tool versions and checksums live in
