@@ -92,6 +92,10 @@ main {
   text-align: center;
   color: var(--muted);
   font-size: 0.9rem;
+
+  p {
+    margin: 0.25rem 0;
+  }
 }
 
 // Page of a stage without sale (HTML written by the organizers).

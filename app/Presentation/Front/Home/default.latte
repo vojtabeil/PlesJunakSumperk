@@ -1,5 +1,9 @@
 {templateType App\Presentation\Front\Home\HomeTemplate}
 
+{block heroAction}
+	<a n:if="$canBuy" class="button hero-action" href="#reservation">Koupit lístky</a>
+{/block}
+
 {block content}
 <p n:if="$preview" class="message">Náhled stránky ve stavu „{$preview->label()}“ – vidíte ji jen vy jako přihlášený organizátor.</p>
 

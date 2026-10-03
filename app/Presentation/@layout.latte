@@ -37,6 +37,8 @@
 				<span class="visually-hidden">Organizátor:</span> {$settings['organizer'] ?? ''}
 			</li>
 		</ul>
+		{* Filled by the reservation page while tickets can be bought. *}
+		{block heroAction}{/block}
 	</div>
 	<img class="hero-figure hero-figure--right" src="{$basePath}/img/girl.svg" alt="">
 </header>
@@ -46,6 +48,12 @@
 </main>
 
 <footer class="site-footer">
+	<p n:if="!empty($settings['contact_email']) || !empty($settings['contact_phone'])">
+		Dotazy k plesu a vstupenkám:
+		<a n:if="!empty($settings['contact_email'])" href="mailto:{$settings['contact_email']}">{$settings['contact_email']}</a>
+		{if !empty($settings['contact_email']) && !empty($settings['contact_phone'])}·{/if}
+		<a n:if="!empty($settings['contact_phone'])" href="tel:{str_replace(' ', '', $settings['contact_phone'])}">{$settings['contact_phone']}</a>
+	</p>
 	<p>Junák – český skaut, Šumperk</p>
 </footer>
 {block scripts}{/block}
