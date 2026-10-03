@@ -33,6 +33,9 @@ final class DashboardTemplate extends BaseTemplate
 	/** @var array<string, int> */
 	public array $reservationProblems;
 
+	/** Overdue reservations without a recent reminder. */
+	public int $toRemind;
+
 	public ?\DateTimeImmutable $lastImportAt;
 
 	public bool $importOverdue;

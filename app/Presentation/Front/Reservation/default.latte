@@ -1,0 +1,69 @@
+{templateType App\Presentation\Front\Reservation\ReservationTemplate}
+
+{block title}Rezervace č. {$reservation['id']}{/block}
+
+{block content}
+{var $r = $reservation}
+{var $seats = array_map(fn($label) => ($label|seatLabel), $r['seat_labels'])}
+<section class="panel reservation-page">
+	{* One status at the top: what is going on and what to do. *}
+	<div n:class="status-panel, 'status-panel--' . $r['status'], $overdue ? 'status-panel--overdue'">
+		{if $justCreated}<p class="status-kicker">Rezervace přijata, děkujeme!</p>{/if}
+		<h2>Rezervace č. {$r['id']}</h2>
+		<p class="status-text">
+			{if $r['status'] === 'paid'}
+				Zaplaceno. Těšíme se na vás{if !empty($settings['event_date'])} {$settings['event_date']}{/if}!
+			{elseif $r['status'] === 'cancelled'}
+				Rezervace byla zrušena.
+			{elseif $overdue}
+				Splatnost byla {$r['due_on']|date:'j. n. Y'} a platbu zatím nemáme. Zaplaťte prosím {$r['remaining']|price} co nejdříve.
+			{else}
+				Čeká na platbu {$r['remaining']|price}{if $r['due_on']} – zaplaťte prosím do <strong>{$r['due_on']|date:'j. n. Y'}</strong>{/if}.
+			{/if}
+		</p>
+	</div>
+
+	<p n:if="$justCreated && $r['email_sent_at']" class="message">Potvrzení s odkazem na tuto stránku jsme poslali na {$r['email']}.</p>
+	<p n:if="$justCreated && !$r['email_sent_at']" class="message message--error">
+		Potvrzovací e-mail se nepodařilo odeslat. Rezervace je ale uložená – uložte si prosím odkaz na tuto stránku.
+	</p>
+
+	<div n:if="$qrCode" class="payment">
+		<div>
+			<h3>{(int) $r['paid_amount'] > 0 ? 'Doplatek' : 'Platba'}</h3>
+			<p>Načtěte QR kód v aplikaci své banky a zkontrolujte předvyplněné údaje, nebo zadejte platbu ručně:</p>
+			<dl class="payment-details">
+				<dt>Částka</dt>
+				<dd><strong>{$r['remaining']|price}</strong> <button type="button" class="copy" data-copy="{$r['remaining']}">kopírovat</button></dd>
+				<dt>Číslo účtu</dt>
+				<dd>{$account} <button type="button" class="copy" data-copy="{$account}">kopírovat</button></dd>
+				<dt>Variabilní symbol</dt>
+				<dd><strong>{$r['variable_symbol']}</strong> <button type="button" class="copy" data-copy="{$r['variable_symbol']}">kopírovat</button></dd>
+				<dt n:if="$r['due_on']">Splatnost</dt>
+				<dd n:if="$r['due_on']">{$r['due_on']|date:'j. n. Y'}</dd>
+				<dt>IBAN</dt>
+				<dd class="iban">{$iban}</dd>
+			</dl>
+			<p class="prices">Bez správného variabilního symbolu platbu nedokážeme přiřadit. Až platba dorazí, pošleme e-mail.</p>
+		</div>
+		<img class="payment-qr" src="{$qrCode|nocheck}" alt="QR kód pro platbu {$r['remaining']|price} na účet {$account}, variabilní symbol {$r['variable_symbol']}" width="240" height="240">
+	</div>
+
+	<h3>Lístky</h3>
+	<dl class="totals">
+		<dt>Jméno</dt><dd>{$r['name']}</dd>
+		<dt>E-mail</dt><dd>{$r['email']}</dd>
+		<dt>Místa u stolu</dt><dd>{$seats ? implode('; ', $seats) : '–'}</dd>
+		<dt>Bez místenky</dt><dd>{$r['standing_tickets']}</dd>
+		<dt>Cena</dt><dd>{(int) $r['total_price']|price}</dd>
+		<dt>Zaplaceno</dt><dd>{(int) $r['paid_amount']|price}</dd>
+	</dl>
+	<p class="prices">Lístky se netisknou – na vstupu vás najdeme na seznamu hostů. Tuto stránku si můžete uložit, odkaz je i v e-mailu.</p>
+
+	<p><a class="button" n:href="Home:default">Na úvodní stránku</a></p>
+</section>
+{/block}
+
+{block scripts}
+<script src="{$basePath}/{asset('build/front.js')}" type="module"></script>
+{/block}

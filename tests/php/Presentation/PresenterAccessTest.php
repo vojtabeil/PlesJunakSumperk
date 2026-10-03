@@ -31,7 +31,7 @@ final class PresenterAccessTest extends DatabaseTestCase
 	/** Public by design, no login. */
 	private const PublicPresenters = [
 		'App\Presentation\Front\Home\HomePresenter',    // reservation page for visitors
-		'App\Presentation\Front\Done\DonePresenter',    // confirmation, bound to the visitor's session
+		'App\Presentation\Front\Reservation\ReservationPresenter', // "Moje rezervace", protected by the secret token
 		'App\Presentation\Front\Api\ApiPresenter',      // JSON API of the seat picker
 		'App\Presentation\Front\Cron\CronPresenter',    // protected by the cron key instead of a login
 		'App\Presentation\Front\Access\AccessPresenter', // tester and VIP links, protected by their secret tokens

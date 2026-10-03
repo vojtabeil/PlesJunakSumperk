@@ -242,3 +242,80 @@ input[aria-invalid='true'] {
   height: 240px;
   image-rendering: pixelated;
 }
+
+// --- "Moje rezervace" ------------------------------------------------------------
+
+.status-panel {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-left: 6px solid var(--orange);
+  border-radius: var(--radius-small);
+  background: rgba(242, 154, 29, 0.12);
+
+  h2 {
+    margin: 0 0 0.25rem;
+  }
+
+  &--paid {
+    border-left-color: var(--green);
+    background: rgba(40, 114, 52, 0.1);
+  }
+
+  &--cancelled,
+  &--overdue {
+    border-left-color: var(--error);
+    background: rgba(179, 38, 30, 0.08);
+  }
+}
+
+.status-kicker {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.status-text {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.payment-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 1rem;
+  align-items: center;
+  margin: 0 0 0.75rem;
+
+  dt {
+    color: var(--muted);
+  }
+
+  dd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.copy {
+  padding: 0.35rem 0.7rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--green);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.iban {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+.reservation-page .totals dd {
+  text-align: left;
+}

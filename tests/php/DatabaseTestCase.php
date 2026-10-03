@@ -6,6 +6,13 @@ namespace App\Tests;
 
 use App\Bootstrap;
 use App\Model\Log\Actor;
+use App\Model\Mail\MailSender;
+use App\Model\Mail\ReservationMailer;
+use App\Model\Payment\QrPayment;
+use App\Model\Reservation\ReservationAdmin;
+use Nette\Application\LinkGenerator;
+use Nette\Bridges\ApplicationLatte\LatteFactory;
+use Tracy\ILogger;
 use App\Model\Log\EventLog;
 use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationService;
@@ -47,6 +54,8 @@ abstract class DatabaseTestCase extends TestCase
 			'standing_capacity' => '5',
 			'bank_account' => '2501895120/2010',
 			'payment_vs_prefix' => '2026',
+			'payment_days' => '2',
+			'contact_email' => 'dotazy@example.com',
 		]);
 		$this->db->exec("INSERT INTO hall_tables (id, label, x, y, width, height) VALUES (1, '1', 0, 0, 160, 40), (2, '2', 0, 100, 160, 40)");
 		$this->db->exec(
@@ -71,6 +80,28 @@ abstract class DatabaseTestCase extends TestCase
 	protected function reservations(): ReservationService
 	{
 		return new ReservationService($this->db, $this->settings(), new VariableSymbol($this->settings()), $this->eventLog());
+	}
+
+
+	protected function reservationAdmin(): ReservationAdmin
+	{
+		return new ReservationAdmin($this->db, $this->settings(), new VariableSymbol($this->settings()), $this->eventLog());
+	}
+
+
+	protected function mailer(MailSender $sender, ILogger $logger): ReservationMailer
+	{
+		return new ReservationMailer(
+			$this->reservations(),
+			$this->reservationAdmin(),
+			$this->settings(),
+			$sender,
+			$this->service(LatteFactory::class),
+			new QrPayment($this->settings()),
+			$this->service(LinkGenerator::class),
+			$logger,
+			$this->eventLog(),
+		);
 	}
 
 

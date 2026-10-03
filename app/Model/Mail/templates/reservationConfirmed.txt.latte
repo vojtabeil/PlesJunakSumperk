@@ -2,6 +2,8 @@
 {varType array $reservation}
 {varType array $settings}
 {varType string $account}
+{varType string $iban}
+{varType string $link}
 {var $seats = array_map(fn($label) => ($label|seatLabel), $reservation['seat_labels'])}
 Dobrý den,
 
@@ -16,12 +18,13 @@ Kdy: {$settings['event_date'] ?? ''}
 Kde: {$settings['venue'] ?? ''}
 
 PLATBA
-Zaplaťte prosím převodem (QR kód je v HTML verzi e-mailu):
-Částka: {(int) $reservation['total_price']|price}
+Zaplaťte prosím převodem{if $reservation['due_on']} do {$reservation['due_on']|date:'j. n. Y'}{/if} (QR kód je v HTML verzi e-mailu i u rezervace):
+Částka: {$reservation['remaining']|price}
 Číslo účtu: {$account}
 Variabilní symbol: {$reservation['variable_symbol']}
+IBAN: {$iban}
 
 Bez správného variabilního symbolu platbu nedokážeme přiřadit. Až platba dorazí, pošleme vám potvrzení.
+Lístky se netisknou – na vstupu vás najdeme na seznamu hostů.
 
-Těšíme se na vás!
-{if !empty($settings['organizer'])}{$settings['organizer']}, organizátor{/if}
+{include '@footer.txt.latte'}

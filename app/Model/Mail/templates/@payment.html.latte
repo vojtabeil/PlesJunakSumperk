@@ -1,0 +1,16 @@
+{* Payment details with the QR code (included by the confirmation and the reminder). *}
+{varType array $reservation}
+{varType string $account}
+{varType string $iban}
+{varType string $qrCid}
+{var $row = 'padding:4px 16px 4px 0;color:#5c5c57'}
+<table style="border-collapse:collapse;margin:8px 0 16px">
+	<tr><td style="{$row}">Částka</td><td style="padding:4px 0;font-weight:bold">{$reservation['remaining']|price}</td></tr>
+	<tr><td style="{$row}">Číslo účtu</td><td style="padding:4px 0;font-weight:bold">{$account}</td></tr>
+	<tr><td style="{$row}">Variabilní symbol</td><td style="padding:4px 0;font-weight:bold">{$reservation['variable_symbol']}</td></tr>
+	<tr n:if="$reservation['due_on']"><td style="{$row}">Splatnost</td><td style="padding:4px 0;font-weight:bold">{$reservation['due_on']|date:'j. n. Y'}</td></tr>
+	<tr><td style="{$row}">IBAN</td><td style="padding:4px 0">{$iban}</td></tr>
+</table>
+<p><img src="cid:{$qrCid}" alt="QR platba: {$reservation['remaining']|price}, variabilní symbol {$reservation['variable_symbol']}" width="220" height="220" style="display:block"></p>
+<p style="color:#5c5c57;font-size:14px">QR kód načtěte v aplikaci své banky a zkontrolujte předvyplněné údaje.
+	Bez správného variabilního symbolu platbu nedokážeme přiřadit.</p>

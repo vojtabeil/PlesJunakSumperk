@@ -42,21 +42,6 @@ final class ReservationSession
 	}
 
 
-	public function addFinished(int $reservationId): void
-	{
-		$section = $this->section();
-		$ids = $section->get('finished') ?? [];
-		$ids[] = $reservationId;
-		$section->set('finished', array_values(array_unique($ids)));
-	}
-
-
-	public function isFinished(int $reservationId): bool
-	{
-		return in_array($reservationId, $this->section()->get('finished') ?? [], true);
-	}
-
-
 	private function section(): SessionSection
 	{
 		return $this->session->getSection('reservation');

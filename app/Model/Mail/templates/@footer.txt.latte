@@ -1,0 +1,10 @@
+{contentType text}
+{varType array $settings}
+{varType string $link}
+Rezervace a platební údaje: {$link}
+
+Těšíme se na vás!
+{if !empty($settings['organizer'])}{$settings['organizer']}, organizátor
+{/if}{if !empty($settings['contact_email'])}{$settings['contact_email']}
+{/if}{if !empty($settings['contact_phone'])}{$settings['contact_phone']}
+{/if}

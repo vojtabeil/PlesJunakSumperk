@@ -32,6 +32,10 @@ final class QrPaymentTest extends DatabaseTestCase
 		$this->setSettings(['bank_account' => '2501895120/2010']);
 		$qr = new QrPayment($this->settings());
 
+		$withDue = $qr->spayd(950, '20260012', 'Ples', new \DateTimeImmutable('tomorrow'));
+		self::assertStringContainsString('*DT:' . (new \DateTimeImmutable('tomorrow'))->format('Ymd') . '*', $withDue);
+		self::assertStringNotContainsString('DT:', $qr->spayd(950, '20260012', 'Ples', new \DateTimeImmutable('yesterday')), 'A past due date is left out (banks would refuse it)');
+
 		$spayd = $qr->spayd(950, '20260012', 'Šumperský skautský ples *2026*');
 
 		self::assertSame('SPD*1.0*ACC:CZ4720100000002501895120*AM:950.00*CC:CZK*X-VS:20260012*MSG:SUMPERSKY SKAUTSKY PLES 2026', $spayd);

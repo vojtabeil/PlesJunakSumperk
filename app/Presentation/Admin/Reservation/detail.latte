@@ -20,7 +20,8 @@
 	{if $r['status'] === 'paid'}
 		Zaplaceno {(int) $r['paid_amount']|price}{if $r['paid_at']} dne {$r['paid_at']|date:'j. n. Y'}{/if}. Není potřeba nic dělat.
 	{elseif $open}
-		Čeká na platbu {$remaining|price} na VS <strong>{$r['variable_symbol']}</strong>{if (int) $r['paid_amount'] > 0} (už zaplaceno {(int) $r['paid_amount']|price}){/if}.
+		Čeká na platbu {$remaining|price} na VS <strong>{$r['variable_symbol']}</strong>{if (int) $r['paid_amount'] > 0} (už zaplaceno {(int) $r['paid_amount']|price}){/if}{if $dueOn}, splatnost {$dueOn|date:'j. n. Y'}{if $dueOn < new \DateTimeImmutable('today')} – <strong>po splatnosti</strong>{/if}{/if}.
+		{if $r['reminded_at']}Připomínka odeslána {$r['reminded_at']|date:'j. n. Y H:i'}.{/if}
 		Platba z banky se spáruje sama; zaplatil-li host hotově, označte rezervaci jako zaplacenou.
 	{elseif $r['status'] === 'cancelled'}
 		Rezervace je zrušená, její místa jsou volná.
@@ -50,6 +51,8 @@
 			<dt>Zaplaceno</dt><dd>{(int) $r['paid_amount']|price}</dd>
 			<dt>Variabilní symbol</dt><dd>{$r['variable_symbol']}</dd>
 			<dt>Potvrzeno</dt><dd>{if $r['confirmed_at']}{$r['confirmed_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
+			<dt>Stránka zákazníka</dt>
+			<dd>{if $customerLink}<a href="{$customerLink}" target="_blank">Moje rezervace</a> <span class="muted">(stejný odkaz má zákazník v e-mailu)</span>{else}–{/if}</dd>
 			<dt>Potvrzovací e-mail</dt>
 			<dd>{if $r['email_sent_at']}odeslán {$r['email_sent_at']|date:'j. n. Y H:i'}{else}neodeslán{/if}</dd>
 		</dl>
@@ -59,6 +62,7 @@
 		<h2>Co můžete udělat</h2>
 		<div class="actions">
 			{if $open}{control markPaidForm}{/if}
+			{if $open && $r['email_sent_at']}{control remindForm}{/if}
 			{if $r['status'] !== 'draft' && $r['status'] !== 'cancelled'}{control resendForm}{/if}
 			{if $r['status'] !== 'cancelled'}
 				<div class="danger-zone">{control cancelForm}</div>

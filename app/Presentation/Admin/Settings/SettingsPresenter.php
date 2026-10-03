@@ -34,6 +34,7 @@ final class SettingsPresenter extends BasePresenter
 		$this->addNumber($form, 'standing_capacity', 'Počet lístků bez místenky', 0, 10000);
 
 		$form->addGroup('Platby');
+		$this->addNumber($form, 'payment_days', 'Splatnost (dní od rezervace)', 1, 60);
 		$form->addText('bank_account', 'Číslo účtu pro platby')
 			->setRequired('Zadejte číslo účtu.')
 			->addRule($form::Pattern, 'Zadejte číslo účtu ve tvaru 123456789/2010 (případně s předčíslím 19-123456789/0800).', '(\d{1,6}-)?\d{2,10}/\d{4}');
@@ -51,6 +52,11 @@ final class SettingsPresenter extends BasePresenter
 		$form->addText('band', 'Kapela')->setMaxLength(255);
 		$this->addUrl($form, 'band_url', 'Odkaz na kapelu');
 		$form->addText('organizer', 'Organizátor')->setMaxLength(255);
+		$form->addEmail('contact_email', 'Kontaktní e-mail (v patičce webu a v e-mailech)')->setMaxLength(255);
+		$form->addText('contact_phone', 'Kontaktní telefon')
+			->setMaxLength(32)
+			->addCondition($form::Filled)
+			->addRule($form::Pattern, 'Telefon zadejte jen jako čísla, např. +420 777 123 456.', '\+?[0-9 ]{9,20}');
 
 		$form->setCurrentGroup(null);
 		$form->addSubmit('save', 'Uložit nastavení');

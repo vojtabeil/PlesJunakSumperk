@@ -17,3 +17,5 @@ INSERT INTO admin_users (login, name, password_hash) VALUES
     ('admin', 'Testovací Organizátor', '$2y$12$0dzo6iQBXaEx2QIunet7P.rVyXI5H5K52wlJ/bG6umC0LijyaoSea');
 
 UPDATE reservations SET paid_at = NOW(), paid_amount = total_price WHERE status = 'paid';
+-- Links "Moje rezervace" of the test reservations: /rezervace/1/1111..., /rezervace/2/2222...
+UPDATE reservations SET access_token = REPEAT(id, 32) WHERE id IN (1, 2);

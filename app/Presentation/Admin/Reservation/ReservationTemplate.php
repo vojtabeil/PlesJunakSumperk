@@ -22,4 +22,9 @@ final class ReservationTemplate extends BaseTemplate
 
 	/** @var list<array<string, mixed>> */
 	public array $payments;
+
+	/** "Moje rezervace" of the customer; null for reservations without a link. */
+	public ?string $customerLink;
+
+	public ?\DateTimeImmutable $dueOn;
 }

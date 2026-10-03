@@ -7,8 +7,10 @@ namespace App\Model\Mail;
 use App\Model\Log\EventLog;
 use App\Model\Payment\PaymentChange;
 use App\Model\Payment\QrPayment;
+use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
 use App\Model\Reservation\Settings;
+use Nette\Application\LinkGenerator;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use RuntimeException;
 use Throwable;
@@ -16,7 +18,8 @@ use Tracy\ILogger;
 
 
 /**
- * E-mails about reservations; templates are in ./templates (Czech texts).
+ * E-mails about reservations; templates are in ./templates (Czech texts). Every e-mail links
+ * to the page "Moje rezervace" (status, payment details, QR code).
  * Sending never throws: a failed e-mail must not undo a stored reservation or payment.
  */
 final class ReservationMailer
@@ -26,10 +29,12 @@ final class ReservationMailer
 
 	public function __construct(
 		private readonly ReservationService $reservations,
+		private readonly ReservationAdmin $reservationAdmin,
 		private readonly Settings $settings,
 		private readonly MailSender $sender,
 		private readonly LatteFactory $latteFactory,
 		private readonly QrPayment $qrPayment,
+		private readonly LinkGenerator $linkGenerator,
 		private readonly ILogger $logger,
 		private readonly EventLog $eventLog,
 	) {
@@ -44,14 +49,13 @@ final class ReservationMailer
 		try {
 			$reservation = $this->load($reservationId);
 			$to = (string) $reservation['email'];
-			$spayd = $this->spayd($reservation);
 			$params = $this->params($reservation) + ['qrCid' => self::QrCid];
 			$this->sender->send(new MailMessage(
-				to: $reservation['email'],
+				to: $to,
 				subject: sprintf('Potvrzení rezervace č. %d – %s', $reservationId, $this->eventName()),
 				html: $this->render('reservationConfirmed.html.latte', $params),
 				text: $this->render('reservationConfirmed.txt.latte', $params),
-				inlineImages: [self::QrCid => $this->qrPayment->png($spayd)],
+				inlineImages: [self::QrCid => $this->qrPayment->png($this->spayd($reservation))],
 			));
 		} catch (Throwable $e) {
 			$error = $e->getMessage();
@@ -98,12 +102,55 @@ final class ReservationMailer
 			return true;
 		} catch (Throwable $e) {
 			$this->logger->log("Payment e-mail for reservation $change->reservationId failed: {$e->getMessage()}", ILogger::WARNING);
-			try {
-				$this->eventLog->record('email.payment_failed', $change->reservationId, ['error' => $e->getMessage()], automatic: true);
-			} catch (Throwable $logError) {
-				$this->logger->log($logError, ILogger::EXCEPTION);
-			}
+			$this->logFailure('email.payment_failed', $change->reservationId, $e);
 			return false;
+		}
+	}
+
+
+	/** Reminder of an unpaid reservation after its due date (sent by hand from the administration). */
+	public function sendReminder(int $reservationId): bool
+	{
+		try {
+			$reservation = $this->load($reservationId);
+			if ($reservation['remaining'] <= 0) {
+				return false;
+			}
+			$params = $this->params($reservation) + ['qrCid' => self::QrCid];
+			$this->sender->send(new MailMessage(
+				to: $reservation['email'],
+				subject: sprintf('Připomínka platby – rezervace č. %d – %s', $reservationId, $this->eventName()),
+				html: $this->render('paymentReminder.html.latte', $params),
+				text: $this->render('paymentReminder.txt.latte', $params),
+				inlineImages: [self::QrCid => $this->qrPayment->png($this->spayd($reservation))],
+			));
+			$this->reservationAdmin->markReminded($reservationId);
+			$this->eventLog->record('email.reminder_sent', $reservationId, [
+				'to' => $reservation['email'],
+				'amount' => $reservation['remaining'],
+			], automatic: true);
+			return true;
+		} catch (Throwable $e) {
+			$this->logger->log("Reminder for reservation $reservationId failed: {$e->getMessage()}", ILogger::WARNING);
+			$this->logFailure('email.reminder_failed', $reservationId, $e);
+			return false;
+		}
+	}
+
+
+	/** URL of the page "Moje rezervace". */
+	public function reservationLink(int $id, string $token): string
+	{
+		return $this->linkGenerator->link('Front:Reservation:default', ['id' => $id, 'token' => $token]);
+	}
+
+
+	private function logFailure(string $action, int $reservationId, Throwable $error): void
+	{
+		try {
+			$this->eventLog->record($action, $reservationId, ['error' => $error->getMessage()], automatic: true);
+		} catch (Throwable $logError) {
+			$this->logger->log($logError, ILogger::EXCEPTION);
 		}
 	}
 
@@ -119,7 +166,7 @@ final class ReservationMailer
 	/** @param array<string, mixed> $reservation */
 	private function spayd(array $reservation): string
 	{
-		return $this->qrPayment->spayd((int) $reservation['total_price'], (string) $reservation['variable_symbol'], $this->eventName());
+		return $this->qrPayment->forReservation($reservation, $this->eventName());
 	}
 
 
@@ -133,6 +180,8 @@ final class ReservationMailer
 			'reservation' => $reservation,
 			'settings' => $this->settings->all(),
 			'account' => $this->qrPayment->account(),
+			'iban' => $this->qrPayment->iban(),
+			'link' => $this->reservationLink((int) $reservation['id'], (string) $reservation['access_token']),
 		];
 	}
 

@@ -7,10 +7,8 @@ namespace App\Tests\Model\Mail;
 use App\Model\Mail\MailMessage;
 use App\Model\Mail\MailSender;
 use App\Model\Mail\ReservationMailer;
-use App\Model\Payment\QrPayment;
 use App\Tests\DatabaseTestCase;
 use App\Tests\RecordingMailSender;
-use Nette\Bridges\ApplicationLatte\LatteFactory;
 use RuntimeException;
 use Tracy\ILogger;
 
@@ -22,7 +20,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 		$id = $this->confirmedReservation();
 		$sender = new RecordingMailSender;
 
-		self::assertTrue($this->mailer($sender)->sendConfirmation($id));
+		self::assertTrue($this->mailerFor($sender)->sendConfirmation($id));
 
 		self::assertCount(1, $sender->sent);
 		$message = $sender->sent[0];
@@ -35,6 +33,14 @@ final class ReservationMailerTest extends DatabaseTestCase
 		self::assertStringContainsString('2501895120/2010', $message->text);
 		self::assertStringContainsString('cid:qr-platba', $message->html);
 		self::assertStringStartsWith("\x89PNG", $message->inlineImages['qr-platba'] ?? '');
+
+		$token = (string) $this->db->query("SELECT access_token FROM reservations WHERE id = $id")->fetchColumn();
+		self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $token);
+		self::assertStringContainsString("/rezervace/$id/$token", $message->text, 'Link to "Moje rezervace"');
+		self::assertStringContainsString("/rezervace/$id/$token", $message->html);
+		$due = (new \DateTimeImmutable('today'))->modify('+2 days')->format('j. n. Y');
+		self::assertStringContainsString("do $due", $message->text, 'Due date = today + payment_days');
+		self::assertStringContainsString('dotazy@example.com', $message->text, 'Contact of the organizers');
 
 		$row = $this->db->query("SELECT email_sent_at, email_error FROM reservations WHERE id = $id")->fetch();
 		self::assertNotNull($row['email_sent_at']);
@@ -52,7 +58,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 			}
 		};
 
-		self::assertFalse($this->mailer($sender)->sendConfirmation($id));
+		self::assertFalse($this->mailerFor($sender)->sendConfirmation($id));
 
 		$row = $this->db->query("SELECT email_sent_at, email_error FROM reservations WHERE id = $id")->fetch();
 		self::assertNull($row['email_sent_at']);
@@ -60,7 +66,33 @@ final class ReservationMailerTest extends DatabaseTestCase
 	}
 
 
-	private function mailer(MailSender $sender): ReservationMailer
+	public function testReminderGoesOnlyToOverdueReservationsOnce(): void
+	{
+		$overdue = $this->confirmedReservation();
+		$this->db->exec("UPDATE reservations SET confirmed_at = NOW() - INTERVAL 3 DAY WHERE id = $overdue");
+		$admin = $this->reservationAdmin();
+		self::assertSame([$overdue], $admin->toRemind());
+		self::assertSame(1, $admin->problemCounts()['overdue']);
+
+		$sender = new RecordingMailSender;
+		self::assertTrue($this->mailerFor($sender)->sendReminder($overdue));
+
+		self::assertSame("Připomínka platby – rezervace č. $overdue – Testovací ples", $sender->sent[0]->subject);
+		self::assertStringContainsString("600\u{A0}Kč", $sender->sent[0]->text);
+		self::assertSame([], $admin->toRemind(), 'Reminded now: not again before another payment period');
+		self::assertContains('email.reminder_sent', $this->loggedActions());
+	}
+
+
+	public function testDueDayItselfIsNotOverdue(): void
+	{
+		$id = $this->confirmedReservation();
+		$this->db->exec("UPDATE reservations SET confirmed_at = NOW() - INTERVAL 2 DAY WHERE id = $id");
+		self::assertSame([], $this->reservationAdmin()->toRemind());
+	}
+
+
+	private function mailerFor(MailSender $sender): ReservationMailer
 	{
 		$logger = new class implements ILogger {
 			/** @var list<mixed> */
@@ -72,15 +104,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 				$this->logged[] = $value;
 			}
 		};
-		return new ReservationMailer(
-			$this->reservations(),
-			$this->settings(),
-			$sender,
-			$this->service(LatteFactory::class),
-			new QrPayment($this->settings()),
-			$logger,
-			$this->eventLog(),
-		);
+		return $this->mailer($sender, $logger);
 	}
 
 

@@ -1,0 +1,18 @@
+{layout '@layout.html.latte'}
+{varType array $reservation}
+{varType array $settings}
+{varType string $account}
+{varType string $iban}
+{varType string $qrCid}
+{varType string $link}
+
+{block content}
+<p>Dobrý den,</p>
+<p>u rezervace č. <strong>{$reservation['id']}</strong> ({$reservation['name']}) zatím evidujeme
+	{if (int) $reservation['paid_amount'] > 0}jen část platby{else}nezaplacenou částku{/if}.
+	Prosíme o zaplacení <strong>{$reservation['remaining']|price}</strong>{if $reservation['due_on']} –
+	splatnost byla {$reservation['due_on']|date:'j. n. Y'}{/if}.</p>
+{include '@payment.html.latte'}
+<p>Pokud jste už zaplatili, děkujeme a tento e-mail prosím ignorujte – přiřazení platby může trvat den nebo dva.
+	Pokud lístky nechcete, dejte nám prosím vědět, ať můžeme místa nabídnout dalším.</p>
+{/block}

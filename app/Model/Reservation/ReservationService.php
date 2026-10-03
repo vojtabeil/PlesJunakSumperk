@@ -115,7 +115,8 @@ final class ReservationService
 
 
 	/**
-	 * A finished (confirmed or paid) reservation with its seat labels.
+	 * A finished (confirmed or paid) reservation with its seat labels, the amount still to pay
+	 * (remaining) and the due date (due_on).
 	 * @return array<string, mixed>|null
 	 */
 	public function findFinished(int $id): ?array
@@ -123,13 +124,49 @@ final class ReservationService
 		$stmt = $this->db->prepare('SELECT * FROM reservations WHERE id = ? AND status IN (' . self::FinishedStatuses . ')');
 		$stmt->execute([$id]);
 		$reservation = $stmt->fetch();
-		if (!$reservation) {
-			return null;
-		}
+		return $reservation ? $this->complete($reservation) : null;
+	}
+
+
+	/**
+	 * The reservation behind the link "Moje rezervace" (also a cancelled one), or null for a wrong token.
+	 * @return array<string, mixed>|null
+	 */
+	public function findByToken(int $id, string $token): ?array
+	{
+		$stmt = $this->db->prepare("SELECT * FROM reservations WHERE id = ? AND status <> 'draft'");
+		$stmt->execute([$id]);
+		$reservation = $stmt->fetch();
+		return $reservation && $reservation['access_token'] !== null && hash_equals((string) $reservation['access_token'], $token)
+			? $this->complete($reservation)
+			: null;
+	}
+
+
+	/** Last day to pay a reservation confirmed at the given time. */
+	public function dueDate(\DateTimeInterface $confirmedAt): \DateTimeImmutable
+	{
+		return \DateTimeImmutable::createFromInterface($confirmedAt)
+			->setTime(0, 0)
+			->modify('+' . $this->settings->int('payment_days', 2) . ' days');
+	}
+
+
+	/**
+	 * @param array<string, mixed> $reservation
+	 * @return array<string, mixed>
+	 */
+	private function complete(array $reservation): array
+	{
+		$id = (int) $reservation['id'];
 		$seats = $this->db->prepare('SELECT label FROM seats WHERE reservation_id = ? ORDER BY id');
 		$seats->execute([$id]);
 		$reservation['seat_labels'] = $seats->fetchAll(PDO::FETCH_COLUMN);
 		$reservation['variable_symbol'] = $this->variableSymbol->forReservation($id);
+		$reservation['remaining'] = max(0, (int) $reservation['total_price'] - (int) $reservation['paid_amount']);
+		$reservation['due_on'] = $reservation['confirmed_at'] !== null
+			? $this->dueDate(new \DateTimeImmutable((string) $reservation['confirmed_at']))
+			: null;
 		return $reservation;
 	}
 
@@ -292,9 +329,10 @@ final class ReservationService
 			)->execute([$draftId]);
 			$this->db->prepare(
 				"UPDATE reservations
-				SET status = 'confirmed', email = ?, name = ?, phone = ?, total_price = ?, channel = ?, confirmed_at = NOW(), session_id = NULL
+				SET status = 'confirmed', email = ?, name = ?, phone = ?, total_price = ?, channel = ?,
+					access_token = ?, confirmed_at = NOW(), session_id = NULL
 				WHERE id = ?",
-			)->execute([$email, $name, $phone === '' ? null : $phone, $total, $channel, $draftId]);
+			)->execute([$email, $name, $phone === '' ? null : $phone, $total, $channel, bin2hex(random_bytes(16)), $draftId]);
 
 			$this->eventLog->record('reservation.confirmed', $draftId, [
 				'name' => $name,

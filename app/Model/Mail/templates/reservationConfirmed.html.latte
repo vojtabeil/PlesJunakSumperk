@@ -1,7 +1,12 @@
+{layout '@layout.html.latte'}
 {varType array $reservation}
 {varType array $settings}
 {varType string $account}
+{varType string $iban}
 {varType string $qrCid}
+{varType string $link}
+
+{block content}
 {var $seats = array_map(fn($label) => ($label|seatLabel), $reservation['seat_labels'])}
 {var $rows = [
 	'Číslo rezervace' => $reservation['id'],
@@ -12,32 +17,18 @@
 	'Kdy' => $settings['event_date'] ?? '',
 	'Kde' => $settings['venue'] ?? '',
 ]}
-<!DOCTYPE html>
-<html lang="cs">
-<head><meta charset="UTF-8"><title>{$settings['event_name'] ?? 'Skautský ples'}</title></head>
-<body style="margin:0;padding:24px;background:#f7f3ea;font-family:Arial,Helvetica,sans-serif;color:#1d1d1b">
-<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #ddd5c6;border-radius:10px;padding:24px">
-	<h1 style="margin:0 0 16px;font-size:24px;color:#287234">{$settings['event_name'] ?? 'Skautský ples'}</h1>
-	<p>Dobrý den,</p>
-	<p>děkujeme za rezervaci lístků. Rezervaci jsme uložili:</p>
-	<table style="border-collapse:collapse;margin:16px 0">
-		<tr n:foreach="$rows as $label => $value">
-			<td style="padding:4px 16px 4px 0;color:#5c5c57">{$label}</td>
-			<td style="padding:4px 0;font-weight:bold">{$value}</td>
-		</tr>
-	</table>
+<p>Dobrý den,</p>
+<p>děkujeme za rezervaci lístků. Rezervaci jsme uložili:</p>
+<table style="border-collapse:collapse;margin:16px 0">
+	<tr n:foreach="$rows as $label => $value">
+		<td style="padding:4px 16px 4px 0;color:#5c5c57">{$label}</td>
+		<td style="padding:4px 0;font-weight:bold">{$value}</td>
+	</tr>
+</table>
 
-	<h2 style="margin:24px 0 8px;font-size:18px;color:#287234">Platba</h2>
-	<p>Zaplaťte prosím převodem, nejjednodušeji načtením QR kódu v aplikaci své banky:</p>
-	<table style="border-collapse:collapse;margin:8px 0 16px">
-		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Částka</td><td style="padding:4px 0;font-weight:bold">{(int) $reservation['total_price']|price}</td></tr>
-		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Číslo účtu</td><td style="padding:4px 0;font-weight:bold">{$account}</td></tr>
-		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Variabilní symbol</td><td style="padding:4px 0;font-weight:bold">{$reservation['variable_symbol']}</td></tr>
-	</table>
-	<p><img src="cid:{$qrCid}" alt="QR platba" width="220" height="220" style="display:block"></p>
-	<p style="color:#5c5c57;font-size:14px">Bez správného variabilního symbolu platbu nedokážeme přiřadit. Až platba dorazí, pošleme vám potvrzení.</p>
-
-	<p>Těšíme se na vás!{if !empty($settings['organizer'])}<br>{$settings['organizer']}, organizátor{/if}</p>
-</div>
-</body>
-</html>
+<h2 style="margin:24px 0 8px;font-size:18px;color:#287234">Platba</h2>
+<p>Zaplaťte prosím převodem{if $reservation['due_on']} <strong>do {$reservation['due_on']|date:'j. n. Y'}</strong>{/if},
+	nejjednodušeji načtením QR kódu v aplikaci své banky:</p>
+{include '@payment.html.latte'}
+<p>Až platba dorazí, pošleme vám potvrzení. Lístky se netisknou – na vstupu vás najdeme na seznamu hostů.</p>
+{/block}

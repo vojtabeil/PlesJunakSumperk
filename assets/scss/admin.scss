@@ -578,6 +578,17 @@ $seat-colors: (
   margin: 0 0 1rem;
   padding-left: 1.25rem;
 
+  .form-fields {
+    display: block;
+    margin-top: 0.4rem;
+  }
+
+  .button--primary {
+    width: auto;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+  }
+
   .muted {
     display: block;
     font-size: 0.9rem;

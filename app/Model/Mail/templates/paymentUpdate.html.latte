@@ -1,26 +1,22 @@
+{layout '@layout.html.latte'}
 {varType array $reservation}
 {varType array $settings}
 {varType string $account}
+{varType string $link}
 {varType int $paid}
 {varType int $remaining}
 {varType bool $complete}
-<!DOCTYPE html>
-<html lang="cs">
-<head><meta charset="UTF-8"><title>{$settings['event_name'] ?? 'Skautský ples'}</title></head>
-<body style="margin:0;padding:24px;background:#f7f3ea;font-family:Arial,Helvetica,sans-serif;color:#1d1d1b">
-<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #ddd5c6;border-radius:10px;padding:24px">
-	<h1 style="margin:0 0 16px;font-size:24px;color:#287234">{$settings['event_name'] ?? 'Skautský ples'}</h1>
-	<p>Dobrý den,</p>
-	{if $complete}
-		<p>platbu za rezervaci č. <strong>{$reservation['id']}</strong> jsme přijali, děkujeme. Vaše lístky jsou zaplacené.</p>
-		<p>Kdy: <strong>{$settings['event_date'] ?? ''}</strong><br>Kde: <strong>{$settings['venue'] ?? ''}</strong></p>
-	{else}
-		<p>k rezervaci č. <strong>{$reservation['id']}</strong> jsme přijali platbu, celkem zatím <strong>{$paid|price}</strong>
-			z <strong>{(int) $reservation['total_price']|price}</strong>.</p>
-		<p>Doplaťte prosím <strong>{$remaining|price}</strong> na účet <strong>{$account}</strong>
-			s variabilním symbolem <strong>{$reservation['variable_symbol']}</strong>.</p>
-	{/if}
-	<p>Těšíme se na vás!{if !empty($settings['organizer'])}<br>{$settings['organizer']}, organizátor{/if}</p>
-</div>
-</body>
-</html>
+
+{block content}
+<p>Dobrý den,</p>
+{if $complete}
+	<p>platbu za rezervaci č. <strong>{$reservation['id']}</strong> jsme přijali, děkujeme. Vaše lístky jsou zaplacené.</p>
+	<p>Kdy: <strong>{$settings['event_date'] ?? ''}</strong><br>Kde: <strong>{$settings['venue'] ?? ''}</strong></p>
+	<p>Lístky se netisknou – na vstupu vás najdeme na seznamu hostů.</p>
+{else}
+	<p>k rezervaci č. <strong>{$reservation['id']}</strong> jsme přijali platbu, celkem zatím <strong>{$paid|price}</strong>
+		z <strong>{(int) $reservation['total_price']|price}</strong>.</p>
+	<p>Doplaťte prosím <strong>{$remaining|price}</strong> na účet <strong>{$account}</strong>
+		s variabilním symbolem <strong>{$reservation['variable_symbol']}</strong>. QR kód pro doplatek najdete u rezervace.</p>
+{/if}
+{/block}

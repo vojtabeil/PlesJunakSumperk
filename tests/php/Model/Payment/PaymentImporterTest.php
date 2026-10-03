@@ -241,15 +241,7 @@ final class PaymentImporterTest extends DatabaseTestCase
 				throw new \LogicException('Unexpected log: ' . (is_string($value) ? $value : get_debug_type($value)));
 			}
 		};
-		$mailer = new ReservationMailer(
-			$this->reservations(),
-			$this->settings(),
-			$this->sender,
-			$this->service(LatteFactory::class),
-			new QrPayment($this->settings()),
-			$logger,
-			$this->eventLog(),
-		);
+		$mailer = $this->mailer($this->sender, $logger);
 		return new PaymentImporter(
 			$source ?? new MockBankSource($this->db),
 			$this->matcher,

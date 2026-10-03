@@ -54,7 +54,13 @@
 				<a n:href="Reservation:default, problem: email">Neodeslané potvrzovací e-maily: <strong>{$reservationProblems['email']}</strong></a>
 			</li>
 			<li n:if="$reservationProblems['overdue']">
-				<a n:href="Reservation:default, problem: overdue">Nezaplacené déle než {=\App\Model\Reservation\ReservationAdmin::OverdueDays} dní: <strong>{$reservationProblems['overdue']}</strong></a>
+				<a n:href="Reservation:default, problem: overdue">Nezaplacené po splatnosti: <strong>{$reservationProblems['overdue']}</strong></a>
+				{if $toRemind}
+					<span class="muted">Připomínku zatím nedostalo: {$toRemind}</span>
+					{control remindForm}
+				{else}
+					<span class="muted">Všichni už připomínku dostali.</span>
+				{/if}
 			</li>
 			<li n:if="$importOverdue">Platby se déle než den nenačítaly a rezervace čekají na platbu.</li>
 		</ul>

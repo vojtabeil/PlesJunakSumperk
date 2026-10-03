@@ -21,6 +21,10 @@ INSERT INTO settings (name, value) VALUES
     ('band_url', 'https://www.luckyband.cz/'),
     ('organizer', ''),
     ('bank_account', '2501895120/2010'),
+    -- Days to pay after the reservation (shown to visitors, in the QR code, overdue in the admin).
+    ('payment_days', '2'),
+    ('contact_email', ''),
+    ('contact_phone', ''),
     ('payment_vs_prefix', '2026'),
     ('max_ticket', '10'),
     ('hold_seconds', '300'),

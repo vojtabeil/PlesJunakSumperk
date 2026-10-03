@@ -8,6 +8,7 @@ use App\Model\Mail\ReservationMailer;
 use App\Model\Payment\PaymentRepository;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationError;
+use App\Model\Reservation\ReservationService;
 use App\Presentation\Accessory\TemplateExtension;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\Attributes\Persistent;
@@ -35,6 +36,7 @@ final class ReservationPresenter extends BasePresenter
 		private readonly ReservationAdmin $reservationAdmin,
 		private readonly ReservationMailer $mailer,
 		private readonly PaymentRepository $payments,
+		private readonly ReservationService $reservations,
 	) {
 		parent::__construct();
 	}
@@ -58,6 +60,11 @@ final class ReservationPresenter extends BasePresenter
 		$this->template->reservation = $this->reservation;
 		$this->template->activity = $this->events->recent(100, (int) $this->reservation['id']);
 		$this->template->payments = $this->payments->forReservation((int) $this->reservation['id']);
+		$token = $this->reservation['access_token'] ?? null;
+		$this->template->customerLink = $token !== null ? $this->mailer->reservationLink((int) $this->reservation['id'], (string) $token) : null;
+		$this->template->dueOn = $this->reservation['confirmed_at'] !== null
+			? $this->reservations->dueDate(new \DateTimeImmutable((string) $this->reservation['confirmed_at']))
+			: null;
 	}
 
 
@@ -108,6 +115,17 @@ final class ReservationPresenter extends BasePresenter
 				throw new ReservationError('E-mail se nepodařilo odeslat, chyba je uložená u rezervace.');
 			}
 			return 'Potvrzovací e-mail byl odeslán.';
+		});
+	}
+
+
+	protected function createComponentRemindForm(): Form
+	{
+		return $this->createSimpleForm('Poslat připomínku platby', function (int $id): string {
+			if (!$this->mailer->sendReminder($id)) {
+				throw new ReservationError('Připomínku se nepodařilo odeslat (viz Log).');
+			}
+			return 'Připomínka platby byla odeslána.';
 		});
 	}
 

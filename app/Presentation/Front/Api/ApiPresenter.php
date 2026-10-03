@@ -99,9 +99,9 @@ final class ApiPresenter extends Presenter
 							($input['consent'] ?? false) === true,
 							(string) ($input['email'] ?? ''),
 						);
-						$this->reservationSession->addFinished($id);
 						$this->mailer->sendConfirmation($id);
-						$extra['redirect'] = $this->link('Done:default', ['id' => $id]);
+						$token = (string) ($this->reservations->findFinished($id)['access_token'] ?? '');
+						$extra['redirect'] = $this->link('Reservation:default', ['id' => $id, 'token' => $token, 'new' => true]);
 						break;
 					case 'cancel':
 						$this->reservations->cancel($owner);

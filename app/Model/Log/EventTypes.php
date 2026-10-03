@@ -28,6 +28,8 @@ final class EventTypes
 		'email.confirmation_failed' => ['email', 'Potvrzovací e-mail se nepodařilo odeslat'],
 		'email.payment_sent' => ['email', 'Odeslán e-mail o platbě'],
 		'email.payment_failed' => ['email', 'E-mail o platbě se nepodařilo odeslat'],
+		'email.reminder_sent' => ['email', 'Odeslána připomínka platby'],
+		'email.reminder_failed' => ['email', 'Připomínku platby se nepodařilo odeslat'],
 
 		'payment.matched' => ['payment', 'Platba přijata'],
 		'payment.partial' => ['payment', 'Přijata částečná platba'],

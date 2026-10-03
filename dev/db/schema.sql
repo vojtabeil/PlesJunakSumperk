@@ -31,6 +31,11 @@ CREATE TABLE reservations (
     note             VARCHAR(1000) NULL,
     -- Stage of the site when the reservation was started: test (tester link), vip (VIP link), public.
     channel          ENUM('test', 'vip', 'public') NOT NULL DEFAULT 'public',
+    -- Secret of the link "Moje rezervace" (/rezervace/<id>/<token>) sent in the e-mails.
+    access_token     CHAR(32) NULL,
+    -- Last payment reminder (sent by hand from the administration).
+    reminded_at      DATETIME NULL,
+    UNIQUE KEY uq_reservations_token (access_token),
     -- The draft of a browser, looked up on every API call. (No index on email: it is only
     -- searched with LIKE '%...%' in the administration, and the table stays small.)
     KEY ix_reservations_session (session_id)

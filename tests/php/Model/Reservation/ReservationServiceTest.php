@@ -46,6 +46,22 @@ final class ReservationServiceTest extends DatabaseTestCase
 	}
 
 
+	public function testReservationIsFoundOnlyWithItsToken(): void
+	{
+		$service = $this->reservations();
+		$service->hold(self::Alice, 101);
+		$id = $service->confirm(self::Alice, 'Alice Nováková', '', true, 'alice@example.com');
+		$token = (string) $service->findFinished($id)['access_token'];
+
+		$found = $service->findByToken($id, $token);
+		self::assertSame('Alice Nováková', $found['name'] ?? null);
+		self::assertSame(350, $found['remaining'] ?? null);
+		self::assertEquals((new \DateTimeImmutable('today'))->modify('+2 days'), $found['due_on'] ?? null);
+		self::assertNull($service->findByToken($id, str_repeat('0', 32)));
+		self::assertNull($service->findByToken($id + 1, $token));
+	}
+
+
 	public function testExtendRestartsTheHold(): void
 	{
 		$service = $this->reservations();

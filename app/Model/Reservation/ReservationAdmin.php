@@ -72,10 +72,8 @@ final class ReservationAdmin
 	/** Problem filters of the reservation list (key => Czech label). */
 	public const Problems = [
 		'email' => 'Neodeslaný potvrzovací e-mail',
-		'overdue' => 'Nezaplacené déle než ' . self::OverdueDays . ' dní',
+		'overdue' => 'Nezaplacené po splatnosti',
 	];
-
-	public const OverdueDays = 7;
 
 
 	/**
@@ -91,7 +89,7 @@ final class ReservationAdmin
 			$params[] = $status;
 		}
 		if ($problem !== null && isset(self::Problems[$problem])) {
-			$where[] = self::problemCondition($problem);
+			$where[] = $this->problemCondition($problem);
 		}
 		$query = trim($query);
 		if ($query !== '') {
@@ -118,7 +116,7 @@ final class ReservationAdmin
 		$counts = [];
 		foreach (array_keys(self::Problems) as $problem) {
 			$counts[$problem] = (int) $this->db->query(
-				'SELECT COUNT(*) FROM reservations r WHERE ' . self::problemCondition($problem),
+				'SELECT COUNT(*) FROM reservations r WHERE ' . $this->problemCondition($problem),
 			)->fetchColumn();
 		}
 		return $counts;
@@ -154,11 +152,35 @@ final class ReservationAdmin
 	}
 
 
-	private static function problemCondition(string $problem): string
+	/**
+	 * Overdue reservations that have not been reminded since their due date (or for another
+	 * payment period since the last reminder).
+	 * @return list<int>
+	 */
+	public function toRemind(): array
 	{
+		$days = $this->settings->int('payment_days', 2);
+		return array_map('intval', $this->db->query(
+			'SELECT r.id FROM reservations r WHERE ' . $this->problemCondition('overdue') . "
+				AND (r.reminded_at IS NULL OR r.reminded_at < NOW() - INTERVAL $days DAY)
+			ORDER BY r.id",
+		)->fetchAll(PDO::FETCH_COLUMN));
+	}
+
+
+	public function markReminded(int $id): void
+	{
+		$this->db->prepare('UPDATE reservations SET reminded_at = NOW() WHERE id = ?')->execute([$id]);
+	}
+
+
+	private function problemCondition(string $problem): string
+	{
+		$days = $this->settings->int('payment_days', 2);
 		return match ($problem) {
 			'email' => "r.status IN ('confirmed', 'partially_paid', 'paid') AND r.email_sent_at IS NULL",
-			'overdue' => "r.status IN ('confirmed', 'partially_paid') AND r.confirmed_at < NOW() - INTERVAL " . self::OverdueDays . ' DAY',
+			// Overdue = the due date (day of the reservation + payment_days) has passed.
+			'overdue' => "r.status IN ('confirmed', 'partially_paid') AND DATE(r.confirmed_at) + INTERVAL $days DAY < CURDATE()",
 			default => throw new \InvalidArgumentException("Unknown problem '$problem'."),
 		};
 	}

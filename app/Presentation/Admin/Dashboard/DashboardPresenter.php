@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Dashboard;
 
+use App\Model\Mail\ReservationMailer;
 use App\Model\Payment\PaymentImporter;
 use App\Model\Payment\PaymentRepository;
 use App\Model\Reservation\ReservationAdmin;
@@ -14,6 +15,7 @@ use App\Presentation\Accessory\PieChart;
 use App\Presentation\Admin\BasePresenter;
 use App\Presentation\Admin\ImportPaymentsForm;
 use Nette\Application\Attributes\Persistent;
+use Nette\Application\UI\Form;
 
 
 /**
@@ -40,6 +42,7 @@ final class DashboardPresenter extends BasePresenter
 		private readonly Settings $settings,
 		private readonly PaymentRepository $payments,
 		private readonly PaymentImporter $importer,
+		private readonly ReservationMailer $mailer,
 	) {
 		parent::__construct();
 	}
@@ -62,9 +65,27 @@ final class DashboardPresenter extends BasePresenter
 		$t->seatFilter = $filter;
 		$t->paymentProblems = $this->payments->problemCount();
 		$t->reservationProblems = $this->reservationAdmin->problemCounts();
+		$t->toRemind = count($this->reservationAdmin->toRemind());
 		$t->lastImportAt = $this->importer->lastImportAt();
 		// Without a cron job someone has to press the button; remind when payments are waiting.
 		$t->importOverdue = $this->importer->isStale() && ($stats['confirmed'] + $stats['partially_paid']) > 0;
+	}
+
+
+	/** Reminder e-mail to everybody who has not paid after the due date (and was not reminded lately). */
+	protected function createComponentRemindForm(): Form
+	{
+		$form = $this->formFactory->create();
+		$form->addSubmit('send', 'Poslat připomínku platby');
+		$form->onSuccess[] = function (): void {
+			$sent = $failed = 0;
+			foreach ($this->reservationAdmin->toRemind() as $id) {
+				$this->mailer->sendReminder($id) ? $sent++ : $failed++;
+			}
+			$this->flashMessage("Připomínka odeslána: $sent" . ($failed ? ", nepodařilo se: $failed (viz Log)" : '') . '.', $failed ? 'error' : 'success');
+			$this->redirect('this');
+		};
+		return $form;
 	}
 
 

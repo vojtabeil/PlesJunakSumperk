@@ -27,7 +27,7 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | Path | Purpose |
 |---|---|
 | `app/Bootstrap.php` | Nette configurator (debug mode only on localhost, Tracy logs in `var/log`). |
-| `app/Core/RouterFactory.php` | Routes: `/` reservation, `/hotovo/<id>` confirmation, `/api/<op>` JSON, `/tester/<token>` and `/vip/<token>` secret links, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`. |
+| `app/Core/RouterFactory.php` | Routes: `/` reservation, `/rezervace/<id>/<token>` "Moje rezervace" (secret link from the e-mails), `/api/<op>` JSON, `/tester/<token>` and `/vip/<token>` secret links, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`. |
 | `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout + per-request DB check (`Authenticator` as `IdentityHandler`), `SetupConfig`. |
 | `app/Core/SetupGuard.php` | No administrator = site not configured: every presenter except the setup wizard is disabled (pages redirect, API 503). |
 | `app/Model/Payment/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, `Fio/FioApiSource` in production, chosen by `bank.driver`; both `RewindableSource`), `PaymentImporter` (fetch -> store -> match -> e-mail; manual button or cron), `PaymentMatcher` (partial payments add up), `VariableSymbol` (VS = prefix + id, e.g. 20260003), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
@@ -102,7 +102,7 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   a deleted account or a changed password (`session_version`) logs the user out everywhere.
   After changing one's own account, re-login with `Authenticator::identity()`.
 - Deny by default: `tests/php/Presentation/PresenterAccessTest` fails for any presenter that is
-  reachable without login and not on its allowlist. Public by design: Front (Home, Done, Api, Access),
+  reachable without login and not on its allowlist. Public by design: Front (Home, Reservation, Api, Access),
   Error, Admin Sign/Setup and `Dev:*` (debug mode only; must be excluded from the release build).
 - Admin: every presenter extends `Admin\BasePresenter` (login required unless `isPublic()`).
   State changes go only through POST forms from `FormFactory` (CSRF token) - never GET links -
@@ -132,10 +132,16 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   (`page_<stage>` settings, HTML written by organizers and printed unescaped - trusted content).
   The API answers 503; `ReservationService` also refuses changes when the stage does not sell.
   Reservations store their `channel` (test/vip/public); test ones are left out of the guest list
-  and can be deleted. The Done page (payment details) works in every stage.
+  and can be deleted. "Moje rezervace" (payment details) works in every stage.
 - Database data files: `dev/db/schema.sql` + `defaults.sql` + `hall.sql` are also the production
   installation; `seed.sql` is local test data only.
 - Do not depend on `bcmath` (may be missing on the hosting).
+- Every finished reservation has `access_token`: the page "Moje rezervace" (status, payment, QR)
+  is reachable only with it and every e-mail links to it (`ReservationMailer::reservationLink`,
+  absolute URL from the current request; tests set `HTTP_HOST`).
+- Payment is due `payment_days` (setting, default 2) after the reservation day: shown to the
+  customer, put into the QR code (DT), "overdue" in the admin; reminders are sent by hand from the
+  dashboard or the reservation detail (no cron), at most once per payment period.
 - E-mails are sent after the reservation is committed; a failure is logged and stored in
   `reservations.email_error`, it never rolls back the reservation.
 - POST requests to `/api/*` require the `X-CSRF-Token` header (token printed into the page).

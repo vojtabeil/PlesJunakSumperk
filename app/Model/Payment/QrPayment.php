@@ -55,19 +55,44 @@ final class QrPayment
 	}
 
 
-	public function spayd(int $amountCzk, string $variableSymbol, string $message): string
+	/** IBAN of the account, grouped by four for people ("CZ65 0800 ..."). */
+	public function iban(): string
+	{
+		return trim(chunk_split(self::czechAccountToIban($this->account()), 4, ' '));
+	}
+
+
+	/** @param \DateTimeInterface|null $dueDate shown by banks as the payment date (DT) */
+	public function spayd(int $amountCzk, string $variableSymbol, string $message, ?\DateTimeInterface $dueDate = null): string
 	{
 		$message = Strings::upper(Strings::toAscii($message));
 		$message = Strings::truncate(str_replace('*', '', $message), 60, '');
-		return implode('*', [
+		return implode('*', array_filter([
 			'SPD',
 			'1.0',
 			'ACC:' . self::czechAccountToIban($this->account()),
 			'AM:' . number_format($amountCzk, 2, '.', ''),
 			'CC:CZK',
+			$dueDate !== null && $dueDate > new \DateTimeImmutable('today') ? 'DT:' . $dueDate->format('Ymd') : null,
 			'X-VS:' . $variableSymbol,
 			'MSG:' . $message,
-		]);
+		]));
+	}
+
+
+	/**
+	 * Payment of what is still to pay for a reservation (from ReservationService::findFinished),
+	 * with its due date and "<event> - <name>" as the message for the organizers.
+	 * @param array<string, mixed> $reservation
+	 */
+	public function forReservation(array $reservation, string $eventName): string
+	{
+		return $this->spayd(
+			(int) $reservation['remaining'],
+			(string) $reservation['variable_symbol'],
+			trim($eventName . ' - ' . ($reservation['name'] ?? '')),
+			$reservation['due_on'] ?? null,
+		);
 	}
 
 
