@@ -89,6 +89,9 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
 - Reservation rules live only in `ReservationService`; the browser renders server state.
   Mutations lock the draft reservation row in a transaction; seat holds use atomic
   `UPDATE ... WHERE state = 'free'`. Draft ownership is a random key from `ReservationSession`.
+- One e-mail may have several reservations. The public API must never look up reservations by
+  e-mail or answer differently depending on other people's data (no enumeration, no takeover);
+  a draft belongs only to the browser that created it.
 - User-facing errors are thrown as `ReservationError` with a Czech message.
 - First run: with an empty `admin_users` the site is off and `/admin/setup` asks for the setup
   password (`setup.password`, default `skaut-sumperk`) and creates the first administrator.

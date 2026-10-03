@@ -144,7 +144,12 @@ final class ReservationService
 	}
 
 
-	/** Creates or resumes the draft reservation for an e-mail (one reservation per e-mail). */
+	/**
+	 * Starts this browser's draft reservation, or changes its e-mail (held seats are kept).
+	 * One e-mail may have any number of reservations. Other reservations are never looked up
+	 * by e-mail, so the answer reveals nothing about them and nobody can take over a draft
+	 * of another browser.
+	 */
 	public function start(string $owner, string $email): void
 	{
 		$this->assertSaleOpen();
@@ -155,29 +160,13 @@ final class ReservationService
 
 		$this->transaction(function () use ($owner, $email): void {
 			$current = $this->currentDraft($owner, lock: true);
-			if ($current !== null && $current['email'] !== $email) {
-				$this->abandonDraft((int) $current['id']);
-			}
-
-			$stmt = $this->db->prepare('SELECT * FROM reservations WHERE email = ? FOR UPDATE');
-			$stmt->execute([$email]);
-			$existing = $stmt->fetch();
-
-			if (!$existing) {
-				$this->db->prepare('INSERT INTO reservations (email, session_id) VALUES (?, ?)')
-					->execute([$email, $owner]);
+			if ($current !== null) {
+				$this->db->prepare('UPDATE reservations SET email = ? WHERE id = ?')
+					->execute([$email, $current['id']]);
 				return;
 			}
-			if (in_array($existing['status'], ['confirmed', 'partially_paid', 'paid'], true)) {
-				throw new ReservationError('Na tento e-mail už rezervace existuje. Pro změnu kontaktujte organizátora.');
-			}
-			if ($existing['session_id'] !== $owner) {
-				// Draft left in another browser (or cancelled): take it over with a clean slate.
-				$this->releaseHolds((int) $existing['id']);
-				$this->db->prepare(
-					"UPDATE reservations SET status = 'draft', session_id = ?, standing_tickets = 0 WHERE id = ?",
-				)->execute([$owner, $existing['id']]);
-			}
+			$this->db->prepare('INSERT INTO reservations (email, session_id) VALUES (?, ?)')
+				->execute([$email, $owner]);
 		});
 	}
 

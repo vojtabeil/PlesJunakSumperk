@@ -7,8 +7,9 @@ CREATE TABLE settings (
     value VARCHAR(1000) NOT NULL
 ) ENGINE=InnoDB;
 
--- One reservation per e-mail (the original site refused a second one).
--- A draft is bound to the PHP session that created it; id is the payment variable symbol.
+-- Reservations. One e-mail may have several (e.g. tickets bought for different groups).
+-- A draft is bound to the browser (owner key in session_id) that created it and is never looked
+-- up by e-mail, so the public API reveals nothing about other people's reservations.
 CREATE TABLE reservations (
     id               INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     email            VARCHAR(255) NOT NULL,
@@ -26,7 +27,7 @@ CREATE TABLE reservations (
     paid_at          DATETIME NULL,
     paid_amount      DECIMAL(12, 2) NOT NULL DEFAULT 0,
     note             VARCHAR(1000) NULL,
-    UNIQUE KEY uq_reservations_email (email),
+    KEY ix_reservations_email (email),
     KEY ix_reservations_session (session_id)
 ) ENGINE=InnoDB;
 

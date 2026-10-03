@@ -62,7 +62,9 @@ only treated as free by the client.
 
 Same user flow, but all rules live on the server:
 
-1. Enter e-mail -> `start` creates or resumes a draft reservation bound to the session.
+1. Enter e-mail -> `start` creates the browser's draft reservation (or changes its e-mail).
+   Unlike the original, one e-mail may have several reservations and the answer never depends
+   on other reservations (the original revealed whether an e-mail had already booked).
 2. Click seats -> `hold` / `release`. Holds are atomic `UPDATE ... WHERE state = 'free'`,
    expire after `hold_seconds` since the last change, and are cleaned up on every request.
 3. Choose standing tickets -> `standing`. Limit: `max_ticket` per reservation,

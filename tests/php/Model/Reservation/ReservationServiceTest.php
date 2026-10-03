@@ -131,31 +131,61 @@ final class ReservationServiceTest extends DatabaseTestCase
 	}
 
 
-	public function testAllowsOnlyOneFinishedReservationPerEmail(): void
+	public function testOneEmailCanHaveMoreReservations(): void
 	{
 		$service = $this->reservations();
 		$service->start(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
-		$service->confirm(self::Alice, 'Alice Nováková', '', true);
+		$first = $service->confirm(self::Alice, 'Alice Nováková', '', true);
 
-		$this->expectExceptionObject(new ReservationError('Na tento e-mail už rezervace existuje. Pro změnu kontaktujte organizátora.'));
-		$service->start(self::Bob, 'alice@example.com');
+		// Same person again from the same browser, and a third one from another browser.
+		$service->start(self::Alice, 'alice@example.com');
+		$service->hold(self::Alice, 102);
+		$second = $service->confirm(self::Alice, 'Alice Nováková', '', true);
+		$service->start(self::Bob, 'Alice@Example.com');
+		$service->hold(self::Bob, 103);
+		$third = $service->confirm(self::Bob, 'Alice pro rodiče', '', true);
+
+		self::assertCount(3, array_unique([$first, $second, $third]));
+		self::assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM reservations WHERE email = 'alice@example.com'")->fetchColumn());
 	}
 
 
-	public function testAnotherBrowserTakesOverDraftAndItsSeatsAreReleased(): void
+	public function testEmailOfAnotherReservationRevealsAndChangesNothing(): void
 	{
 		$service = $this->reservations();
 		$service->start(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 		$service->setStanding(self::Alice, 2);
+		$service->start('owner-carol', 'carol@example.com');
+		$service->hold('owner-carol', 201);
+		$service->confirm('owner-carol', 'Carol Test', '', true);
 
+		// Bob types the e-mails of Alice (draft) and Carol (confirmed): same answer as for anyone.
 		$service->start(self::Bob, 'alice@example.com');
+		$service->start(self::Bob, 'carol@example.com');
 
-		self::assertNull($service->state(self::Alice)['reservation']);
+		$alice = $service->state(self::Alice);
+		self::assertSame([101], $alice['mine'], "Alice's draft and held seat are untouched");
+		self::assertSame(2, $alice['reservation']['standing']);
 		$bob = $service->state(self::Bob);
+		self::assertSame('carol@example.com', $bob['reservation']['email']);
+		self::assertSame([], $bob['mine']);
 		self::assertSame(0, $bob['reservation']['standing']);
-		self::assertSame([], $bob['taken'], 'Seat 101 is free again');
+	}
+
+
+	public function testChangingEmailKeepsTheHeldSeats(): void
+	{
+		$service = $this->reservations();
+		$service->start(self::Alice, 'alice@example.com');
+		$service->hold(self::Alice, 101);
+
+		$service->start(self::Alice, 'alice.novakova@example.com');
+
+		$state = $service->state(self::Alice);
+		self::assertSame('alice.novakova@example.com', $state['reservation']['email']);
+		self::assertSame([101], $state['mine']);
 	}
 
 

@@ -67,7 +67,7 @@ export function createStore(api: ApiCall, navigate: (url: string) => void) {
     message,
     show,
     refresh,
-    start: (email: string) => run('start', { email }, 'E-mail ověřen. Vyberte místa nebo lístky bez místenky.'),
+    start: (email: string) => run('start', { email }, 'Vyberte místa nebo lístky bez místenky.'),
     toggleSeat: (seatId: number) =>
       run(state.value?.mine.includes(seatId) ? 'release' : 'hold', { seat_id: seatId }),
     setStanding: (count: number) => run('standing', { count }),
