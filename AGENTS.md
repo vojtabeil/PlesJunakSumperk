@@ -22,7 +22,9 @@ lebedahosting.cz (skautIS login), support at podpora@skaut.cz.
 
 | Path | Purpose |
 |---|---|
-| `public/` | Web root (document root on the server). |
+| `public/` | Web root (document root on the server): `index.php` (reservation page), `api.php` (JSON API), `done.php` (confirmation), `status.php` (diagnostics, debug only), `assets/`. |
+| `src/` | PHP code outside the web root: `bootstrap.php` (config, DB, session, helpers), `ReservationService.php` (all reservation rules), `layout.php` (page frame). |
+| `docs/legacy-backend.md` | Reconstruction of the original PHP backend and how the new code maps to it. |
 | `config.example.php` | Config template; copied to `config.local.php` (git-ignored). |
 | `dev/` | Local development environment scripts. |
 | `dev/db/schema.sql`, `dev/db/seed.sql` | Database schema and local test data. |
@@ -50,6 +52,12 @@ All scripts are safe to run repeatedly. Tool versions and checksums live in
 - Code must work on both local MariaDB 11.8 and production MySQL 8; avoid
   vendor-specific SQL.
 - Database access via PDO with prepared statements; charset `utf8mb4`.
+- Reservation rules (limits, hold expiry, capacity) live only in `ReservationService`;
+  the browser just renders server state. Mutations go through a transaction that
+  locks the draft reservation row; seat holds use atomic `UPDATE ... WHERE state = 'free'`.
+- User-facing errors are thrown as `ReservationError` with a Czech message.
+- POST requests to `api.php` require the `X-CSRF-Token` header.
+- Event info, prices and limits are rows in the `settings` table, not code.
 - Database schema changes go to `dev/db/schema.sql` and must stay re-runnable
   through `init-db.cmd`.
 - In PowerShell 5.1, native program arguments lose embedded double quotes, and

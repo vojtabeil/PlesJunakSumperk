@@ -1,0 +1,2 @@
+# Source files must never be served directly (in case src/ ends up inside the web root).
+Require all denied
