@@ -50,8 +50,10 @@ export interface PickerData {
   maxTickets: number;
 }
 
+/** The draft of this browser; it starts with the first chosen ticket. */
 export interface ReservationState {
-  email: string;
+  /** Null until the visitor fills in the confirmation form. */
+  email: string | null;
   standing: number;
   seats: { id: number; label: string }[];
   /** Seconds until held seats are released; null when nothing is held. */
@@ -75,6 +77,8 @@ export type ApiResponse =
   | { ok: true; state: ApiState; redirect?: string }
   | { ok: false; error: string; state?: ApiState | null };
 
-export type Operation = 'state' | 'start' | 'hold' | 'release' | 'standing' | 'confirm' | 'cancel';
+export type Operation = 'state' | 'hold' | 'release' | 'standing' | 'extend' | 'confirm' | 'cancel';
 
 export type SeatStatus = 'free' | 'mine' | 'taken';
+
+export type Direction = 'left' | 'right' | 'up' | 'down';

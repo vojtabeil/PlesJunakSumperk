@@ -16,23 +16,62 @@ final class ReservationServiceTest extends DatabaseTestCase
 
 	public function testRejectsInvalidEmail(): void
 	{
-		$this->expectExceptionObject(new ReservationError('Zadejte platný e-mail.'));
-		$this->reservations()->start(self::Alice, 'not-an-email');
+		$this->expectExceptionObject(new ReservationError('Zadejte e-mail ve tvaru jmeno@example.cz.'));
+		$this->reservations()->setEmail(self::Alice, 'not-an-email');
 	}
 
 
-	public function testRequiresEmailBeforeHolding(): void
+	public function testFirstSeatStartsTheDraftAndTheEmailComesWithTheConfirmation(): void
 	{
-		$this->expectExceptionObject(new ReservationError('Nejdřív zadejte svůj e-mail.'));
-		$this->reservations()->hold(self::Alice, 101);
+		$service = $this->reservations();
+		$service->hold(self::Alice, 101);
+		self::assertSame([101], $service->state(self::Alice)['mine']);
+		self::assertNull($service->state(self::Alice)['reservation']['email']);
+
+		try {
+			$service->confirm(self::Alice, 'Alice Nováková', '', true);
+			self::fail('An e-mail is required');
+		} catch (ReservationError $e) {
+			self::assertSame('Zadejte svůj e-mail.', $e->getMessage());
+		}
+		try {
+			$service->confirm(self::Alice, 'Alice Nováková', '', true, 'alice@');
+			self::fail('The e-mail is validated');
+		} catch (ReservationError $e) {
+			self::assertSame('Zadejte e-mail ve tvaru jmeno@example.cz.', $e->getMessage());
+		}
+
+		$id = $service->confirm(self::Alice, 'Alice Nováková', '', true, ' Alice@Example.com ');
+		self::assertSame('alice@example.com', $this->db->query("SELECT email FROM reservations WHERE id = $id")->fetchColumn());
+	}
+
+
+	public function testExtendRestartsTheHold(): void
+	{
+		$service = $this->reservations();
+		$service->hold(self::Alice, 101);
+		$this->db->exec("UPDATE seats SET booked_at = NOW() - INTERVAL 100 SECOND WHERE id = 101");
+		self::assertSame(20, $service->state(self::Alice)['reservation']['expires_in']);
+
+		$service->extend(self::Alice);
+		$service->extend(self::Bob); // no draft: nothing happens
+
+		self::assertSame(120, $service->state(self::Alice)['reservation']['expires_in']);
+	}
+
+
+	public function testConfirmWithoutTicketsIsRejected(): void
+	{
+		$this->expectExceptionObject(new ReservationError('Nejdřív vyberte místa nebo lístky bez místenky.'));
+		$this->reservations()->confirm(self::Alice, 'Alice Nováková', '', true, 'alice@example.com');
 	}
 
 
 	public function testHoldsSeatOnlyForTheFirstOwner(): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'Alice@Example.com');
-		$service->start(self::Bob, 'bob@example.com');
+		$service->setEmail(self::Alice, 'Alice@Example.com');
+		$service->setEmail(self::Bob, 'bob@example.com');
 		$service->hold(self::Alice, 101);
 
 		$alice = $service->state(self::Alice);
@@ -53,7 +92,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 	{
 		$this->setSettings(['max_ticket' => '3']);
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 		$service->setStanding(self::Alice, 2);
 
@@ -65,7 +104,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 	public function testReleasesExpiredHolds(): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 		$this->db->exec('UPDATE seats SET booked_at = NOW() - INTERVAL 121 SECOND');
 
@@ -80,7 +119,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 	public function testConfirmReservesSeatsAndComputesPrice(): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 		$service->hold(self::Alice, 102);
 		$service->setStanding(self::Alice, 1);
@@ -113,7 +152,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 	public function testValidatesConfirmation(string $name, string $phone, bool $consent, string $error): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 
 		$this->expectExceptionObject(new ReservationError($error));
@@ -124,7 +163,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 	public function testRejectsEmptyConfirmation(): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 
 		$this->expectExceptionObject(new ReservationError('Vyberte alespoň jeden lístek. Pokud jste místa vybrali dříve, mohla vypršet.'));
 		$service->confirm(self::Alice, 'Alice Nováková', '', true);
@@ -134,15 +173,15 @@ final class ReservationServiceTest extends DatabaseTestCase
 	public function testOneEmailCanHaveMoreReservations(): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 		$first = $service->confirm(self::Alice, 'Alice Nováková', '', true);
 
 		// Same person again from the same browser, and a third one from another browser.
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 102);
 		$second = $service->confirm(self::Alice, 'Alice Nováková', '', true);
-		$service->start(self::Bob, 'Alice@Example.com');
+		$service->setEmail(self::Bob, 'Alice@Example.com');
 		$service->hold(self::Bob, 103);
 		$third = $service->confirm(self::Bob, 'Alice pro rodiče', '', true);
 
@@ -154,16 +193,16 @@ final class ReservationServiceTest extends DatabaseTestCase
 	public function testEmailOfAnotherReservationRevealsAndChangesNothing(): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 		$service->setStanding(self::Alice, 2);
-		$service->start('owner-carol', 'carol@example.com');
+		$service->setEmail('owner-carol', 'carol@example.com');
 		$service->hold('owner-carol', 201);
 		$service->confirm('owner-carol', 'Carol Test', '', true);
 
 		// Bob types the e-mails of Alice (draft) and Carol (confirmed): same answer as for anyone.
-		$service->start(self::Bob, 'alice@example.com');
-		$service->start(self::Bob, 'carol@example.com');
+		$service->setEmail(self::Bob, 'alice@example.com');
+		$service->setEmail(self::Bob, 'carol@example.com');
 
 		$alice = $service->state(self::Alice);
 		self::assertSame([101], $alice['mine'], "Alice's draft and held seat are untouched");
@@ -178,10 +217,10 @@ final class ReservationServiceTest extends DatabaseTestCase
 	public function testChangingEmailKeepsTheHeldSeats(): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 
-		$service->start(self::Alice, 'alice.novakova@example.com');
+		$service->setEmail(self::Alice, 'alice.novakova@example.com');
 
 		$state = $service->state(self::Alice);
 		self::assertSame('alice.novakova@example.com', $state['reservation']['email']);
@@ -193,11 +232,11 @@ final class ReservationServiceTest extends DatabaseTestCase
 	{
 		$this->setSettings(['standing_capacity' => '2']);
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->setStanding(self::Alice, 2);
 		$service->confirm(self::Alice, 'Alice Nováková', '', true);
 
-		$service->start(self::Bob, 'bob@example.com');
+		$service->setEmail(self::Bob, 'bob@example.com');
 		$this->expectExceptionObject(new ReservationError('Lístky bez místenky jsou vyprodané.'));
 		$service->setStanding(self::Bob, 1);
 	}
@@ -207,14 +246,14 @@ final class ReservationServiceTest extends DatabaseTestCase
 	{
 		$this->setSettings(['site_mode' => 'closed']);
 		$this->expectExceptionObject(new ReservationError('Prodej lístků je ukončený.'));
-		$this->reservations()->start(self::Alice, 'alice@example.com');
+		$this->reservations()->setEmail(self::Alice, 'alice@example.com');
 	}
 
 
 	public function testCancelReleasesSeats(): void
 	{
 		$service = $this->reservations();
-		$service->start(self::Alice, 'alice@example.com');
+		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
 
 		$service->cancel(self::Alice);

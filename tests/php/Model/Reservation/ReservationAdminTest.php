@@ -76,7 +76,7 @@ final class ReservationAdminTest extends DatabaseTestCase
 		self::assertSame([], $this->admin->get($id)['seats'] ?? null);
 		self::assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM seats WHERE state <> 'free'")->fetchColumn());
 
-		$this->reservations()->start('owner-new', 'alice@example.com');
+		$this->reservations()->setEmail('owner-new', 'alice@example.com');
 		self::assertSame('alice@example.com', $this->reservations()->state('owner-new')['reservation']['email']);
 	}
 
@@ -199,7 +199,7 @@ final class ReservationAdminTest extends DatabaseTestCase
 	{
 		$service = $this->reservations();
 		$owner = 'owner-' . $email;
-		$service->start($owner, $email);
+		$service->setEmail($owner, $email);
 		foreach ($seats as $seat) {
 			$service->hold($owner, $seat);
 		}

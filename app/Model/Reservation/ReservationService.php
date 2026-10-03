@@ -147,40 +147,28 @@ final class ReservationService
 
 
 	/**
-	 * Starts this browser's draft reservation, or changes its e-mail (held seats are kept).
+	 * Sets the e-mail of this browser's draft (creates the draft when there is none).
 	 * One e-mail may have any number of reservations. Other reservations are never looked up
 	 * by e-mail, so the answer reveals nothing about them and nobody can take over a draft
 	 * of another browser.
 	 */
-	public function start(string $owner, string $email): void
+	public function setEmail(string $owner, string $email): void
 	{
 		$this->assertSaleOpen();
-		$email = mb_strtolower(trim($email));
-		if (strlen($email) > 255 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-			throw new ReservationError('Zadejte platný e-mail.');
-		}
-
+		$email = self::validEmail($email);
 		$this->transaction(function () use ($owner, $email): void {
-			$current = $this->currentDraft($owner, lock: true);
-			if ($current !== null) {
-				$this->db->prepare('UPDATE reservations SET email = ? WHERE id = ?')
-					->execute([$email, $current['id']]);
-				return;
-			}
-			// Who may buy in the current stage is checked by the entry point (VisitorGate);
-			// the stage decides the channel (test / vip / public).
-			$this->db->prepare('INSERT INTO reservations (email, session_id, channel) VALUES (?, ?, ?)')
-				->execute([$email, $owner, $this->settings->mode()->channel()]);
+			$draft = $this->draft($owner);
+			$this->db->prepare('UPDATE reservations SET email = ? WHERE id = ?')->execute([$email, $draft['id']]);
 		});
 	}
 
 
-	/** Temporarily holds a seat for the current draft. */
+	/** Temporarily holds a seat; the first chosen ticket starts the draft of this browser. */
 	public function hold(string $owner, int $seatId): void
 	{
 		$this->assertSaleOpen();
 		$this->transaction(function () use ($owner, $seatId): void {
-			$draft = $this->requireDraft($owner);
+			$draft = $this->draft($owner);
 			$draftId = (int) $draft['id'];
 			$held = $this->heldSeatIds($draftId);
 			if (in_array($seatId, $held, true)) {
@@ -223,7 +211,7 @@ final class ReservationService
 	{
 		$this->assertSaleOpen();
 		$this->transaction(function () use ($owner, $count): void {
-			$draft = $this->requireDraft($owner);
+			$draft = $this->draft($owner);
 			$draftId = (int) $draft['id'];
 			$current = (int) $draft['standing_tickets'];
 			$max = $this->settings->int('max_ticket', 10);
@@ -245,10 +233,27 @@ final class ReservationService
 	}
 
 
-	/** Turns the draft into a binding reservation. Returns the reservation id. */
-	public function confirm(string $owner, string $name, string $phone, bool $consent): int
+	/** The visitor is still filling in the form: the chosen seats are held for another hold period. */
+	public function extend(string $owner): void
 	{
 		$this->assertSaleOpen();
+		$this->transaction(function () use ($owner): void {
+			$draft = $this->currentDraft($owner, lock: true);
+			if ($draft !== null) {
+				$this->refreshHolds((int) $draft['id']);
+			}
+		});
+	}
+
+
+	/**
+	 * Turns the draft into a binding reservation. Returns the reservation id.
+	 * @param string|null $email null = keep the e-mail set before (setEmail)
+	 */
+	public function confirm(string $owner, string $name, string $phone, bool $consent, ?string $email = null): int
+	{
+		$this->assertSaleOpen();
+		$email = $email !== null ? self::validEmail($email) : null;
 		$name = trim((string) preg_replace('/\s+/u', ' ', $name));
 		$phone = trim($phone);
 		if (mb_strlen($name) < 3 || mb_strlen($name) > 255) {
@@ -261,12 +266,13 @@ final class ReservationService
 			throw new ReservationError('Pro rezervaci je potřeba souhlas se zpracováním osobních údajů.');
 		}
 
-		return $this->transaction(function () use ($owner, $name, $phone): int {
+		return $this->transaction(function () use ($owner, $name, $phone, $email): int {
 			// Serializes confirmations so the standing capacity cannot be oversold.
 			$this->db->query("SELECT value FROM settings WHERE name = 'standing_capacity' FOR UPDATE")->fetch();
 
 			$draft = $this->requireDraft($owner);
 			$draftId = (int) $draft['id'];
+			$email ??= $draft['email'] ?? throw new ReservationError('Zadejte svůj e-mail.');
 			$seats = count($this->heldSeatIds($draftId));
 			$standing = (int) $draft['standing_tickets'];
 
@@ -286,13 +292,13 @@ final class ReservationService
 			)->execute([$draftId]);
 			$this->db->prepare(
 				"UPDATE reservations
-				SET status = 'confirmed', name = ?, phone = ?, total_price = ?, channel = ?, confirmed_at = NOW(), session_id = NULL
+				SET status = 'confirmed', email = ?, name = ?, phone = ?, total_price = ?, channel = ?, confirmed_at = NOW(), session_id = NULL
 				WHERE id = ?",
-			)->execute([$name, $phone === '' ? null : $phone, $total, $channel, $draftId]);
+			)->execute([$email, $name, $phone === '' ? null : $phone, $total, $channel, $draftId]);
 
 			$this->eventLog->record('reservation.confirmed', $draftId, [
 				'name' => $name,
-				'email' => $draft['email'],
+				'email' => $email,
 				'tickets' => $seats + $standing,
 				'standing' => $standing,
 				'total' => $total,
@@ -358,7 +364,34 @@ final class ReservationService
 	private function requireDraft(string $owner): array
 	{
 		return $this->currentDraft($owner, lock: true)
-			?? throw new ReservationError('Nejdřív zadejte svůj e-mail.');
+			?? throw new ReservationError('Nejdřív vyberte místa nebo lístky bez místenky.');
+	}
+
+
+	/**
+	 * The draft of this browser, created when there is none (inside a transaction, locked).
+	 * Who may buy in the current stage is checked by the entry point (VisitorGate).
+	 * @return array<string, mixed>
+	 */
+	private function draft(string $owner): array
+	{
+		$draft = $this->currentDraft($owner, lock: true);
+		if ($draft !== null) {
+			return $draft;
+		}
+		$this->db->prepare('INSERT INTO reservations (session_id, channel) VALUES (?, ?)')
+			->execute([$owner, $this->settings->mode()->channel()]);
+		return $this->currentDraft($owner, lock: true) ?? throw new \LogicException('Draft not created.');
+	}
+
+
+	private static function validEmail(string $email): string
+	{
+		$email = mb_strtolower(trim($email));
+		if (strlen($email) > 255 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+			throw new ReservationError('Zadejte e-mail ve tvaru jmeno@example.cz.');
+		}
+		return $email;
 	}
 
 

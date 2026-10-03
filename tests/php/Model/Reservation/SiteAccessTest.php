@@ -53,7 +53,7 @@ final class SiteAccessTest extends DatabaseTestCase
 
 	public function testModeSwitchIsLoggedAndLeavingTheSaleFreesHeldSeats(): void
 	{
-		$this->reservations()->start('owner', 'alice@example.com');
+		$this->reservations()->setEmail('owner', 'alice@example.com');
 		$this->reservations()->hold('owner', 101);
 
 		$access = $this->access();
@@ -66,7 +66,7 @@ final class SiteAccessTest extends DatabaseTestCase
 		self::assertStringContainsString('Prodej ukončen', (string) $this->db->query('SELECT details FROM event_log')->fetchColumn());
 
 		$this->expectException(ReservationError::class);
-		$this->reservations()->start('other', 'bob@example.com');
+		$this->reservations()->setEmail('other', 'bob@example.com');
 	}
 
 
@@ -74,7 +74,7 @@ final class SiteAccessTest extends DatabaseTestCase
 	{
 		foreach (['testing' => 'test', 'vip' => 'vip', 'public' => 'public'] as $mode => $channel) {
 			$this->setSettings(['site_mode' => $mode]);
-			$this->reservations()->start("owner-$mode", "$mode@example.com");
+			$this->reservations()->setEmail("owner-$mode", "$mode@example.com");
 			self::assertSame($channel, $this->db->query("SELECT channel FROM reservations WHERE email = '$mode@example.com'")->fetchColumn());
 		}
 	}
@@ -83,7 +83,7 @@ final class SiteAccessTest extends DatabaseTestCase
 	public function testDraftOfATesterConfirmedAfterTheLaunchIsReal(): void
 	{
 		$this->setSettings(['site_mode' => 'testing']);
-		$this->reservations()->start('tester', 'tester@example.com');
+		$this->reservations()->setEmail('tester', 'tester@example.com');
 		$this->reservations()->hold('tester', 101);
 
 		$this->setSettings(['site_mode' => 'public']);

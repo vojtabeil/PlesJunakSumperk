@@ -20,7 +20,7 @@ final class EventLogTest extends DatabaseTestCase
 	{
 		$this->actor()->asCustomer();
 		$service = $this->reservations();
-		$service->start('owner', 'jana@example.com');
+		$service->setEmail('owner', 'jana@example.com');
 		$service->hold('owner', 101);
 		$service->hold('owner', 102);
 		$id = $service->confirm('owner', 'Jana Nováková', '', true);
@@ -53,7 +53,7 @@ final class EventLogTest extends DatabaseTestCase
 	{
 		$this->actor()->asCustomer();
 		$service = $this->reservations();
-		$service->start('owner', 'jana@example.com');
+		$service->setEmail('owner', 'jana@example.com');
 		$service->hold('owner', 101);
 		$id = $service->confirm('owner', 'Jana Nováková', '', true);
 		$this->db->exec(
@@ -78,7 +78,7 @@ final class EventLogTest extends DatabaseTestCase
 		$this->settings()->save(['price_seat' => '400']);
 		$this->actor()->asCustomer();
 		$service = $this->reservations();
-		$service->start('owner', 'jana@example.com');
+		$service->setEmail('owner', 'jana@example.com');
 		$service->hold('owner', 101);
 		$service->confirm('owner', 'Jana Nováková', '', true);
 		$this->db->exec("UPDATE event_log SET created_at = '2026-01-10 10:00:00' WHERE action = 'settings.changed'");

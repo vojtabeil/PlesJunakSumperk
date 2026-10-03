@@ -23,7 +23,7 @@ INSERT INTO settings (name, value) VALUES
     ('bank_account', '2501895120/2010'),
     ('payment_vs_prefix', '2026'),
     ('max_ticket', '10'),
-    ('hold_seconds', '120'),
+    ('hold_seconds', '300'),
     ('price_seat', '350'),
     ('price_standing', '250'),
     ('standing_capacity', '50'),

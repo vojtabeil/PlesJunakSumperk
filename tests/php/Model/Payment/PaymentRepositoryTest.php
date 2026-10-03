@@ -12,7 +12,7 @@ final class PaymentRepositoryTest extends DatabaseTestCase
 {
 	public function testFiltersAndSums(): void
 	{
-		$this->reservations()->start('a', 'alice@example.com');
+		$this->reservations()->setEmail('a', 'alice@example.com');
 		$reservation = (int) $this->db->query('SELECT id FROM reservations')->fetchColumn();
 		$rows = [
 			['1', 350, $reservation, 'matched'],

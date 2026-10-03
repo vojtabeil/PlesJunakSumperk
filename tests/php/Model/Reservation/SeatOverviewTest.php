@@ -25,17 +25,17 @@ final class SeatOverviewTest extends DatabaseTestCase
 	public function testCountsAndFilters(): void
 	{
 		$service = $this->reservations();
-		$service->start('a', 'alice@example.com');
+		$service->setEmail('a', 'alice@example.com');
 		$service->hold('a', 101);
 		$service->hold('a', 102);
 		$paid = $service->confirm('a', 'Alice', '', true);
 		(new ReservationAdmin($this->db, $this->settings(), new VariableSymbol($this->settings()), $this->eventLog()))->markPaid($paid);
 
-		$service->start('b', 'bob@example.com');
+		$service->setEmail('b', 'bob@example.com');
 		$service->hold('b', 201);
 		$service->confirm('b', 'Bob', '', true);
 
-		$service->start('c', 'carol@example.com');
+		$service->setEmail('c', 'carol@example.com');
 		$service->hold('c', 202);
 
 		$overview = new SeatOverview($this->db);

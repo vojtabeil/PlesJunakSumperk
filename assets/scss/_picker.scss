@@ -1,22 +1,28 @@
 @use 'tokens' as *;
 
-.email-form {
-  max-width: 32rem;
-}
-
+// Mobile first: one column; from the tablet breakpoint up the summary sits next to the map.
 .picker {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 20rem;
+  grid-template-columns: minmax(0, 1fr); // never wider than the screen (the map scrolls inside)
   gap: 1.5rem;
   align-items: start;
 
-  @include below($breakpoint-tablet) {
-    grid-template-columns: 1fr;
+  @media (min-width: $breakpoint-tablet + 1) {
+    grid-template-columns: minmax(0, 1fr) 20rem;
   }
 
   &.is-busy {
     cursor: progress;
   }
+}
+
+.message:empty {
+  display: none;
+}
+
+.availability {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
 }
 
 .legend {
@@ -36,19 +42,50 @@
 }
 
 .swatch {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 3px;
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
 
   &--free { background: var(--green); }
-  &--mine { background: var(--orange); }
+  &--mine { background: var(--orange); color: var(--text); box-shadow: 0 0 0 2px var(--text); }
   &--taken { background: var(--taken); }
 }
 
 // --- Hall map ---------------------------------------------------------------
 
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.zoom-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--green);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+
+  &:disabled {
+    color: var(--taken-text);
+    cursor: default;
+  }
+}
+
+// The map scrolls inside its own box, never the page.
 .map-scroll {
+  max-width: 100%;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: #fff;
@@ -57,11 +94,7 @@
 .map {
   position: relative;
   width: 100%;
-
-  // Keep seats large enough to tap; the map scrolls sideways instead.
-  @include below($breakpoint-tablet) {
-    min-width: 640px;
-  }
+  min-width: 100%;
 }
 
 .map-plan {
@@ -73,6 +106,8 @@
 .plan-stage { fill: var(--green); }
 .plan-floor { fill: var(--plan-floor); stroke: var(--border); stroke-dasharray: 8 6; }
 .plan-table { fill: var(--plan-table); }
+// Background of a table with its seats: shows which seats belong to which table.
+.plan-zone { fill: rgba(185, 138, 90, 0.12); stroke: rgba(185, 138, 90, 0.35); }
 
 .plan-label,
 .plan-table-label {
@@ -85,13 +120,16 @@
 .plan-label--stage { fill: #fff; }
 .plan-table-label { font-size: 15px; fill: #fff; }
 
+// Seats grow with the map: at the default phone zoom (720px) they are at least 24px (WCAG 2.5.8).
 .seat {
   position: absolute;
-  width: 2.8%;
+  display: grid;
+  place-items: center;
+  width: 3.4%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   padding: 0;
-  font: 700 clamp(9px, 1vw, 12px) / 1 var(--body-font);
+  font: 700 clamp(10px, 1.1vw, 13px) / 1 var(--body-font);
   color: #fff;
   background: var(--green);
   border: 2px solid #fff;
@@ -100,7 +138,7 @@
   transition: transform 0.1s ease;
 
   &:hover:not(:disabled) {
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: translate(-50%, -50%) scale(1.15);
   }
 
   &--mine {
@@ -109,10 +147,13 @@
     box-shadow: 0 0 0 2px var(--text);
   }
 
+  // Not only colour: taken seats are smaller, faded and crossed out.
   &--taken {
     color: var(--taken-text);
     background: var(--taken);
     cursor: not-allowed;
+    transform: translate(-50%, -50%) scale(0.8);
+    text-decoration: line-through;
   }
 
   &:disabled:not(.seat--taken) {
@@ -128,12 +169,29 @@
 }
 
 .hint {
-  display: none;
   margin: 0.5rem 0 0;
   font-size: 0.85rem;
   color: var(--muted);
+}
 
-  @include below($breakpoint-tablet) {
-    display: block;
+// --- Bottom bar on phones -----------------------------------------------------
+
+.mobile-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 16px calc(0.75rem + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+
+  @media (min-width: $breakpoint-tablet + 1) {
+    display: none;
   }
 }

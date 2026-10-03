@@ -11,17 +11,22 @@ export interface Message {
 }
 
 export interface ConfirmInput {
+  email: string;
   name: string;
   phone: string;
   consent: boolean;
 }
 
+/** Typing in the form extends the hold at most this often. */
+const ExtendEveryMs = 30_000;
+
 export type Store = ReturnType<typeof createStore>;
 
-export function createStore(api: ApiCall, navigate: (url: string) => void) {
+export function createStore(api: ApiCall, navigate: (url: string) => void, now: () => number = Date.now) {
   const state = signal<ApiState | null>(null);
   const busy = signal(false);
   const message = signal<Message | null>(null);
+  let lastExtend = 0;
 
   function show(text: string, error = false): void {
     message.value = text ? { text, error } : null;
@@ -61,20 +66,35 @@ export function createStore(api: ApiCall, navigate: (url: string) => void) {
     }
   }
 
+  /** Holds the chosen seats for another period; quietly, without blocking the page. */
+  async function extend(): Promise<void> {
+    lastExtend = now();
+    const result = await api('extend', {});
+    if (result.state) {
+      state.value = result.state;
+    }
+  }
+
   return {
     state,
     busy,
     message,
     show,
     refresh,
-    start: (email: string) => run('start', { email }, 'Vyberte místa nebo lístky bez místenky.'),
+    extend,
+    /** The visitor is typing in the form: keep the seats held (at most every 30 s). */
+    keepAlive: () => {
+      if (state.value?.reservation?.expires_in !== null && now() - lastExtend >= ExtendEveryMs) {
+        void extend();
+      }
+    },
     toggleSeat: (seatId: number) =>
       run(state.value?.mine.includes(seatId) ? 'release' : 'hold', { seat_id: seatId }),
     setStanding: (count: number) => run('standing', { count }),
     confirm: (input: ConfirmInput) => run('confirm', { ...input }),
-    cancel: () => run('cancel', {}, 'Rezervace byla zrušena, můžete zadat jiný e-mail.'),
+    cancel: () => run('cancel', {}, 'Výběr jsme zrušili, místa jsou opět volná.'),
     holdExpired: async () => {
-      show('Čas na rezervaci vypršel, vybraná místa byla uvolněna.', true);
+      show('Čas na dokončení vypršel a vybraná místa jsme uvolnili. Vyberte je prosím znovu.', true);
       await refresh();
     },
   };

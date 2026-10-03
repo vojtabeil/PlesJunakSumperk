@@ -22,18 +22,35 @@ function fakeApi(responses: Partial<Record<Operation, ApiResponse>>) {
 }
 
 describe('store', () => {
-  test('replaces state and shows the success message', async () => {
-    const withReservation: ApiState = {
+  test('the first seat starts the reservation and replaces the state', async () => {
+    const withSeat: ApiState = {
       ...baseState,
-      reservation: { email: 'a@example.com', standing: 0, seats: [], expires_in: null },
+      mine: [5],
+      reservation: { email: null, standing: 0, seats: [{ id: 5, label: '1/5' }], expires_in: 300 },
     };
-    const { api, calls } = fakeApi({ start: { ok: true, state: withReservation } });
+    const { api, calls } = fakeApi({ hold: { ok: true, state: withSeat } });
     const store = createStore(api, () => {});
 
-    expect(await store.start('a@example.com')).toBe(true);
-    expect(calls).toEqual([{ op: 'start', body: { email: 'a@example.com' } }]);
-    expect(store.state.value?.reservation?.email).toBe('a@example.com');
-    expect(store.message.value?.error).toBe(false);
+    expect(await store.toggleSeat(5)).toBe(true);
+    expect(calls).toEqual([{ op: 'hold', body: { seat_id: 5 } }]);
+    expect(store.state.value?.mine).toEqual([5]);
+    expect(store.message.value).toBeNull();
+  });
+
+  test('typing in the form extends the hold at most every 30 s', async () => {
+    const { api, calls } = fakeApi({});
+    let time = 100_000;
+    const store = createStore(api, () => {}, () => time);
+    store.state.value = { ...baseState, reservation: { email: null, standing: 0, seats: [], expires_in: 200 } };
+
+    store.keepAlive();
+    store.keepAlive();
+    time += 31_000;
+    store.state.value = { ...baseState, reservation: { email: null, standing: 0, seats: [], expires_in: 200 } };
+    store.keepAlive();
+    await Promise.resolve();
+
+    expect(calls.map((c) => c.op)).toEqual(['extend', 'extend']);
   });
 
   test('shows server errors and keeps the returned state', async () => {
@@ -59,7 +76,7 @@ describe('store', () => {
     const visited: string[] = [];
     const store = createStore(api, (url) => visited.push(url));
 
-    await store.confirm({ name: 'Jana', phone: '', consent: true });
+    await store.confirm({ email: 'jana@example.com', name: 'Jana', phone: '', consent: true });
     expect(visited).toEqual(['/hotovo/3']);
   });
 

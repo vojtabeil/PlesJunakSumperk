@@ -87,7 +87,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 	private function confirmedReservation(): int
 	{
 		$service = $this->reservations();
-		$service->start('owner', 'jana@example.com');
+		$service->setEmail('owner', 'jana@example.com');
 		$service->hold('owner', 101);
 		$service->setStanding('owner', 1);
 		return $service->confirm('owner', 'Jana Nováková', '', true);

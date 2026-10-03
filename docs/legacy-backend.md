@@ -58,16 +58,18 @@ only treated as free by the client.
 - Race conditions: two people could likely hold the same seat at once.
 - jQuery loaded twice; 10 MB background image.
 
-## New implementation (see `src/ReservationService.php`)
+## New implementation (see `app/Model/Reservation/ReservationService.php`)
 
-Same user flow, but all rules live on the server:
+All rules live on the server. The flow differs from the original: the hall map with live
+availability is shown right away and the e-mail is asked for at the end.
 
-1. Enter e-mail -> `start` creates the browser's draft reservation (or changes its e-mail).
+1. Click seats -> `hold` / `release`; the first chosen ticket creates the browser's draft
+   reservation. Holds are atomic `UPDATE ... WHERE state = 'free'`, expire after `hold_seconds`
+   (default 5 minutes) since the last change, and are cleaned up on every request. `extend`
+   restarts the hold (typing in the form, the "Prodloužit" button).
+2. Choose standing tickets -> `standing`. Limit: `max_ticket` per reservation,
+   `standing_capacity` in total (checked again on confirm).
+3. Fill in e-mail, name (+ phone) -> `confirm` turns held seats into `reserved` in one transaction.
    Unlike the original, one e-mail may have several reservations and the answer never depends
    on other reservations (the original revealed whether an e-mail had already booked).
-2. Click seats -> `hold` / `release`. Holds are atomic `UPDATE ... WHERE state = 'free'`,
-   expire after `hold_seconds` since the last change, and are cleaned up on every request.
-3. Choose standing tickets -> `standing`. Limit: `max_ticket` per reservation,
-   `standing_capacity` in total (checked again on confirm).
-4. Fill in name (+ phone) -> `confirm` turns held seats into `reserved` in one transaction.
-5. Payment is not implemented yet; the reservation id is used as the variable symbol.
+4. Payment by bank transfer / QR Platba with the variable symbol of the reservation.

@@ -23,12 +23,12 @@ use Tracy\ILogger;
 /**
  * JSON API of the seat picker.
  *   GET  /api/state
- *   POST /api/start|hold|release|standing|confirm|cancel  (JSON body, X-CSRF-Token header)
+ *   POST /api/hold|release|standing|extend|confirm|cancel  (JSON body, X-CSRF-Token header)
  * Every response is {ok: true, state: {...}} or {ok: false, error: "<message for the user>"}.
  */
 final class ApiPresenter extends Presenter
 {
-	private const Commands = ['start', 'hold', 'release', 'standing', 'confirm', 'cancel'];
+	private const Commands = ['hold', 'release', 'standing', 'extend', 'confirm', 'cancel'];
 
 
 	public function __construct(
@@ -79,8 +79,8 @@ final class ApiPresenter extends Presenter
 			$extra = [];
 			try {
 				switch ($op) {
-					case 'start':
-						$this->reservations->start($owner, (string) ($input['email'] ?? ''));
+					case 'extend':
+						$this->reservations->extend($owner);
 						break;
 					case 'hold':
 						$this->reservations->hold($owner, (int) ($input['seat_id'] ?? 0));
@@ -97,6 +97,7 @@ final class ApiPresenter extends Presenter
 							(string) ($input['name'] ?? ''),
 							(string) ($input['phone'] ?? ''),
 							($input['consent'] ?? false) === true,
+							(string) ($input['email'] ?? ''),
 						);
 						$this->reservationSession->addFinished($id);
 						$this->mailer->sendConfirmation($id);

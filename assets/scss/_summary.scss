@@ -1,20 +1,57 @@
 @use 'tokens' as *;
 
 .summary {
-  position: sticky;
-  top: 1rem;
   padding: 1.25rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-alt);
 
-  @include below($breakpoint-tablet) {
-    position: static;
+  @media (min-width: $breakpoint-tablet + 1) {
+    position: sticky;
+    top: 1rem;
   }
 }
 
-.summary-email {
-  overflow-wrap: anywhere;
+.muted {
+  color: var(--muted);
+}
+
+// Chosen seats as chips with a remove button.
+.chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.25rem 0.2rem 0.7rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: rgba(242, 154, 29, 0.18);
+    border: 1px solid var(--orange);
+    border-radius: 999px;
+  }
+}
+
+.chosen-remove {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
 }
 
 .standing {
@@ -24,6 +61,10 @@
   gap: 1rem;
   margin: 1rem 0;
   font-weight: 600;
+
+  .muted {
+    font-weight: 400;
+  }
 }
 
 .stepper {
@@ -39,8 +80,8 @@
 }
 
 .stepper-button {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   font-size: 1.3rem;
   line-height: 1;
   color: #fff;
@@ -53,6 +94,15 @@
     background: var(--taken);
     cursor: not-allowed;
   }
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding-top: 0.75rem;
+  font-size: 1.15rem;
+  border-top: 1px solid var(--border);
 }
 
 .totals {
@@ -79,25 +129,87 @@
 }
 
 .countdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius-small);
   background: rgba(40, 114, 52, 0.1);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 
   &--urgent {
     background: rgba(179, 38, 30, 0.12);
     color: var(--error);
-    font-weight: 600;
   }
+}
+
+.button--small {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
 }
 
 .confirm-form {
   display: grid;
   gap: 0.4rem;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
+
+  h3 {
+    margin: 0 0 0.25rem;
+  }
 
   .button {
     margin-top: 0.6rem;
+  }
+}
+
+.field-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.field-error {
+  font-weight: 600;
+  color: var(--error);
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--error);
+  box-shadow: 0 0 0 1px var(--error);
+}
+
+.error-summary {
+  padding: 0.75rem 1rem;
+  color: var(--error);
+  border: 2px solid var(--error);
+  border-radius: var(--radius-small);
+  background: #fff;
+
+  p {
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  a {
+    color: var(--error);
+  }
+}
+
+.cancel-choice {
+  margin-top: 1rem;
+}
+
+// Space for the bottom bar on phones.
+@include below($breakpoint-tablet) {
+  #reservation {
+    margin-bottom: 4.5rem;
   }
 }
 

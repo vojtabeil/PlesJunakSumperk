@@ -11,9 +11,10 @@ CREATE TABLE settings (
 -- Reservations. One e-mail may have several (e.g. tickets bought for different groups).
 -- A draft is bound to the browser (owner key in session_id) that created it and is never looked
 -- up by e-mail, so the public API reveals nothing about other people's reservations.
+-- The draft starts with the first chosen ticket; the e-mail comes with the confirmation.
 CREATE TABLE reservations (
     id               INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    email            VARCHAR(255) NOT NULL,
+    email            VARCHAR(255) NULL,
     name             VARCHAR(255) NULL,
     phone            VARCHAR(32)  NULL,
     standing_tickets INT UNSIGNED NOT NULL DEFAULT 0,
