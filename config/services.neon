@@ -3,6 +3,12 @@
 services:
 	- App\Core\RouterFactory::createRouter
 
+	# No administrator yet = everything except the first-run wizard is disabled.
+	- App\Core\SetupGuard
+	application.application:
+		setup:
+			- '$onPresenter[]' = [@App\Core\SetupGuard, onPresenter]
+
 	database: App\Model\Database\ConnectionFactory::create(%database%)
 
 	- App\Model\Reservation\Settings
@@ -13,6 +19,7 @@ services:
 	- App\Model\Admin\AdminUsers
 	- App\Model\Admin\Authenticator
 	- App\Model\Admin\AuditLog
+	- App\Model\Admin\SetupConfig(%setup%)
 
 	- App\Model\Clock\SystemClock
 

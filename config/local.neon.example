@@ -24,3 +24,8 @@ parameters:
 	# Bank movements. mock = fake bank for testing (/dev/bank), fio = Fio API (production).
 	bank:
 		driver: mock
+
+	# Password of the first-run wizard (/admin/setup), used only while no administrator exists.
+	# Change it on the hosting before uploading.
+	setup:
+		password: skaut-sumperk

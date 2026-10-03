@@ -67,7 +67,10 @@ CREATE TABLE admin_users (
     failed_logins  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     last_failed_at DATETIME NULL,
     last_login_at  DATETIME NULL,
+    -- Incremented on password change; sessions with an older value are logged out.
+    session_version INT UNSIGNED NOT NULL DEFAULT 1,
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_admin_users_login (login)
 ) ENGINE=InnoDB;
 

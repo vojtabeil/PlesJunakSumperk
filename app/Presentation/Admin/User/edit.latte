@@ -1,0 +1,24 @@
+{templateType App\Presentation\Admin\User\UserTemplate}
+
+{block title}{$account['name']}{/block}
+
+{block content}
+<p><a n:href="default">← Zpět na administrátory</a></p>
+<div class="page-head">
+	<h1>{$account['name']}{if $account['id'] === $currentId} <span class="muted">(váš účet)</span>{/if}</h1>
+	<span n:if="$isLocked" class="badge badge--problem">přihlašování zablokované</span>
+</div>
+
+<div class="columns">
+	<section class="card">
+		<h2>Údaje a heslo</h2>
+		<p class="muted">Po změně hesla se uživatel odhlásí na všech zařízeních.</p>
+		{control accountForm}
+	</section>
+	<section class="card">
+		<h2>Smazání účtu</h2>
+		<p class="muted">Poslední účet smazat nelze.{if $account['id'] === $currentId} Smazáním vlastního účtu budete odhlášeni.{/if}</p>
+		<div class="danger-zone">{control deleteForm}</div>
+	</section>
+</div>
+{/block}

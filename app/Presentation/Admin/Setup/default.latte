@@ -1,0 +1,12 @@
+{templateType App\Presentation\Admin\Setup\SetupTemplate}
+
+{block title}Nastavení webu{/block}
+
+{block content}
+<section class="card card--narrow card--centered">
+	<h1>Vítejte</h1>
+	<p>Web zatím nemá žádného administrátora, a proto je vypnutý (rezervace ani platby nefungují).
+		Založte první účet. Další organizátory pak přidáte v administraci.</p>
+	{control setupForm}
+</section>
+{/block}

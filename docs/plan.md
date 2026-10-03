@@ -1,6 +1,6 @@
 # Implementation plan: Nette, admin, payments, frontend build
 
-Status: phases 1-4 (tooling, Nette skeleton, admin, payments with the mock bank) done; next is phase 5 (Fio API, deployment). Decisions were made in discussion with the
+Status: phases 1-4 and 3b (first run, administrator management) done; next is phase 5 (Fio API, deployment). Decisions were made in discussion with the
 project owner on 2026-10-03; this file is the reference for the next steps.
 
 ## 1. Decisions
@@ -153,6 +153,35 @@ new code), e-mail still lands in Mailpit, `tsc --noEmit` and PHPStan (level 6+) 
 6. Admin styling in `assets/scss/admin.scss`; Naja for inline actions where useful.
 
 Done when: an organizer can run the whole sale from the admin without Adminer.
+
+### Phase 3b - First run, administrator management, login checks
+
+Decided with the project owner on 2026-10-03.
+
+1. **Not configured = no row in `admin_users`.** A central `SetupGuard` (hooked on
+   `Application::onPresenter`) then disables every service: pages redirect to `/admin/setup`,
+   `/api/*` answers `503` JSON. Only the setup wizard and error pages work.
+2. **Setup wizard `/admin/setup`**: requires the setup password (parameter `setup.password`,
+   default `skaut-sumperk`, change it in `config/local.neon`), then login, name, password twice.
+   The account is created under a DB named lock, so two parallel wizards cannot create two
+   accounts. The new admin is logged in. Once an admin exists the wizard returns 404.
+3. **Administrators `/admin/user`**: all admins are equal. List, create, edit any account
+   (login, name, new password, unlock after failed logins), delete any account including
+   one's own (confirmation checkbox). The last account cannot be deleted (the site would fall
+   back to "not configured"). No re-authentication with one's own password. Every change is audited
+   (never the password itself).
+4. **Login checked on every request against the DB**: `Authenticator` also implements Nette's
+   `IdentityHandler`; the session stores only id + `session_version`, every request reloads the
+   account. A deleted account or a changed password (`session_version` incremented) logs the
+   user out immediately, on all devices.
+5. **Deny by default**: admin presenters require login unless they are on the allowlist
+   (`Sign`, `Setup`). A PHPUnit test scans all presenters and fails for any presenter that is
+   public without being on the allowlist (public by design: `Front:Home`, `Front:Done`,
+   `Front:Api`, error presenters, and `Dev:*`).
+6. **Dev pages** (`/dev/*`) stay public but exist only in debug mode; the release build
+   (phase 5) must not contain `app/Presentation/Dev` at all.
+7. `init-db.cmd -NoAdmin` to try the first run locally; `bin/create-admin.php` stays as a
+   rescue tool.
 
 ### Phase 4 - Payments (mock bank first)
 

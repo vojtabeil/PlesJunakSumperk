@@ -17,6 +17,7 @@
 		<a n:href="Reservation:default" n:class="$presenter->isLinkCurrent('Reservation:*') ? 'is-current'">Rezervace</a>
 		<a n:href="Payment:default" n:class="$presenter->isLinkCurrent('Payment:*') ? 'is-current'">Platby</a>
 		<a n:href="Settings:default" n:class="$presenter->isLinkCurrent('Settings:*') ? 'is-current'">Nastavení</a>
+		<a n:href="User:default" n:class="$presenter->isLinkCurrent('User:*') ? 'is-current'">Administrátoři</a>
 		<a n:href="Export:guests">Export hostů (CSV)</a>
 	</nav>
 	<div n:if="$user->isLoggedIn()" class="admin-user">

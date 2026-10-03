@@ -6,6 +6,9 @@ parameters:
 	mail: []
 	bank:
 		driver: mock   # mock = fake bank for local testing (/dev/bank), fio = Fio API
+	setup:
+		# Required by the first-run wizard (/admin/setup) while no administrator exists.
+		password: skaut-sumperk
 
 
 application:

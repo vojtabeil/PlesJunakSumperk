@@ -8,6 +8,9 @@
 .PARAMETER NoSeed
     Creates empty tables only, without test data.
 
+.PARAMETER NoAdmin
+    Leaves out the local administrator account, so the site starts with the first-run wizard.
+
 .PARAMETER Test
     Recreates only the empty test database (ples_test) used by PHPUnit.
 
@@ -23,6 +26,7 @@
 param(
     [string]$Import,
     [switch]$NoSeed,
+    [switch]$NoAdmin,
     [switch]$Test,
     [switch]$Clean
 )
@@ -46,6 +50,10 @@ try {
         Reset-TestDatabase
     } else {
         Reset-AppDatabase -Import $Import -NoSeed:$NoSeed
+        if ($NoAdmin) {
+            Invoke-DbSql 'DELETE FROM admin_users' $DbName | Out-Null
+            Write-Ok 'No administrator: the site starts with the first-run wizard (/admin/setup)'
+        }
     }
 } finally {
     # Leave the server in the state we found it.

@@ -28,10 +28,11 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 |---|---|
 | `app/Bootstrap.php` | Nette configurator (debug mode only on localhost, Tracy logs in `var/log`). |
 | `app/Core/RouterFactory.php` | Routes: `/` reservation, `/hotovo/<id>` confirmation, `/api/<op>` JSON, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`. |
-| `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout (`Authenticator`), `AuditLog`. |
+| `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout + per-request DB check (`Authenticator` as `IdentityHandler`), `AuditLog`, `SetupConfig`. |
+| `app/Core/SetupGuard.php` | No administrator = site not configured: every presenter except the setup wizard is disabled (pages redirect, API 503). |
 | `app/Model/Payment/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, Fio in phase 5, chosen by `bank.driver`), `PaymentImporter` (fetch -> store -> match -> e-mail), `PaymentMatcher` (VS = reservation id, partial payments add up), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
 | `app/Model/Clock/` | `Clock` interface (`SystemClock`; `tests/php/FrozenClock` in tests). |
-| `app/Presentation/Admin/` | Administration: Sign, Dashboard, Reservation (list, detail, actions), Settings, Export (CSV), Account (password). |
+| `app/Presentation/Admin/` | Administration: Setup (first-run wizard), Sign, Dashboard, Reservation, Payment, Settings, User (administrators), Export (CSV), Account (own password). |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
 | `app/Model/` | Business logic: `Reservation/` (ReservationService = all reservation rules, Settings, ReservationSession), `Mail/` (MailSender interface, SMTP implementation, ReservationMailer + Latte e-mail templates), `Database/` (PDO factory). |
 | `app/Presentation/` | Presenters + Latte templates (`Front/`, `Error/`, `Dev/`), typed template classes (`*Template.php`), `@layout.latte`, `Accessory/TemplateExtension.php` (filters `price`, `seatLabel`, function `asset`). |
@@ -86,6 +87,16 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   Mutations lock the draft reservation row in a transaction; seat holds use atomic
   `UPDATE ... WHERE state = 'free'`. Draft ownership is a random key from `ReservationSession`.
 - User-facing errors are thrown as `ReservationError` with a Czech message.
+- First run: with an empty `admin_users` the site is off and `/admin/setup` asks for the setup
+  password (`setup.password`, default `skaut-sumperk`) and creates the first administrator.
+  `init-db.cmd -NoAdmin` reproduces this locally. All administrators are equal; any of them can
+  create, edit (incl. password) and delete any account except the last one.
+- Every request re-checks the logged-in account in the DB (`Authenticator::wakeupIdentity`):
+  a deleted account or a changed password (`session_version`) logs the user out everywhere.
+  After changing one's own account, re-login with `Authenticator::identity()`.
+- Deny by default: `tests/php/Presentation/PresenterAccessTest` fails for any presenter that is
+  reachable without login and not on its allowlist. Public by design: Front (Home, Done, Api),
+  Error, Admin Sign/Setup and `Dev:*` (debug mode only; must be excluded from the release build).
 - Admin: every presenter extends `Admin\BasePresenter` (login required unless `isPublic()`).
   State changes go only through POST forms from `FormFactory` (CSRF token) - never GET links -
   and each one is written to `AuditLog`. Presenter helper methods must not start with

@@ -14,7 +14,11 @@ final class AuditLog
 	/** Czech descriptions of the actions for the admin UI. */
 	public const Labels = [
 		'admin.login' => 'Přihlášení',
-		'admin.password' => 'Změna hesla',
+		'admin.password' => 'Změna vlastního hesla',
+		'admin.setup' => 'Nastavení webu (první účet)',
+		'admin.created' => 'Nový administrátor',
+		'admin.updated' => 'Úprava administrátora',
+		'admin.deleted' => 'Smazání administrátora',
 		'reservation.paid' => 'Označeno jako zaplacené',
 		'reservation.cancelled' => 'Rezervace zrušena',
 		'reservation.email' => 'Znovu odeslán potvrzovací e-mail',

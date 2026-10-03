@@ -1,0 +1,29 @@
+{templateType App\Presentation\Admin\User\UserTemplate}
+
+{block title}Administrátoři{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Administrátoři</h1>
+	<a class="button" n:href="add">Přidat administrátora</a>
+</div>
+<p class="muted">Všichni administrátoři mají stejná práva a mohou upravovat i mazat ostatní účty.</p>
+
+<section class="card">
+	<div class="table-scroll">
+		<table class="data-table">
+			<thead>
+				<tr><th>Jméno</th><th>Přihlašovací jméno</th><th>Poslední přihlášení</th><th>Stav</th></tr>
+			</thead>
+			<tbody>
+				<tr n:foreach="$accounts as $a">
+					<td><a n:href="edit $a['id']">{$a['name']}</a>{if $a['id'] === $currentId} <span class="muted">(vy)</span>{/if}</td>
+					<td>{$a['login']}</td>
+					<td>{if $a['last_login_at']}{$a['last_login_at']|date:'j. n. Y H:i'}{else}–{/if}</td>
+					<td>{if $a['failed_logins'] >= \App\Model\Admin\Authenticator::MaxFailures}<span class="badge badge--problem">zablokovaný</span>{else}–{/if}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+{/block}

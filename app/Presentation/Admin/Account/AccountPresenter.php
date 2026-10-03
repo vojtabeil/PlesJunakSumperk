@@ -5,23 +5,22 @@ declare(strict_types=1);
 namespace App\Presentation\Admin\Account;
 
 use App\Model\Admin\AdminUsers;
+use App\Model\Admin\Authenticator;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\UI\Form;
 use Nette\Security\Passwords;
 
 
 /**
- * The organizer's own account (password change).
+ * The organizer's own account (password change, verified with the current password).
  * @property-read AccountTemplate $template
  */
 final class AccountPresenter extends BasePresenter
 {
-	public const MinPasswordLength = 10;
-
-
 	public function __construct(
 		private readonly AdminUsers $users,
 		private readonly Passwords $passwords,
+		private readonly Authenticator $authenticator,
 	) {
 		parent::__construct();
 	}
@@ -36,7 +35,7 @@ final class AccountPresenter extends BasePresenter
 		$password = $form->addPassword('password', 'Nové heslo')
 			->setHtmlAttribute('autocomplete', 'new-password')
 			->setRequired('Zadejte nové heslo.')
-			->addRule($form::MinLength, 'Heslo musí mít alespoň %d znaků.', self::MinPasswordLength);
+			->addRule($form::MinLength, 'Heslo musí mít alespoň %d znaků.', AdminUsers::MinPasswordLength);
 		$form->addPassword('passwordAgain', 'Nové heslo znovu')
 			->setHtmlAttribute('autocomplete', 'new-password')
 			->setRequired('Zadejte nové heslo ještě jednou.')
@@ -51,7 +50,12 @@ final class AccountPresenter extends BasePresenter
 			}
 			$this->users->changePassword($this->adminId(), $data->password);
 			$this->auditLog->record($this->adminId(), 'admin.password');
-			$this->flashMessage('Heslo je změněné.', 'success');
+			// The password change ends all sessions; keep this one logged in.
+			$fresh = $this->users->findById($this->adminId());
+			if ($fresh !== null) {
+				$this->getUser()->login($this->authenticator->identity($fresh));
+			}
+			$this->flashMessage('Heslo je změněné. Na ostatních zařízeních jste byli odhlášeni.', 'success');
 			$this->redirect('this');
 		};
 		return $form;
