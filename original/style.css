@@ -1,0 +1,597 @@
+/* Styly pro checkboxy a jejich labely */
+#checkbox-container {
+    position: relative;
+    width: 100%; /* Nastavte šířku dle potřeby */
+    /*height: 500px; /* Nastavte výšku dle potřeby */
+   /* border: 3px solid black;*/
+}
+.map-viewport {
+  width: 80%;
+ 
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+  border: 3px solid black;
+}
+
+
+
+
+body {
+
+  align-items: center;
+  justify-content: center;
+  background-image: url('bcgImg.svg'); 
+  background-size:100%;
+ /* background-position: center;*/
+
+}
+.flex-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.incon{
+  display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  width: 100%;
+}
+
+label {
+    
+    display: inline-block;
+    position: relative;
+    left: 6.5px;
+    top: 2.8px;
+    cursor: pointer;
+    margin: auto;
+}
+
+/*input[type="checkbox"] {
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    cursor: pointer;
+    /*padding-left: -20px; /* Posunutí textu vlevo od checkboxu */
+    /*opacity: 0;
+}*/
+
+/*span.chair {
+    /*width: 20px;
+    height: 20px;
+    display: block;
+    position: absolute;
+    /*border: 1px solid black;
+    color: black;
+    text-align: center;
+    font-size: 8px;
+}*/
+
+/*input[type="checkbox"].free {
+  background-color: green; 
+}*/
+
+.chair {
+	position: absolute;
+	width: 13px;
+	height: 13px;
+	line-height: 13px;
+	text-align: center;
+	display: block;
+	background: rgba(40, 114, 52, 1);
+	color: rgb(255, 255, 255);
+	font-size: 8px;
+	border: 0.5px solid #fff;
+    cursor: pointer;
+}
+input[type=checkbox] {
+  max-width: 95%;
+  max-height: 95%;
+    opacity: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+   cursor: pointer;
+   margin: 0;
+}
+.chair-selected {
+	position: absolute;
+	width: 13px;
+	height: 13px;
+	line-height: 13px;
+	text-align: center;
+	display: block;
+	background: orange;
+	color: black;
+	font-size: 8px;
+	border: 0.5px solid #fff;
+    cursor: pointer;
+}
+.chair-reserved {
+	position: absolute;
+	width: 13px;
+	height: 13px;
+	line-height: 13px;
+	text-align: center;
+	display: block;
+	background: red;
+	color: black;
+	font-size: 8px;
+	border: 0.5px solid #fff;
+    cursor: not-allowed;
+}
+
+/*numberrr*/
+.quantity {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .quantity input {
+    width: 45px;
+    height: 42px;
+    line-height: 1.65;
+    margin-right: 20px; /* Nově přidaný styl pro vzdálenost od tlačítek */
+    border: 1px solid #eee;
+  }
+
+  .quantity input:focus {
+    outline: 0;
+  }
+
+  .quantity-nav {
+    display: flex;
+    flex-direction: column;
+    height: 42px;
+  }
+
+  .quantity-button {
+    cursor: pointer;
+    width: 20px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 13px;
+    font-family: "Trebuchet MS", Helvetica, sans-serif !important;
+    line-height: 1.7;
+    user-select: none;
+    background-color: rgb(40, 114, 52);; /* Oranžová barva */
+  }
+
+  .quantity-button.quantity-up {
+    border-bottom: 1px solid #eee;
+  }
+
+  .cointainer{
+    /*min-width: 1000px;*/
+    width: 80%;
+    /*border: 3px solid black;*/
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    /*align-items: center;*/
+    align-items: center;
+ 
+
+  }
+  h1{
+    width: 100%;
+    text-align: center;
+    font-size: 5rem;
+    color: rgb(40, 114, 52);
+    /*margin-left: 12%;*/
+    font-family: 'Calistoga', sans-serif;
+    /*position: relative;*/
+  }
+  .trasnparent{
+    color: rgba(40, 114, 52, 0.5);
+  }
+.nadpisK{
+  height: 400pt;
+  margin-left: -0.8rem;
+  /*left: 285pt;*/
+ /* position: absolute;*/
+ /* top: 33%;
+  left: 20%;*/
+}
+.nadpisH{
+  height: 450pt;
+  /*position: absolute;*/
+ 
+  /*left: 60%;
+  top: 33%;*/
+}
+.menu{
+  width: 100%;
+  margin: auto;
+  align-items: center;
+  align-content: center;
+  align-self: center;
+  text-align: center;
+}
+.nadpisos2{
+  min-width: 10rem;  
+max-width: 26rem;
+  margin: auto;
+  align-items: center;
+  justify-content: center;
+  
+ /* margin-top: -9rem;*/
+  /*left: -1rem;*/
+}
+
+
+.spl{
+  margin: auto;
+}
+.ikon{
+  width: 2.5rem;
+  padding-right: 2rem;
+}
+.ikonT {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Zarovná text vlevo */
+  gap: 1rem; /* Mezera mezi ikonou a textem */
+  margin-bottom: 1rem; /* Mezera mezi řádky */
+  text-align: left;
+}
+
+.ikonT a{
+  text-decoration: none;
+  color: black;
+}
+.h2R{
+  color: rgb(40, 114, 52);
+  text-align: center;
+  font-size: 3.5rem;
+  font-family: 'Calistoga', sans-serif;
+  font-weight: 800;
+}
+.obris{
+  width:10%;
+}
+.obris2{
+  width:23%;
+}
+.infTable-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  width: 100%; /* Nastavte šířku dle potřeby */
+}
+
+.infTable {
+  margin: 0 auto;
+ /* border-collapse: collapse; /* Lepší vzhled tabulky */
+  text-align: center; /* Zarovnání textu v buňkách na střed */
+  width: 70%; /* Nastavte požadovanou šířku */
+}
+.infTable2 {
+  margin: 0 auto;
+ /* border-collapse: collapse; /* Lepší vzhled tabulky */
+  text-align: center; /* Zarovnání textu v buňkách na střed */
+  width: 50%; /* Nastavte požadovanou šířku */
+  table-layout: fixed; /* Rovnoměrná šířka sloupců */
+  border-collapse: collapse;
+}
+.infTable .ikonTa {
+  width: 3rem; /* Nastavte šířku */
+  object-fit: contain; /* Přizpůsobení bez deformace */
+  margin: 0 auto;
+  padding-right: 1.5rem;
+}
+.infTable2 .ikonTa {
+  width: 5rem; /* Nastavte šířku */
+  object-fit: contain; /* Přizpůsobení bez deformace */
+  
+  
+}
+.infTable td.textColumn {
+  text-align: left;
+  vertical-align: top;
+}
+.infTable2 td {
+  padding: 0.5rem; /* Menší odsazení pro zmenšení mezer */
+
+  max-width: 150px;
+  vertical-align: middle; /* Zarovná obsah vertikálně na střed */
+}
+.infTable2 input {
+  width: 90%; /* Šířka vstupních polí */
+  margin-left: 0.5rem; /* Menší odsazení mezi ikonou a polem */
+}
+
+
+
+#overeni{
+  color: rgb(40, 114, 52);
+}
+
+#odeslat {
+  background-color: rgb(40, 114, 52); /* Barva pozadí tlačítka */
+  color: #fff; /* Barva textu na tlačítku */
+  padding: 10px 20px; /* Odsazení vnitřního obsahu tlačítka */
+  border: none; /* Žádný okraj kolem tlačítka */
+  border-radius: 5px; /* Zaoblené rohy tlačítka */
+  cursor: pointer; /* Kurzor při najetí myší */
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+}
+
+.infProdej {
+  display: flex; /* Použití flexboxu pro uspořádání prvků vedle sebe */
+  flex-direction: row; /* Rozložení prvků ve směru řádku (horizontálně) */
+  align-items: center; /* Zarovnání prvků na střed podle osy Y */
+}
+
+.obsahz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20rem; /* Výška na celou výšku obrazovky, můžete upravit podle potřeby */
+  min-width: 26rem;  
+max-width: 26rem;  
+
+}
+
+.uvodz {
+ 
+  font-weight: bolder;
+  font-size: 2rem;
+  color: rgb(40, 114, 52);
+  text-shadow: -0.3px 0 black, 0 0.3px black, 0.3px 0 black, 0 -0.3px black;
+}
+/* Pro mobilní zařízení */
+/* Pro mobilní zařízení */
+/* Pro mobilní zařízení */
+/* Pro mobilní zařízení */
+@media screen and (max-width: 850px) {
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-image: url('bcgImg.svg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Vertikální zarovnání na střed */
+    align-items: center; /* Horizontální zarovnání na střed */
+    min-height: 100vh; /* Aby se obsah rozprostřel na celou výšku */
+  }
+
+  .cointainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Vertikální zarovnání na střed */
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .menu {
+    text-align: center;
+    width: 100%;
+  }
+
+  .menu h1 {
+    font-size: 1.5rem;
+    color: rgb(40, 114, 52);
+    margin-bottom: 10px;
+  }
+
+  .nadpisos2 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .nadpisos2 p {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    word-wrap: break-word;
+    text-align: center; /* Text zarovnaný na střed */
+  }
+
+  .ikonT {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .ikonT img {
+    width: 1.8rem;
+  }
+
+  .ikonT a {
+    font-size: 0.9rem;
+    color: rgb(0, 0, 0);
+    text-decoration: none;
+  }
+
+  .h2R {
+    font-size: 1.6rem;
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .infTable-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Vertikální zarovnání */
+    width: 90%;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .infTable, 
+  .infTable2 {
+    width: 80%;
+    border-collapse: collapse;
+    margin: 0 auto;
+  }
+
+  .infTable td.textColumn {
+    text-align: center;
+    font-size: 0.9rem;
+    padding: 5px;
+  }
+
+  .infTable2 td {
+    font-size: 0.9rem;
+    padding: 5px;
+    text-align: center;
+    word-wrap: break-word;
+  }
+
+  .incon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Vertikální zarovnání */
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .quantity {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+
+  .quantity input {
+    width: 40px;
+    height: 35px;
+  }
+
+  .quantity-nav {
+    display: flex;
+    flex-direction: column;
+    height: 35px;
+  }
+
+  .quantity-button {
+    width: 25px;
+    height: 17px;
+    font-size: 0.9rem;
+  }
+  #checkbox-container {
+    position: relative;
+    width: 100%; /* Nastavte šířku dle potřeby */
+    /*height: 500px; /* Nastavte výšku dle potřeby */
+    /*border: 3px solid black;*/
+  }
+  .map-viewport {
+    width: 96%;
+  
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    border: 3px solid black;
+  }
+
+  #odeslat {
+    display: block;
+    width: 90%;
+    margin: 20px auto;
+    padding: 12px;
+    font-size: 1rem;
+    text-align: center;
+    background-color: rgb(40, 114, 52);
+    color: white;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+  }
+  .chair {
+    position: absolute;
+    width: 1.3%;
+    height: 1.3%;
+    
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    background: rgba(40, 114, 52, 1);
+    color: rgb(255, 255, 255);
+    font-size: clamp(2px, 0.6vw, 4px);
+    cursor: pointer;
+    margin: 0 auto;
+  }
+  input[type=checkbox] {
+  max-width: 95%;
+  max-height: 95%;
+    opacity: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+   cursor: pointer;
+   margin: 0;
+}
+  .chair-selected {
+    position: absolute;
+    width: 1.4%;
+    height: 1.4%;
+    
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    background: orange;
+    color: black;
+    font-size: clamp(2px, 0.6vw, 4px);
+      cursor: pointer;
+  }
+  .chair-reserved {
+    position: absolute;
+    width: 1.4%;
+    height: 1.4%;
+    
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    background: red;
+    color: black;
+    font-size: clamp(2px, 0.6vw, 4px);
+      cursor: not-allowed;
+  }
+  
+  #odeslat:hover {
+    background-color: rgb(34, 92, 45);
+  }
+}
+
+
+.adminInfo{
+  width: 100%;
+  text-align: center;
+  background-color: rgb(255, 0, 0);
+  padding: 10px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
