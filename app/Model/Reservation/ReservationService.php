@@ -15,7 +15,8 @@ use Throwable;
  */
 final class ReservationService
 {
-	private const FinishedStatuses = "'confirmed', 'paid'";
+	/** Reservations that hold their seats and tickets (as an SQL list). */
+	public const FinishedStatuses = "'confirmed', 'partially_paid', 'paid'";
 
 	/** Static decorations of the hall map, in map units like hall_tables. */
 	private const HallAreas = [
@@ -164,7 +165,7 @@ final class ReservationService
 					->execute([$email, $owner]);
 				return;
 			}
-			if (in_array($existing['status'], ['confirmed', 'paid'], true)) {
+			if (in_array($existing['status'], ['confirmed', 'partially_paid', 'paid'], true)) {
 				throw new ReservationError('Na tento e-mail už rezervace existuje. Pro změnu kontaktujte organizátora.');
 			}
 			if ($existing['session_id'] !== $owner) {

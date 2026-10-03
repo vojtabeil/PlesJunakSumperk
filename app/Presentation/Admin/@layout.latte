@@ -15,6 +15,7 @@
 	<nav n:if="$user->isLoggedIn()" class="admin-nav" aria-label="Hlavní menu">
 		<a n:href="Dashboard:default" n:class="$presenter->isLinkCurrent('Dashboard:*') ? 'is-current'">Přehled</a>
 		<a n:href="Reservation:default" n:class="$presenter->isLinkCurrent('Reservation:*') ? 'is-current'">Rezervace</a>
+		<a n:href="Payment:default" n:class="$presenter->isLinkCurrent('Payment:*') ? 'is-current'">Platby</a>
 		<a n:href="Settings:default" n:class="$presenter->isLinkCurrent('Settings:*') ? 'is-current'">Nastavení</a>
 		<a n:href="Export:guests">Export hostů (CSV)</a>
 	</nav>

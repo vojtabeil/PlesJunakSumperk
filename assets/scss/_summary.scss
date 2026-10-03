@@ -108,3 +108,25 @@
     text-align: left;
   }
 }
+
+.payment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem 2rem;
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+
+  > div {
+    flex: 1 1 18rem;
+  }
+}
+
+.payment-qr {
+  width: 240px;
+  height: 240px;
+  image-rendering: pixelated;
+}

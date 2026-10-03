@@ -7,6 +7,7 @@
         "php": ">=8.3",
         "ext-mbstring": "*",
         "ext-pdo": "*",
+        "chillerlan/php-qrcode": "^6.0",
         "latte/latte": "^3.1",
         "nette/application": "^3.3",
         "nette/bootstrap": "^3.3",

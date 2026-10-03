@@ -1,0 +1,22 @@
+{contentType text}
+{varType array $reservation}
+{varType array $settings}
+{varType string $account}
+{varType int $paid}
+{varType int $remaining}
+{varType bool $complete}
+Dobrý den,
+
+{if $complete}
+platbu za rezervaci č. {$reservation['id']} jsme přijali, děkujeme. Vaše lístky jsou zaplacené.
+
+Kdy: {$settings['event_date'] ?? ''}
+Kde: {$settings['venue'] ?? ''}
+{else}
+k rezervaci č. {$reservation['id']} jsme přijali platbu, celkem zatím {$paid|price} z {(int) $reservation['total_price']|price}.
+
+Doplaťte prosím {$remaining|price} na účet {$account} s variabilním symbolem {$reservation['id']}.
+{/if}
+
+Těšíme se na vás!
+{if !empty($settings['organizer'])}{$settings['organizer']}, organizátor{/if}

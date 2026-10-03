@@ -29,6 +29,8 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | `app/Bootstrap.php` | Nette configurator (debug mode only on localhost, Tracy logs in `var/log`). |
 | `app/Core/RouterFactory.php` | Routes: `/` reservation, `/hotovo/<id>` confirmation, `/api/<op>` JSON, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`. |
 | `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout (`Authenticator`), `AuditLog`. |
+| `app/Model/Payment/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, Fio in phase 5, chosen by `bank.driver`), `PaymentImporter` (fetch -> store -> match -> e-mail), `PaymentMatcher` (VS = reservation id, partial payments add up), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
+| `app/Model/Clock/` | `Clock` interface (`SystemClock`; `tests/php/FrozenClock` in tests). |
 | `app/Presentation/Admin/` | Administration: Sign, Dashboard, Reservation (list, detail, actions), Settings, Export (CSV), Account (password). |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
 | `app/Model/` | Business logic: `Reservation/` (ReservationService = all reservation rules, Settings, ReservationSession), `Mail/` (MailSender interface, SMTP implementation, ReservationMailer + Latte e-mail templates), `Database/` (PDO factory). |
@@ -58,6 +60,7 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | `php.cmd`, `composer.cmd`, `bun.cmd`, `tsc.cmd`, `sass.cmd` | Run the portable tools with the project environment. |
 
 URLs while running: site `/`, administration `/admin` (local seed account `admin` / `admin`),
+mock bank `/dev/bank` (create fake payments, then "Načíst platby z banky" in admin -> Platby),
 diagnostics `/dev/status`, Adminer `/adminer`
 (user `ples`, password `ples`, server `127.0.0.1:3307`), recovered old site `/original/`,
 captured e-mails http://127.0.0.1:8025/.
@@ -88,6 +91,12 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   and each one is written to `AuditLog`. Presenter helper methods must not start with
   `action`/`render`/`handle`/`createComponent` (Nette treats them as lifecycle methods).
 - `Form::URL` accepts "foo" (prepends http://); require an explicit scheme with a Pattern rule.
+- Payments: amounts are hellers (`int`) in PHP and `DECIMAL(12,2)` CZK in the DB. Bank movements
+  are delivered only once, so `PaymentImporter` stores them (unique per source + external id)
+  before matching. Reservation statuses: draft -> confirmed -> partially_paid -> paid, or cancelled;
+  "finished" = `ReservationService::FinishedStatuses`.
+- Dev-only pages (`/dev/*`) check `Debugger::$productionMode`; `/dev/bank` also requires the mock bank.
+- Do not depend on `bcmath` (may be missing on the hosting).
 - E-mails are sent after the reservation is committed; a failure is logged and stored in
   `reservations.email_error`, it never rolls back the reservation.
 - POST requests to `/api/*` require the `X-CSRF-Token` header (token printed into the page).

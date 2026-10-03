@@ -1,5 +1,7 @@
 {varType array $reservation}
 {varType array $settings}
+{varType string $account}
+{varType string $qrCid}
 {var $seats = array_map(fn($label) => ($label|seatLabel), $reservation['seat_labels'])}
 {var $rows = [
 	'Číslo rezervace' => $reservation['id'],
@@ -7,8 +9,6 @@
 	'Místa u stolu' => $seats ? implode('; ', $seats) : '–',
 	'Lístky bez místenky' => $reservation['standing_tickets'],
 	'Celkem lístků' => count($seats) + (int) $reservation['standing_tickets'],
-	'K zaplacení' => ((int) $reservation['total_price']|price),
-	'Variabilní symbol' => $reservation['id'],
 	'Kdy' => $settings['event_date'] ?? '',
 	'Kde' => $settings['venue'] ?? '',
 ]}
@@ -26,8 +26,17 @@
 			<td style="padding:4px 0;font-weight:bold">{$value}</td>
 		</tr>
 	</table>
-	{* TODO: real payment instructions (account, QR code) in phase 4. *}
-	<p>Pokyny k platbě vám pošleme v samostatném e-mailu.</p>
+
+	<h2 style="margin:24px 0 8px;font-size:18px;color:#287234">Platba</h2>
+	<p>Zaplaťte prosím převodem, nejjednodušeji načtením QR kódu v aplikaci své banky:</p>
+	<table style="border-collapse:collapse;margin:8px 0 16px">
+		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Částka</td><td style="padding:4px 0;font-weight:bold">{(int) $reservation['total_price']|price}</td></tr>
+		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Číslo účtu</td><td style="padding:4px 0;font-weight:bold">{$account}</td></tr>
+		<tr><td style="padding:4px 16px 4px 0;color:#5c5c57">Variabilní symbol</td><td style="padding:4px 0;font-weight:bold">{$reservation['id']}</td></tr>
+	</table>
+	<p><img src="cid:{$qrCid}" alt="QR platba" width="220" height="220" style="display:block"></p>
+	<p style="color:#5c5c57;font-size:14px">Bez správného variabilního symbolu platbu nedokážeme přiřadit. Až platba dorazí, pošleme vám potvrzení.</p>
+
 	<p>Těšíme se na vás!{if !empty($settings['organizer'])}<br>{$settings['organizer']}, organizátor{/if}</p>
 </div>
 </body>

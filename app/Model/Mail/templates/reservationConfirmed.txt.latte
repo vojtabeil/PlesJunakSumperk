@@ -1,6 +1,7 @@
 {contentType text}
 {varType array $reservation}
 {varType array $settings}
+{varType string $account}
 {var $seats = array_map(fn($label) => ($label|seatLabel), $reservation['seat_labels'])}
 Dobrý den,
 
@@ -11,12 +12,16 @@ Jméno: {$reservation['name']}
 Místa u stolu: {$seats ? implode('; ', $seats) : '–'}
 Lístky bez místenky: {$reservation['standing_tickets']}
 Celkem lístků: {count($seats) + (int) $reservation['standing_tickets']}
-K zaplacení: {(int) $reservation['total_price']|price}
-Variabilní symbol: {$reservation['id']}
 Kdy: {$settings['event_date'] ?? ''}
 Kde: {$settings['venue'] ?? ''}
 
-Pokyny k platbě vám pošleme v samostatném e-mailu.
+PLATBA
+Zaplaťte prosím převodem (QR kód je v HTML verzi e-mailu):
+Částka: {(int) $reservation['total_price']|price}
+Číslo účtu: {$account}
+Variabilní symbol: {$reservation['id']}
+
+Bez správného variabilního symbolu platbu nedokážeme přiřadit. Až platba dorazí, pošleme vám potvrzení.
 
 Těšíme se na vás!
 {if !empty($settings['organizer'])}{$settings['organizer']}, organizátor{/if}

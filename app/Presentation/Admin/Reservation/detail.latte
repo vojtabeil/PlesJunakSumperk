@@ -20,10 +20,11 @@
 			<dt>Místa</dt><dd>{$r['seats'] ? implode('; ', array_map(fn($l) => ($l|seatLabel), $r['seats'])) : '–'}</dd>
 			<dt>Bez místenky</dt><dd>{$r['standing_tickets']}</dd>
 			<dt>Cena</dt><dd>{(int) $r['total_price']|price}</dd>
+			<dt>Zaplaceno</dt><dd>{(int) $r['paid_amount']|price}</dd>
 			<dt>Variabilní symbol</dt><dd>{$r['id']}</dd>
 			<dt>Vytvořeno</dt><dd>{$r['created_at']|date:'j. n. Y H:i'}</dd>
 			<dt>Potvrzeno</dt><dd>{if $r['confirmed_at']}{$r['confirmed_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
-			<dt>Zaplaceno</dt><dd>{if $r['paid_at']}{$r['paid_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
+			<dt>Zaplaceno dne</dt><dd>{if $r['paid_at']}{$r['paid_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
 			<dt>Potvrzovací e-mail</dt>
 			<dd>
 				{if $r['email_sent_at']}odeslán {$r['email_sent_at']|date:'j. n. Y H:i'}{else}neodeslán{/if}
@@ -35,8 +36,8 @@
 	<section class="card">
 		<h2>Akce</h2>
 		<div class="actions">
-			{if $r['status'] === 'confirmed'}{control markPaidForm}{/if}
-			{if in_array($r['status'], ['confirmed', 'paid'], true)}{control resendForm}{/if}
+			{if in_array($r['status'], ['confirmed', 'partially_paid'], true)}{control markPaidForm}{/if}
+			{if in_array($r['status'], ['confirmed', 'partially_paid', 'paid'], true)}{control resendForm}{/if}
 			{if $r['status'] !== 'cancelled'}
 				<div class="danger-zone">{control cancelForm}</div>
 			{/if}
@@ -44,6 +45,18 @@
 		{control noteForm}
 	</section>
 </div>
+
+<section class="card">
+	<h2>Platby z banky</h2>
+	<ul class="activity" n:if="$payments">
+		<li n:foreach="$payments as $p">
+			<time>{$p['booked_on']|date:'j. n. Y'}</time>
+			{number_format((float) $p['amount'], 2, ',', ' ')} Kč – {$p['counter_name'] ?? '?'}
+			<span class="muted">({$p['match_status']|matchLabel})</span>
+		</li>
+	</ul>
+	<p n:if="!$payments" class="muted">Zatím žádná platba z banky.</p>
+</section>
 
 <section class="card">
 	<h2>Historie změn</h2>

@@ -19,4 +19,6 @@ final class DashboardTemplate extends BaseTemplate
 
 	/** @var list<array<string, mixed>> */
 	public array $activity;
+
+	public int $paymentProblems;
 }

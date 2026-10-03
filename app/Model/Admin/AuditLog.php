@@ -20,6 +20,9 @@ final class AuditLog
 		'reservation.email' => 'Znovu odeslán potvrzovací e-mail',
 		'reservation.note' => 'Změna poznámky',
 		'settings.changed' => 'Změna nastavení',
+		'payments.imported' => 'Načtení plateb z banky',
+		'payment.assigned' => 'Platba přiřazena ručně',
+		'payment.ignored' => 'Platba ignorována',
 	];
 
 

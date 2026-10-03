@@ -7,7 +7,9 @@ namespace App\Tests\Model\Mail;
 use App\Model\Mail\MailMessage;
 use App\Model\Mail\MailSender;
 use App\Model\Mail\ReservationMailer;
+use App\Model\Payment\QrPayment;
 use App\Tests\DatabaseTestCase;
+use App\Tests\RecordingMailSender;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use RuntimeException;
 use Tracy\ILogger;
@@ -18,16 +20,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 	public function testSendsConfirmationAndRecordsIt(): void
 	{
 		$id = $this->confirmedReservation();
-		$sender = new class implements MailSender {
-			/** @var list<MailMessage> */
-			public array $sent = [];
-
-
-			public function send(MailMessage $message): void
-			{
-				$this->sent[] = $message;
-			}
-		};
+		$sender = new RecordingMailSender;
 
 		self::assertTrue($this->mailer($sender)->sendConfirmation($id));
 
@@ -38,6 +31,10 @@ final class ReservationMailerTest extends DatabaseTestCase
 		self::assertStringContainsString('stůl 1, místo 1', $message->text);
 		self::assertStringContainsString("600\u{A0}Kč", $message->text);
 		self::assertStringContainsString('Jana Nováková', $message->html);
+		self::assertStringContainsString('Variabilní symbol: ' . $id, $message->text);
+		self::assertStringContainsString('2501895120/2010', $message->text);
+		self::assertStringContainsString('cid:qr-platba', $message->html);
+		self::assertStringStartsWith("\x89PNG", $message->inlineImages['qr-platba'] ?? '');
 
 		$row = $this->db->query("SELECT email_sent_at, email_error FROM reservations WHERE id = $id")->fetch();
 		self::assertNotNull($row['email_sent_at']);
@@ -75,7 +72,14 @@ final class ReservationMailerTest extends DatabaseTestCase
 				$this->logged[] = $value;
 			}
 		};
-		return new ReservationMailer($this->reservations(), $this->settings(), $sender, $this->service(LatteFactory::class), $logger);
+		return new ReservationMailer(
+			$this->reservations(),
+			$this->settings(),
+			$sender,
+			$this->service(LatteFactory::class),
+			new QrPayment($this->settings()),
+			$logger,
+		);
 	}
 
 

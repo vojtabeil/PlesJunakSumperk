@@ -15,7 +15,7 @@ CREATE TABLE reservations (
     name             VARCHAR(255) NULL,
     phone            VARCHAR(32)  NULL,
     standing_tickets INT UNSIGNED NOT NULL DEFAULT 0,
-    status           ENUM('draft', 'confirmed', 'paid', 'cancelled') NOT NULL DEFAULT 'draft',
+    status           ENUM('draft', 'confirmed', 'partially_paid', 'paid', 'cancelled') NOT NULL DEFAULT 'draft',
     session_id       VARCHAR(128) NULL,
     total_price      INT UNSIGNED NULL,
     created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -24,6 +24,7 @@ CREATE TABLE reservations (
     email_sent_at    DATETIME NULL,
     email_error      VARCHAR(1000) NULL,
     paid_at          DATETIME NULL,
+    paid_amount      DECIMAL(12, 2) NOT NULL DEFAULT 0,
     note             VARCHAR(1000) NULL,
     UNIQUE KEY uq_reservations_email (email),
     KEY ix_reservations_session (session_id)
@@ -80,4 +81,40 @@ CREATE TABLE audit_log (
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY ix_audit_log_reservation (reservation_id),
     CONSTRAINT fk_audit_log_admin FOREIGN KEY (admin_user_id) REFERENCES admin_users (id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Incoming and outgoing payments downloaded from the bank (Fio) or the mock bank.
+-- Stored before matching, so nothing is lost when matching fails; (source, external_id) is unique.
+CREATE TABLE bank_transactions (
+    id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    source          ENUM('fio', 'mock') NOT NULL,
+    external_id     VARCHAR(64)  NOT NULL,
+    booked_on       DATE NOT NULL,
+    amount          DECIMAL(12, 2) NOT NULL,
+    currency        CHAR(3) NOT NULL DEFAULT 'CZK',
+    variable_symbol VARCHAR(10)  NULL,
+    counter_account VARCHAR(64)  NULL,
+    counter_name    VARCHAR(255) NULL,
+    message         VARCHAR(255) NULL,
+    raw             TEXT NULL,
+    imported_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reservation_id  INT UNSIGNED NULL,
+    match_status    ENUM('matched', 'underpaid', 'overpaid', 'unknown_vs', 'no_vs', 'outgoing', 'ignored') NOT NULL,
+    UNIQUE KEY uq_bank_transactions_external (source, external_id),
+    KEY ix_bank_transactions_reservation (reservation_id),
+    CONSTRAINT fk_bank_transactions_reservation FOREIGN KEY (reservation_id) REFERENCES reservations (id)
+) ENGINE=InnoDB;
+
+-- Fake bank for local testing (/dev/bank); read by MockBankSource like the Fio API.
+CREATE TABLE mock_bank_transactions (
+    id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    booked_on       DATE NOT NULL,
+    amount          DECIMAL(12, 2) NOT NULL,
+    currency        CHAR(3) NOT NULL DEFAULT 'CZK',
+    variable_symbol VARCHAR(10)  NULL,
+    counter_account VARCHAR(64)  NULL,
+    counter_name    VARCHAR(255) NULL,
+    message         VARCHAR(255) NULL,
+    fetched         TINYINT(1) NOT NULL DEFAULT 0,
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

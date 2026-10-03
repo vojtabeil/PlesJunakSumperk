@@ -23,6 +23,7 @@ final class TemplateExtension extends Extension
 			'price' => self::formatPrice(...),
 			'seatLabel' => self::formatSeatLabel(...),
 			'statusLabel' => self::formatStatus(...),
+			'matchLabel' => self::formatMatchStatus(...),
 			'auditLabel' => static fn(string $action): string => AuditLog::Labels[$action] ?? $action,
 		];
 	}
@@ -57,8 +58,25 @@ final class TemplateExtension extends Extension
 		return match ($status) {
 			'draft' => 'rozpracovaná',
 			'confirmed' => 'nezaplacená',
+			'partially_paid' => 'částečně zaplacená',
 			'paid' => 'zaplacená',
 			'cancelled' => 'zrušená',
+			default => $status,
+		};
+	}
+
+
+	/** Czech name of a bank transaction matching status. */
+	public static function formatMatchStatus(string $status): string
+	{
+		return match ($status) {
+			'matched' => 'spárováno',
+			'underpaid' => 'nedoplatek',
+			'overpaid' => 'přeplatek',
+			'unknown_vs' => 'neznámý VS',
+			'no_vs' => 'bez VS',
+			'outgoing' => 'odchozí',
+			'ignored' => 'ignorováno',
 			default => $status,
 		};
 	}

@@ -4,6 +4,8 @@ parameters:
 	# Overridden in local.neon.
 	database: []
 	mail: []
+	bank:
+		driver: mock   # mock = fake bank for local testing (/dev/bank), fio = Fio API
 
 
 application:

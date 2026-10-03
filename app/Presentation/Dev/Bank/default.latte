@@ -1,0 +1,63 @@
+{templateType App\Presentation\Dev\Bank\BankTemplate}
+{layout none}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex">
+	<title>Zkušební banka</title>
+	<link rel="stylesheet" href="{$basePath}/{asset('build/admin.css')}">
+</head>
+<body>
+<header class="admin-header admin-header--dev">
+	<span class="admin-brand">Zkušební banka</span>
+	<nav class="admin-nav">
+		<a n:href=":Admin:Payment:default">Administrace → Platby</a>
+		<a n:href=":Front:Home:default">Web</a>
+		<a href="http://127.0.0.1:8025/">E-maily (Mailpit)</a>
+	</nav>
+</header>
+<main class="admin-main">
+	<p class="flash flash--info">Jen pro lokální testování. Platby odsud se do administrace dostanou stejně jako skutečné platby z Fio:
+		tlačítkem <strong>Načíst platby z banky</strong> na stránce Platby.</p>
+	<div n:foreach="$flashes as $flash" class="flash flash--{$flash->type}" role="status">{$flash->message}</div>
+
+	<div class="columns">
+		<section class="card">
+			<h2>Zaplatit rezervaci</h2>
+			{control payForm}
+		</section>
+		<section class="card">
+			<h2>Vlastní platba</h2>
+			{control customForm}
+		</section>
+	</div>
+
+	<section class="card">
+		<div class="page-head">
+			<h2>Platby v bance</h2>
+			{control clearForm}
+		</div>
+		<div class="table-scroll" n:if="$transactions">
+			<table class="data-table">
+				<thead>
+					<tr><th>#</th><th class="num">Částka</th><th>VS</th><th>Plátce</th><th>Zpráva</th><th>Stav</th></tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$transactions as $t">
+						<td>{$t['id']}</td>
+						<td class="num">{number_format((float) $t['amount'], 2, ',', ' ')} Kč</td>
+						<td>{$t['variable_symbol'] ?? '–'}</td>
+						<td>{$t['counter_name']}</td>
+						<td>{$t['message'] ?? ''}</td>
+						<td><span n:class="'badge', $t['fetched'] ? 'badge--paid' : ''">{$t['fetched'] ? 'načteno' : 'čeká na načtení'}</span></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<p n:if="!$transactions" class="muted">Zatím žádné platby.</p>
+	</section>
+</main>
+</body>
+</html>

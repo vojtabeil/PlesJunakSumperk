@@ -29,8 +29,13 @@
 	<div class="stat stat--warning">
 		<span class="stat-value">{$stats['confirmed']}</span>
 		<span class="stat-label">čeká na platbu</span>
-		<span class="stat-note">{$stats['unpaid_amount']|price}</span>
+		<span class="stat-note">{$stats['unpaid_amount']|price}{if $stats['partially_paid']}, z toho částečně zaplaceno {$stats['partially_paid']}{/if}</span>
 	</div>
+	<a n:if="$paymentProblems" class="stat stat--problem" n:href="Payment:default, problems: true">
+		<span class="stat-value">{$paymentProblems}</span>
+		<span class="stat-label">plateb k vyřešení</span>
+		<span class="stat-note">neznámý VS, nedoplatek, přeplatek</span>
+	</a>
 </section>
 
 <div class="columns">

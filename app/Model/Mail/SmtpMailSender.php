@@ -58,6 +58,9 @@ final class SmtpMailSender implements MailSender
 		$mail->isHTML(true);
 		$mail->Body = $message->html;
 		$mail->AltBody = $message->text;
+		foreach ($message->inlineImages as $cid => $png) {
+			$mail->addStringEmbeddedImage($png, $cid, $cid . '.png', PHPMailer::ENCODING_BASE64, 'image/png');
+		}
 		$mail->send();
 	}
 }

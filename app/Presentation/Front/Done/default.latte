@@ -13,16 +13,28 @@
 		<dt>Místa u stolu</dt><dd>{$seats ? implode('; ', $seats) : '–'}</dd>
 		<dt>Bez místenky</dt><dd>{$reservation['standing_tickets']}</dd>
 		<dt>Celkem lístků</dt><dd>{count($seats) + (int) $reservation['standing_tickets']}</dd>
-		<dt>K zaplacení</dt><dd><strong>{(int) $reservation['total_price']|price}</strong></dd>
-		<dt>Variabilní symbol</dt><dd>{$reservation['id']}</dd>
+		<dt>Cena</dt><dd><strong>{(int) $reservation['total_price']|price}</strong></dd>
 	</dl>
 
-	<p n:if="$reservation['email_sent_at']" class="message">Potvrzení jsme poslali na {$reservation['email']}.</p>
+	<p n:if="$reservation['email_sent_at']" class="message">Potvrzení s platebními údaji jsme poslali na {$reservation['email']}.</p>
 	<p n:if="!$reservation['email_sent_at']" class="message message--error">
-		Potvrzovací e-mail se nepodařilo odeslat. Rezervace je ale uložená, údaje si prosím poznamenejte.
+		Potvrzovací e-mail se nepodařilo odeslat. Rezervace je ale uložená, platební údaje si prosím poznamenejte.
 	</p>
-	{* TODO: payment instructions (account, QR code) in phase 4. *}
-	<p>Pokyny k platbě zatím nejsou k dispozici.</p>
+
+	<div n:if="$qrCode" class="payment">
+		<div>
+			<h3>Platba</h3>
+			<p>Zaplaťte prosím převodem, nejjednodušeji načtením QR kódu v aplikaci své banky.</p>
+			<dl class="totals">
+				<dt>Částka</dt><dd><strong>{$remaining|price}</strong></dd>
+				<dt>Číslo účtu</dt><dd>{$account}</dd>
+				<dt>Variabilní symbol</dt><dd><strong>{$reservation['id']}</strong></dd>
+			</dl>
+			<p class="prices">Bez správného variabilního symbolu platbu nedokážeme přiřadit.</p>
+		</div>
+		<img class="payment-qr" src="{$qrCode|nocheck}" alt="QR kód pro platbu {$remaining|price} na účet {$account}, variabilní symbol {$reservation['id']}" width="240" height="240">
+	</div>
+	<p n:if="!$qrCode" class="message">Rezervace je zaplacená. Děkujeme!</p>
 
 	<p><a class="button" n:href="Home:default">Zpět na úvod</a></p>
 </section>

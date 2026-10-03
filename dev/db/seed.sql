@@ -12,6 +12,7 @@ INSERT INTO settings (name, value) VALUES
     ('band', 'Lucky Band'),
     ('band_url', 'https://www.luckyband.cz/'),
     ('organizer', 'Tomáš Slavický'),
+    ('bank_account', '2501895120/2010'),
     ('max_ticket', '10'),
     ('hold_seconds', '120'),
     ('price_seat', '350'),
@@ -58,4 +59,4 @@ UPDATE seats SET state = 'reserved', reservation_id = 2 WHERE id IN (501, 502, 5
 INSERT INTO admin_users (login, name, password_hash) VALUES
     ('admin', 'Testovací Organizátor', '$2y$12$0dzo6iQBXaEx2QIunet7P.rVyXI5H5K52wlJ/bG6umC0LijyaoSea');
 
-UPDATE reservations SET paid_at = NOW() WHERE status = 'paid';
+UPDATE reservations SET paid_at = NOW(), paid_amount = total_price WHERE status = 'paid';

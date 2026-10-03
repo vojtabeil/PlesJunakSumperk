@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Presentation\Admin\Reservation;
 
 use App\Model\Mail\ReservationMailer;
+use App\Model\Payment\PaymentRepository;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationError;
 use App\Presentation\Accessory\TemplateExtension;
@@ -29,6 +30,7 @@ final class ReservationPresenter extends BasePresenter
 	public function __construct(
 		private readonly ReservationAdmin $reservationAdmin,
 		private readonly ReservationMailer $mailer,
+		private readonly PaymentRepository $payments,
 	) {
 		parent::__construct();
 	}
@@ -50,6 +52,7 @@ final class ReservationPresenter extends BasePresenter
 	{
 		$this->template->reservation = $this->reservation;
 		$this->template->activity = $this->auditLog->recent(50, (int) $this->reservation['id']);
+		$this->template->payments = $this->payments->forReservation((int) $this->reservation['id']);
 	}
 
 

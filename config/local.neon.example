@@ -20,3 +20,7 @@ parameters:
 		from: ples@junak-sumperk.cz
 		fromName: Šumperský skautský ples
 		replyTo: ''
+
+	# Bank movements. mock = fake bank for testing (/dev/bank), fio = Fio API (production).
+	bank:
+		driver: mock

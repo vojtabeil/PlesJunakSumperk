@@ -14,6 +14,18 @@ services:
 	- App\Model\Admin\Authenticator
 	- App\Model\Admin\AuditLog
 
+	- App\Model\Clock\SystemClock
+
+	# Bank movements: mock bank locally, Fio API in production (parameter bank.driver).
+	bankSource:
+		type: App\Model\Payment\BankTransactionSource
+		create: App\Model\Payment\BankSourceFactory::create(%bank%)
+	- App\Model\Payment\Mock\MockBank
+	- App\Model\Payment\PaymentMatcher
+	- App\Model\Payment\PaymentImporter
+	- App\Model\Payment\PaymentRepository
+	- App\Model\Payment\QrPayment
+
 	- App\Presentation\Accessory\FormFactory
 
 	mailSender:

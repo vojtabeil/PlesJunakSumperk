@@ -1,0 +1,64 @@
+{templateType App\Presentation\Admin\Payment\PaymentTemplate}
+
+{block title}Platby{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Platby</h1>
+	<div class="inline-actions">
+		{control importForm}
+		<a n:if="$bankName === 'mock'" class="button" href="{plink :Dev:Bank:default}">Zkušební banka</a>
+	</div>
+</div>
+<p class="muted">
+	Zdroj: {$bankName === 'fio' ? 'Fio banka (API)' : 'zkušební banka (jen pro testování)'}.
+	{if $waitSeconds}Další načtení je možné za {$waitSeconds} s.{/if}
+</p>
+
+<div class="columns" n:if="$problemCount">
+	<section class="card">
+		<h2>Přiřadit platbu ručně</h2>
+		<p class="muted">Pro platby bez variabilního symbolu nebo s neznámým číslem rezervace.</p>
+		{control assignForm}
+	</section>
+	<section class="card">
+		<h2>Platba nepatří k plesu</h2>
+		{control ignoreForm}
+	</section>
+</div>
+
+<section class="card">
+	<div class="page-head">
+		<h2>Pohyby na účtu</h2>
+		<p>
+			<a n:href="this, problems: false" n:class="!$problems ? 'is-current'">všechny</a> ·
+			<a n:href="this, problems: true" n:class="$problems ? 'is-current'">k vyřešení ({$problemCount})</a>
+		</p>
+	</div>
+	<div class="table-scroll" n:if="$payments">
+		<table class="data-table">
+			<thead>
+				<tr>
+					<th scope="col">Datum</th>
+					<th scope="col" class="num">Částka</th>
+					<th scope="col">VS</th>
+					<th scope="col">Plátce / zpráva</th>
+					<th scope="col">Rezervace</th>
+					<th scope="col">Stav</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr n:foreach="$payments as $p">
+					<td>{$p['booked_on']|date:'j. n. Y'}</td>
+					<td class="num">{number_format((float) $p['amount'], 2, ',', ' ')} Kč</td>
+					<td>{$p['variable_symbol'] ?? '–'}</td>
+					<td>{$p['counter_name'] ?? '–'}<br><span class="muted">{$p['counter_account']} {$p['message']}</span></td>
+					<td>{if $p['reservation_id']}<a n:href="Reservation:detail $p['reservation_id']">č. {$p['reservation_id']}</a>{else}–{/if}</td>
+					<td><span n:class="'badge', in_array($p['match_status'], \App\Model\Payment\PaymentRepository::ProblemStatuses, true) ? 'badge--problem' : ($p['match_status'] === 'matched' ? 'badge--paid' : '')">{$p['match_status']|matchLabel}</span></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<p n:if="!$payments" class="muted">Žádné platby.</p>
+</section>
+{/block}

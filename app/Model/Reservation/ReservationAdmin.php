@@ -11,7 +11,7 @@ use Throwable;
 /** Reservation management for organizers (overview, search, payments by hand, cancelling). */
 final class ReservationAdmin
 {
-	public const Statuses = ['draft', 'confirmed', 'paid', 'cancelled'];
+	public const Statuses = ['draft', 'confirmed', 'partially_paid', 'paid', 'cancelled'];
 
 
 	public function __construct(
@@ -33,11 +33,12 @@ final class ReservationAdmin
 		$reservations = $this->db->query(
 			"SELECT
 				COALESCE(SUM(status = 'confirmed'), 0) AS confirmed,
+				COALESCE(SUM(status = 'partially_paid'), 0) AS partially_paid,
 				COALESCE(SUM(status = 'paid'), 0) AS paid,
 				COALESCE(SUM(status = 'cancelled'), 0) AS cancelled,
-				COALESCE(SUM(IF(status IN ('confirmed', 'paid'), standing_tickets, 0)), 0) AS standing,
-				COALESCE(SUM(IF(status = 'confirmed', total_price, 0)), 0) AS unpaid_amount,
-				COALESCE(SUM(IF(status = 'paid', total_price, 0)), 0) AS paid_amount
+				COALESCE(SUM(IF(status IN (" . ReservationService::FinishedStatuses . "), standing_tickets, 0)), 0) AS standing,
+				COALESCE(SUM(IF(status IN ('confirmed', 'partially_paid'), total_price - paid_amount, 0)), 0) AS unpaid_amount,
+				COALESCE(SUM(IF(status IN (" . ReservationService::FinishedStatuses . "), paid_amount, 0)), 0) AS paid_amount
 			FROM reservations",
 		)->fetch();
 
@@ -98,7 +99,10 @@ final class ReservationAdmin
 	/** Payment received outside the bank (e.g. cash). */
 	public function markPaid(int $id): void
 	{
-		$stmt = $this->db->prepare("UPDATE reservations SET status = 'paid', paid_at = NOW() WHERE id = ? AND status = 'confirmed'");
+		$stmt = $this->db->prepare(
+			"UPDATE reservations SET status = 'paid', paid_at = NOW(), paid_amount = total_price
+			WHERE id = ? AND status IN ('confirmed', 'partially_paid')",
+		);
 		$stmt->execute([$id]);
 		if ($stmt->rowCount() === 0) {
 			throw new ReservationError('Zaplacenou lze označit jen potvrzenou nezaplacenou rezervaci.');
@@ -144,10 +148,10 @@ final class ReservationAdmin
 	public function guestList(): array
 	{
 		return $this->db->query(
-			"SELECT r.id, r.name, r.email, r.phone, r.status, r.standing_tickets, r.total_price, r.paid_at, r.note,
+			"SELECT r.id, r.name, r.email, r.phone, r.status, r.standing_tickets, r.total_price, r.paid_amount, r.paid_at, r.note,
 				GROUP_CONCAT(s.label ORDER BY s.id SEPARATOR ', ') AS seat_labels, COUNT(s.id) AS seat_count
 			FROM reservations r LEFT JOIN seats s ON s.reservation_id = r.id
-			WHERE r.status IN ('confirmed', 'paid')
+			WHERE r.status IN (" . ReservationService::FinishedStatuses . ")
 			GROUP BY r.id
 			ORDER BY r.name, r.id",
 		)->fetchAll();

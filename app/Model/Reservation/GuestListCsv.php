@@ -8,13 +8,13 @@ namespace App\Model\Reservation;
 /** CSV export of the guest list, ready for Excel with Czech locale (UTF-8 BOM, semicolons). */
 final class GuestListCsv
 {
-	private const StatusLabels = ['confirmed' => 'nezaplaceno', 'paid' => 'zaplaceno'];
+	private const StatusLabels = ['confirmed' => 'nezaplaceno', 'partially_paid' => 'částečně zaplaceno', 'paid' => 'zaplaceno'];
 
 
 	/** @param list<array<string, mixed>> $rows from ReservationAdmin::guestList() */
 	public static function build(array $rows): string
 	{
-		$lines = [self::line(['Číslo', 'Jméno', 'E-mail', 'Telefon', 'Místa', 'Počet míst', 'Bez místenky', 'Cena', 'Stav', 'Zaplaceno', 'Poznámka'])];
+		$lines = [self::line(['Číslo', 'Jméno', 'E-mail', 'Telefon', 'Místa', 'Počet míst', 'Bez místenky', 'Cena', 'Zaplaceno Kč', 'Stav', 'Zaplaceno dne', 'Poznámka'])];
 		foreach ($rows as $row) {
 			$lines[] = self::line([
 				$row['id'],
@@ -25,6 +25,7 @@ final class GuestListCsv
 				$row['seat_count'],
 				$row['standing_tickets'],
 				$row['total_price'],
+				(int) $row['paid_amount'],
 				self::StatusLabels[$row['status']] ?? $row['status'],
 				$row['paid_at'] ?? '',
 				$row['note'] ?? '',

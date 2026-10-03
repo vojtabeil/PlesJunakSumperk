@@ -17,6 +17,7 @@ final class RouterFactory
 		$router->addRoute('api/<op>', 'Front:Api:default');
 		$router->addRoute('hotovo/<id \d+>', 'Front:Done:default');
 		$router->addRoute('dev/status', 'Dev:Status:default');
+		$router->addRoute('dev/bank', 'Dev:Bank:default');
 		$router->addRoute('', 'Front:Home:default');
 		return $router;
 	}

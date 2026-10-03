@@ -17,4 +17,7 @@ final class ReservationTemplate extends BaseTemplate
 
 	/** @var list<array<string, mixed>> */
 	public array $activity;
+
+	/** @var list<array<string, mixed>> */
+	public array $payments;
 }

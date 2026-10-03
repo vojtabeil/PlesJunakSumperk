@@ -1,6 +1,6 @@
 # Implementation plan: Nette, admin, payments, frontend build
 
-Status: phases 1-3 (tooling, Nette skeleton, admin) done; next is phase 4 (payments). Decisions were made in discussion with the
+Status: phases 1-4 (tooling, Nette skeleton, admin, payments with the mock bank) done; next is phase 5 (Fio API, deployment). Decisions were made in discussion with the
 project owner on 2026-10-03; this file is the reference for the next steps.
 
 ## 1. Decisions
