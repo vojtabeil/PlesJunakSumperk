@@ -1,0 +1,48 @@
+{templateType App\Presentation\Front\Home\HomeTemplate}
+
+{block content}
+<section n:if="!$saleOpen" class="panel closed">
+	<h2>Prodej lístků je uzavřený</h2>
+	<p>{$settings['closed_message'] ?? ''}</p>
+</section>
+
+<section n:if="$saleOpen" class="panel" id="reservation" aria-labelledby="reservation-title">
+	<h2 id="reservation-title">Rezervace lístků</h2>
+
+	<ol class="steps">
+		<li>Zadejte svůj e-mail.</li>
+		<li>Vyberte místa v plánku sálu nebo lístky bez místenky.</li>
+		<li>Vyplňte jméno a rezervaci potvrďte.</li>
+	</ol>
+
+	{* Replaced by the Preact seat picker; without JavaScript the static plan stays visible. *}
+	<div id="seat-picker">
+		<noscript><p class="message message--error">Rezervace vyžaduje zapnutý JavaScript.</p></noscript>
+		<div class="map-scroll">
+			<div class="map" style="aspect-ratio: {$layout['width']} / {$layout['height']}">
+				{include hallPlan, layout: $layout}
+				<span n:foreach="$layout['seats'] as $seat" class="seat seat--static"
+					style="left: {$seat['x'] / $layout['width'] * 100|number:3, '.', ''}%; top: {$seat['y'] / $layout['height'] * 100|number:3, '.', ''}%"></span>
+			</div>
+		</div>
+	</div>
+	<script type="application/json" id="seat-picker-data">{$pickerData|noescape}</script>
+</section>
+{/block}
+
+{block scripts}
+<script n:if="$saleOpen" src="{$basePath}/{asset('build/front.js')}" type="module"></script>
+{/block}
+
+{define hallPlan, array $layout}
+<svg class="map-plan" viewBox="0 0 {$layout['width']} {$layout['height']}" aria-hidden="true">
+	{foreach $layout['areas'] as $area}
+		<rect class="plan-{$area['kind']}" x="{$area['x']}" y="{$area['y']}" width="{$area['width']}" height="{$area['height']}" rx="8"/>
+		<text class="plan-label plan-label--{$area['kind']}" x="{$area['x'] + $area['width'] / 2}" y="{$area['y'] + $area['height'] / 2}">{$area['label']}</text>
+	{/foreach}
+	{foreach $layout['tables'] as $table}
+		<rect class="plan-table" x="{$table['x']}" y="{$table['y']}" width="{$table['width']}" height="{$table['height']}" rx="4"/>
+		<text class="plan-table-label" x="{$table['x'] + $table['width'] / 2}" y="{$table['y'] + $table['height'] / 2}">Stůl {$table['label']}</text>
+	{/foreach}
+</svg>
+{/define}

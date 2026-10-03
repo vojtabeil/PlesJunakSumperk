@@ -1,0 +1,74 @@
+@use 'tokens' as *;
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 16px 1rem;
+
+  h1 {
+    margin: 0 0 1rem;
+    font-family: var(--heading-font);
+    font-weight: 400;
+    font-size: clamp(2.2rem, 7vw, 4.5rem);
+    line-height: 1.05;
+    text-transform: uppercase;
+
+    a {
+      color: var(--green);
+      text-decoration: none;
+    }
+  }
+}
+
+.hero-figure {
+  height: 340px;
+  flex: none;
+
+  @include below($breakpoint-tablet) {
+    display: none;
+  }
+}
+
+.hero-text {
+  max-width: 34rem;
+  text-align: center;
+}
+
+.hero-town {
+  display: block;
+  color: var(--green-soft);
+}
+
+.intro {
+  margin: 0 0 1.25rem;
+}
+
+.event-facts {
+  display: grid;
+  gap: 0.6rem;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  img {
+    width: 2.2rem;
+    height: 2.2rem;
+    object-fit: contain;
+  }
+
+  a {
+    color: var(--text);
+  }
+}

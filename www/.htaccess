@@ -1,0 +1,15 @@
+# Apache configuration for the document root (www/).
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+
+	# Never serve dotfiles (except .well-known).
+	RewriteRule /\.|^\.(?!well-known/) - [F]
+
+	# Front controller: everything that is not an existing file goes to index.php.
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteRule . index.php [L]
+</IfModule>

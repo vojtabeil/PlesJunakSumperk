@@ -1,0 +1,32 @@
+# Shared configuration. Secrets and machine-specific values belong to config/local.neon.
+
+parameters:
+	# Overridden in local.neon.
+	database: []
+	mail: []
+
+
+application:
+	errorPresenter:
+		4xx: Error:Error4xx
+		5xx: Error:Error5xx
+	mapping: App\Presentation\*\**Presenter
+
+
+latte:
+	strictTypes: yes
+	strictParsing: yes
+	extensions:
+		- App\Presentation\Accessory\TemplateExtension(%rootDir%/www)
+
+
+session:
+	name: ples_session
+	cookieSamesite: Lax
+	expiration: 7 days
+
+
+di:
+	export:
+		parameters: no
+		tags: no

@@ -1,0 +1,32 @@
+// Design tokens. Colours and fonts follow the original site (original/style.css).
+
+$breakpoint-tablet: 900px;
+$breakpoint-phone: 480px;
+
+@mixin below($width) {
+  @media (max-width: $width) {
+    @content;
+  }
+}
+
+:root {
+  --green: #287234;
+  --green-dark: #1f5a29;
+  --green-soft: rgba(40, 114, 52, 0.5);
+  --orange: #f29a1d;
+  --taken: #c9c3bb;
+  --taken-text: #6d665e;
+  --error: #b3261e;
+  --text: #1d1d1b;
+  --muted: #5c5c57;
+  --bg: #f7f3ea;
+  --surface: #ffffff;
+  --surface-alt: #fcfaf5;
+  --border: #ddd5c6;
+  --plan-floor: #efe8d8;
+  --plan-table: #b98a5a;
+  --radius: 10px;
+  --radius-small: 6px;
+  --heading-font: 'Calistoga', Georgia, serif;
+  --body-font: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+}

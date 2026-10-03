@@ -1,0 +1,34 @@
+{varType array $reservation}
+{varType array $settings}
+{var $seats = array_map(fn($label) => ($label|seatLabel), $reservation['seat_labels'])}
+{var $rows = [
+	'Číslo rezervace' => $reservation['id'],
+	'Jméno' => $reservation['name'],
+	'Místa u stolu' => $seats ? implode('; ', $seats) : '–',
+	'Lístky bez místenky' => $reservation['standing_tickets'],
+	'Celkem lístků' => count($seats) + (int) $reservation['standing_tickets'],
+	'K zaplacení' => ((int) $reservation['total_price']|price),
+	'Variabilní symbol' => $reservation['id'],
+	'Kdy' => $settings['event_date'] ?? '',
+	'Kde' => $settings['venue'] ?? '',
+]}
+<!DOCTYPE html>
+<html lang="cs">
+<head><meta charset="UTF-8"><title>{$settings['event_name'] ?? 'Skautský ples'}</title></head>
+<body style="margin:0;padding:24px;background:#f7f3ea;font-family:Arial,Helvetica,sans-serif;color:#1d1d1b">
+<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #ddd5c6;border-radius:10px;padding:24px">
+	<h1 style="margin:0 0 16px;font-size:24px;color:#287234">{$settings['event_name'] ?? 'Skautský ples'}</h1>
+	<p>Dobrý den,</p>
+	<p>děkujeme za rezervaci lístků. Rezervaci jsme uložili:</p>
+	<table style="border-collapse:collapse;margin:16px 0">
+		<tr n:foreach="$rows as $label => $value">
+			<td style="padding:4px 16px 4px 0;color:#5c5c57">{$label}</td>
+			<td style="padding:4px 0;font-weight:bold">{$value}</td>
+		</tr>
+	</table>
+	{* TODO: real payment instructions (account, QR code) in phase 4. *}
+	<p>Pokyny k platbě vám pošleme v samostatném e-mailu.</p>
+	<p>Těšíme se na vás!{if !empty($settings['organizer'])}<br>{$settings['organizer']}, organizátor{/if}</p>
+</div>
+</body>
+</html>

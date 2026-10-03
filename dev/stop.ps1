@@ -13,6 +13,7 @@ if ($web) {
     Write-Ok 'PHP server stopped'
 }
 
+Stop-Watchers
 Stop-Mailpit
 
 if (Test-Path $MariaAdmin) {

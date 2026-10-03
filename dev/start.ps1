@@ -11,13 +11,20 @@ Write-MyIni
 Start-Db | Out-Null
 Start-Mailpit
 
+Assert-BuildTools
+if (-not (Test-Path (Join-Path $Root 'www\build\front.js'))) {
+    & (Join-Path $PSScriptRoot 'build.ps1') -SkipTypeCheck
+}
+Write-Step 'Starting asset watchers'
+Start-Watchers
+
 $url = "http://127.0.0.1:$WebPort"
 if (Get-PidProcess $WebPidFile 'php') {
     Write-Ok 'PHP server is already running'
 } else {
     if (Test-PortInUse $WebPort) { throw "Port $WebPort is already used by another program." }
     Write-Step "Starting PHP server on port $WebPort"
-    $public = Join-Path $Root 'public'
+    $public = Join-Path $Root 'www'
     $router = Join-Path $PSScriptRoot 'router.php'
     $proc = Start-Process -FilePath $PhpExe -WindowStyle Hidden -PassThru `
         -ArgumentList "-c `"$PhpIni`" -S 127.0.0.1:$WebPort -t `"$public`" `"$router`"" `
@@ -37,6 +44,7 @@ if (Get-PidProcess $WebPidFile 'php') {
 
 Write-Host ''
 Write-Host "Web:      $url/"
+Write-Host "Status:   $url/dev/status"
 Write-Host "Old site: $url/original/"
 Write-Host "Adminer:  $url/adminer?server=127.0.0.1:$DbPort&username=$DbUser&db=$DbName  (password: $DbPass)"
 Write-Host "E-mails:  http://127.0.0.1:$MailPort/  (Mailpit, SMTP 127.0.0.1:$SmtpPort)"

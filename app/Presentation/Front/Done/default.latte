@@ -1,0 +1,29 @@
+{templateType App\Presentation\Front\Done\DoneTemplate}
+
+{block title}Rezervace přijata{/block}
+
+{block content}
+{var $seats = array_map(fn($label) => ($label|seatLabel), $reservation['seat_labels'])}
+<section class="panel done">
+	<h2>Rezervace přijata</h2>
+	<p>Děkujeme, {$reservation['name']}. Vaše rezervace č. <strong>{$reservation['id']}</strong> je uložena.</p>
+
+	<dl class="totals">
+		<dt>E-mail</dt><dd>{$reservation['email']}</dd>
+		<dt>Místa u stolu</dt><dd>{$seats ? implode('; ', $seats) : '–'}</dd>
+		<dt>Bez místenky</dt><dd>{$reservation['standing_tickets']}</dd>
+		<dt>Celkem lístků</dt><dd>{count($seats) + (int) $reservation['standing_tickets']}</dd>
+		<dt>K zaplacení</dt><dd><strong>{(int) $reservation['total_price']|price}</strong></dd>
+		<dt>Variabilní symbol</dt><dd>{$reservation['id']}</dd>
+	</dl>
+
+	<p n:if="$reservation['email_sent_at']" class="message">Potvrzení jsme poslali na {$reservation['email']}.</p>
+	<p n:if="!$reservation['email_sent_at']" class="message message--error">
+		Potvrzovací e-mail se nepodařilo odeslat. Rezervace je ale uložená, údaje si prosím poznamenejte.
+	</p>
+	{* TODO: payment instructions (account, QR code) in phase 4. *}
+	<p>Pokyny k platbě zatím nejsou k dispozici.</p>
+
+	<p><a class="button" n:href="Home:default">Zpět na úvod</a></p>
+</section>
+{/block}

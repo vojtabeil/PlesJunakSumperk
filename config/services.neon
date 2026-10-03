@@ -1,0 +1,16 @@
+# Service definitions. Implementations of interfaces are chosen here (or overridden in local.neon).
+
+services:
+	- App\Core\RouterFactory::createRouter
+
+	database: App\Model\Database\ConnectionFactory::create(%database%)
+	- App\Model\Database\Migrator(%rootDir%/migrations)
+
+	- App\Model\Reservation\Settings
+	- App\Model\Reservation\ReservationService
+	- App\Model\Reservation\ReservationSession
+
+	mailSender:
+		type: App\Model\Mail\MailSender
+		create: App\Model\Mail\SmtpMailSender(%mail%)
+	- App\Model\Mail\ReservationMailer

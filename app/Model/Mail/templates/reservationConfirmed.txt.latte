@@ -1,0 +1,22 @@
+{contentType text}
+{varType array $reservation}
+{varType array $settings}
+{var $seats = array_map(fn($label) => ($label|seatLabel), $reservation['seat_labels'])}
+Dobrý den,
+
+děkujeme za rezervaci lístků na akci {$settings['event_name'] ?? 'Skautský ples'}. Rezervaci jsme uložili:
+
+Číslo rezervace: {$reservation['id']}
+Jméno: {$reservation['name']}
+Místa u stolu: {$seats ? implode('; ', $seats) : '–'}
+Lístky bez místenky: {$reservation['standing_tickets']}
+Celkem lístků: {count($seats) + (int) $reservation['standing_tickets']}
+K zaplacení: {(int) $reservation['total_price']|price}
+Variabilní symbol: {$reservation['id']}
+Kdy: {$settings['event_date'] ?? ''}
+Kde: {$settings['venue'] ?? ''}
+
+Pokyny k platbě vám pošleme v samostatném e-mailu.
+
+Těšíme se na vás!
+{if !empty($settings['organizer'])}{$settings['organizer']}, organizátor{/if}

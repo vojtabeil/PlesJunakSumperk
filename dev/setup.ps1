@@ -192,19 +192,25 @@ Install-TypeScript
 Install-Sass
 Install-Dependencies
 
-$localConfig = Join-Path $Root 'config.local.php'
+$localConfig = Join-Path $Root 'config\local.neon'
 if (-not (Test-Path $localConfig)) {
-    Copy-Item (Join-Path $Root 'config.example.php') $localConfig
-    Write-Ok 'Created config.local.php'
+    Copy-Item (Join-Path $Root 'config\local.neon.example') $localConfig
+    Write-Ok 'Created config/local.neon'
 }
+# Nette cache and logs.
+New-Item -ItemType Directory -Force (Join-Path $Root 'var\temp'), (Join-Path $Root 'var\log') | Out-Null
 
 Write-MyIni
 $started = Start-Db
 try {
-    if (Test-DatabaseExists) {
-        Write-Ok "Database '$DbName' already exists, keeping it (reset with init-db.cmd)"
+    if (Test-DatabaseExists $DbName) {
+        Write-Ok "Database '$DbName' already exists, keeping it"
+        Invoke-Migrations
     } else {
         Reset-AppDatabase
+    }
+    if (-not (Test-DatabaseExists $TestDbName)) {
+        Reset-TestDatabase
     }
 } finally {
     if ($started) { Stop-Db }

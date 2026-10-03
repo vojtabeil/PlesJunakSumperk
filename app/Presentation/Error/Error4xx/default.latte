@@ -1,0 +1,11 @@
+{templateType App\Presentation\Error\Error4xx\Error4xxTemplate}
+
+{block title}Stránka nenalezena{/block}
+
+{block content}
+<section class="panel">
+	<h2 n:if="$httpCode === 404">Stránka nenalezena</h2>
+	<h2 n:if="$httpCode !== 404">Chyba {$httpCode}</h2>
+	<p>Zkuste to prosím z <a n:href=":Front:Home:default">úvodní stránky</a>.</p>
+</section>
+{/block}

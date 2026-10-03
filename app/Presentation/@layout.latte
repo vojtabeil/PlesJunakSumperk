@@ -1,0 +1,53 @@
+{templateType App\Presentation\Front\BaseTemplate}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{ifset title}{include title|stripHtml} – {/ifset}{$settings['event_name'] ?? 'Skautský ples'}</title>
+	<link rel="icon" type="image/svg+xml" href="{$basePath}/img/icons/organizer.svg">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="{$basePath}/{asset('build/front.css')}">
+</head>
+<body>
+<header class="hero">
+	<img class="hero-figure hero-figure--left" src="{$basePath}/img/boy.svg" alt="">
+	<div class="hero-text">
+		<h1><a href="{plink :Front:Home:default}"><span class="hero-town">Šumperský</span> Skautský ples</a></h1>
+		<p n:if="!empty($settings['event_intro'])" class="intro">{$settings['event_intro']}</p>
+		<ul class="event-facts">
+			<li>
+				<img src="{$basePath}/img/icons/where.svg" alt="">
+				<span class="visually-hidden">Kde:</span>
+				<a n:tag-if="!empty($settings['venue_url'])" href="{$settings['venue_url'] ?? ''}" target="_blank" rel="noopener">{$settings['venue'] ?? ''}</a>
+			</li>
+			<li>
+				<img src="{$basePath}/img/icons/when.svg" alt="">
+				<span class="visually-hidden">Kdy:</span> {$settings['event_date'] ?? ''}
+			</li>
+			<li>
+				<img src="{$basePath}/img/icons/band.svg" alt="">
+				<span class="visually-hidden">Kapela:</span>
+				<a n:tag-if="!empty($settings['band_url'])" href="{$settings['band_url'] ?? ''}" target="_blank" rel="noopener">{$settings['band'] ?? ''}</a>
+			</li>
+			<li>
+				<img src="{$basePath}/img/icons/organizer.svg" alt="">
+				<span class="visually-hidden">Organizátor:</span> {$settings['organizer'] ?? ''}
+			</li>
+		</ul>
+	</div>
+	<img class="hero-figure hero-figure--right" src="{$basePath}/img/girl.svg" alt="">
+</header>
+
+<main>
+	{include content}
+</main>
+
+<footer class="site-footer">
+	<p>Junák – český skaut, Šumperk</p>
+</footer>
+{block scripts}{/block}
+</body>
+</html>

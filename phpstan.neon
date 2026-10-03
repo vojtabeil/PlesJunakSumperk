@@ -1,0 +1,7 @@
+parameters:
+	level: 6
+	paths:
+		- app
+		- bin
+		- tests/php
+	tmpDir: var/temp/phpstan

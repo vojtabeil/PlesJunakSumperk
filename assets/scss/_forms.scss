@@ -1,0 +1,84 @@
+@use 'tokens' as *;
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+input[type='email'],
+input[type='text'],
+input[type='tel'] {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: #fff;
+}
+
+.inline-field {
+  display: flex;
+  gap: 0.5rem;
+
+  @include below($breakpoint-phone) {
+    flex-direction: column;
+  }
+}
+
+.button {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--green-dark);
+  }
+
+  &:disabled {
+    background: var(--taken);
+    color: var(--taken-text);
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 1.05rem;
+  }
+}
+
+.link-button {
+  padding: 0;
+  font: inherit;
+  color: var(--green);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.checkbox {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-weight: 400;
+  font-size: 0.95rem;
+
+  input {
+    margin-top: 0.3rem;
+  }
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--muted);
+}

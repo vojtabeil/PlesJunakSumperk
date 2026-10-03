@@ -1,6 +1,6 @@
 # Implementation plan: Nette, admin, payments, frontend build
 
-Status: approved direction, not started. Decisions were made in discussion with the
+Status: phase 1 (tooling) and phase 2 (Nette skeleton) done; next is phase 3 (admin). Decisions were made in discussion with the
 project owner on 2026-10-03; this file is the reference for the next steps.
 
 ## 1. Decisions
@@ -104,6 +104,9 @@ Done when: `setup.cmd` on a clean checkout installs everything, nothing is writt
 the repository (check `%APPDATA%`, `%LOCALAPPDATA%`, `%USERPROFILE%\.bun`), all wrappers work.
 
 ### Phase 2 - Nette skeleton and migration of the current site
+
+Notes from the implementation: the `Clock` interface is postponed to phase 4 (no PHP-side time logic
+exists yet; hold expiry uses DB `NOW()`); PHPMailer moved from a vendored copy to Composer.
 
 1. `composer.json` with pinned packages (section 1), `composer.lock` committed.
 2. `www/index.php` -> `App\Bootstrap::boot()`; Tracy in debug mode only.

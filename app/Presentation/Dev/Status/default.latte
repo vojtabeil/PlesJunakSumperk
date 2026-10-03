@@ -1,0 +1,40 @@
+{layout none}
+{templateType App\Presentation\Dev\Status\StatusTemplate}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Ples - local environment</title>
+	<style>
+		body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 16px; color: #222; background: #fafafa; }
+		.ok { color: #1a7f37; } .err { color: #c62828; }
+		table { border-collapse: collapse; } td, th { padding: 4px 12px 4px 0; text-align: left; }
+	</style>
+</head>
+<body>
+	<h1>Local environment is running</h1>
+
+	<h2>PHP</h2>
+	<p>Version <strong>{=\PHP_VERSION}</strong></p>
+	<ul>
+		<li n:foreach="$extensions as $ext" class="{$ext['loaded'] ? 'ok' : 'err'}">{$ext['name']}</li>
+	</ul>
+
+	<h2>Database</h2>
+	<p n:if="$dbError" class="err">Connection failed: {$dbError}</p>
+	<p n:if="!$dbError" class="ok">Connected ({$dbVersion})</p>
+	<table n:if="!$dbError">
+		<tr><th>Table</th><th>Rows</th></tr>
+		<tr n:foreach="$tables as $name => $count"><td>{$name}</td><td>{$count}</td></tr>
+	</table>
+
+	<h2>Links</h2>
+	<ul>
+		<li><a n:href=":Front:Home:default">Reservation page</a></li>
+		<li><a href="/adminer?server=127.0.0.1:3307&amp;username=ples&amp;db=ples">Adminer</a> (password <code>ples</code>)</li>
+		<li><a href="http://127.0.0.1:8025/">Mailpit</a> (captured e-mails; nothing is delivered)</li>
+		<li><a href="/original/">Recovered original site</a> (look only, no backend)</li>
+	</ul>
+</body>
+</html>

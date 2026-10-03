@@ -1,9 +1,10 @@
 .tools/
 .devdata/
-config.local.php
+/config/local.neon
 
-# Dependencies and build output (phase 2+)
+# Dependencies, Nette cache/logs and build output
 /vendor/
 /node_modules/
+/var/
 /www/build/
 /dist/

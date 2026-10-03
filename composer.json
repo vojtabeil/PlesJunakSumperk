@@ -1,0 +1,39 @@
+{
+    "name": "junak-sumperk/ples",
+    "description": "Ticket reservation and payment site for the Sumperk scout ball",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.3",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "latte/latte": "^3.1",
+        "nette/application": "^3.3",
+        "nette/bootstrap": "^3.3",
+        "nette/di": "^3.2",
+        "nette/forms": "^3.3",
+        "nette/http": "^3.3",
+        "nette/security": "^3.2",
+        "nette/utils": "^4.0",
+        "phpmailer/phpmailer": "^7.1",
+        "tracy/tracy": "^2.12"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^13.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/php/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

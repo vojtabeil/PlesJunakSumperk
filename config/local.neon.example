@@ -1,0 +1,22 @@
+# Machine-specific configuration. setup.cmd copies this file to config/local.neon (not committed).
+# On Lebeda, fill in the credentials from the hosting administration.
+
+parameters:
+	database:
+		host: 127.0.0.1
+		port: 3307
+		name: ples
+		user: ples
+		password: ples
+
+	# Outgoing e-mail over SMTP. Locally everything goes to Mailpit (http://127.0.0.1:8025).
+	# Production example (Seznam): host smtp.seznam.cz, port 465, secure ssl, user/password of the mailbox.
+	mail:
+		host: 127.0.0.1
+		port: 1025
+		secure: ''       # '', ssl (SMTPS) or tls (STARTTLS)
+		user: ''         # empty = no SMTP authentication
+		password: ''
+		from: ples@junak-sumperk.cz
+		fromName: Šumperský skautský ples
+		replyTo: ''

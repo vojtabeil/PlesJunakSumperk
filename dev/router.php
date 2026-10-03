@@ -1,5 +1,6 @@
 <?php
 // Router for the PHP built-in server - used only for local development (start.cmd).
+// Document root is www/; this emulates www/.htaccess (front controller) plus dev-only tools.
 
 $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/');
 
@@ -29,5 +30,16 @@ if ($path === '/original' || str_starts_with($path, '/original/')) {
     return true;
 }
 
-// Everything else is served from public/.
-return false;
+// Existing files in www/ (built assets, images) are served directly; dotfiles never.
+$www = realpath(__DIR__ . '/../www');
+$file = realpath($www . $path);
+if ($file !== false && is_file($file) && str_starts_with($file, $www . DIRECTORY_SEPARATOR)
+    && !str_contains($path, '/.') && pathinfo($file, PATHINFO_EXTENSION) !== 'php') {
+    return false;
+}
+
+// Everything else goes to the Nette front controller.
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+$_SERVER['SCRIPT_FILENAME'] = $www . DIRECTORY_SEPARATOR . 'index.php';
+require $www . '/index.php';
+return true;

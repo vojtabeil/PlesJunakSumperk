@@ -1,0 +1,5 @@
+# Overrides for PHPUnit (loaded after local.neon). The test database is created by `init-db.cmd -Test`.
+
+parameters:
+	database:
+		name: ples_test

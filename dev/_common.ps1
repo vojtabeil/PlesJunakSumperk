@@ -110,6 +110,7 @@ $WebPort  = 8000
 $SmtpPort = 1025
 $MailPort = 8025
 $DbName  = 'ples'
+$TestDbName = 'ples_test'
 $DbUser  = 'ples'
 $DbPass  = 'ples'
 
@@ -318,34 +319,54 @@ function Import-DbFile([string]$Path, [string]$Database) {
     Invoke-DbSql "SOURCE $(ConvertTo-SlashPath $full)" $Database | Out-Null
 }
 
-function Test-DatabaseExists {
-    (Invoke-DbSql "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$DbName'") -eq '1'
+function Test-DatabaseExists([string]$Name) {
+    (Invoke-DbSql "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$Name'") -eq '1'
 }
 
 # Drops and recreates the application database and user, then loads data.
-function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
-    Write-Step "Creating database '$DbName' and user '$DbUser'"
+# Drops and recreates a database and grants the application user access to it.
+function Reset-Database([string]$Name) {
+    Write-Step "Creating database '$Name' for user '$DbUser'"
     $bootstrap = @"
-DROP DATABASE IF EXISTS ``$DbName``;
-CREATE DATABASE ``$DbName`` CHARACTER SET utf8mb4 COLLATE utf8mb4_czech_ci;
+DROP DATABASE IF EXISTS ``$Name``;
+CREATE DATABASE ``$Name`` CHARACTER SET utf8mb4 COLLATE utf8mb4_czech_ci;
 CREATE USER IF NOT EXISTS '$DbUser'@'localhost' IDENTIFIED BY '$DbPass';
 CREATE USER IF NOT EXISTS '$DbUser'@'127.0.0.1' IDENTIFIED BY '$DbPass';
 ALTER USER '$DbUser'@'localhost' IDENTIFIED BY '$DbPass';
 ALTER USER '$DbUser'@'127.0.0.1' IDENTIFIED BY '$DbPass';
-GRANT ALL PRIVILEGES ON ``$DbName``.* TO '$DbUser'@'localhost';
-GRANT ALL PRIVILEGES ON ``$DbName``.* TO '$DbUser'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON ``$Name``.* TO '$DbUser'@'localhost';
+GRANT ALL PRIVILEGES ON ``$Name``.* TO '$DbUser'@'127.0.0.1';
 FLUSH PRIVILEGES;
 "@
     Invoke-DbSql $bootstrap | Out-Null
+}
 
-    $dbScripts = Join-Path $PSScriptRoot 'db'
+# Applies migrations/*.sql through the application (bin/migrate.php).
+function Invoke-Migrations([switch]$Test) {
+    $argList = @('-c', $PhpIni, (Join-Path $Root 'bin\migrate.php'))
+    if ($Test) { $argList += '--test' }
+    $r = Invoke-Native $PhpExe $argList
+    if ($r.Code -ne 0) { throw "Migrations failed:`n$($r.Output)" }
+    Write-Info $r.Output.Trim()
+}
+
+# Recreates the application database: migrations + seed data, or a raw SQL dump.
+function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
+    Reset-Database $DbName
     if ($Import) {
         Import-DbFile $Import $DbName
     } else {
-        Import-DbFile (Join-Path $dbScripts 'schema.sql') $DbName
-        if (-not $NoSeed) { Import-DbFile (Join-Path $dbScripts 'seed.sql') $DbName }
+        Invoke-Migrations
+        if (-not $NoSeed) { Import-DbFile (Join-Path $PSScriptRoot 'db\seed.sql') $DbName }
     }
     Write-Ok 'Database ready'
+}
+
+# Recreates the empty test database used by PHPUnit (config/test.neon).
+function Reset-TestDatabase {
+    Reset-Database $TestDbName
+    Invoke-Migrations -Test
+    Write-Ok 'Test database ready'
 }
 
 # --- Mailpit (catches all outgoing e-mail; nothing is delivered) -----------------
@@ -382,4 +403,56 @@ function Stop-Mailpit {
     $proc.WaitForExit(10000) | Out-Null
     Remove-Item $MailPidFile -Force -ErrorAction SilentlyContinue
     Write-Ok 'Mailpit stopped'
+}
+
+# --- Frontend build (bun + sass) -----------------------------------------------
+$BunPidFile  = Join-Path $RunDir 'bun-watch.pid'
+$SassPidFile = Join-Path $RunDir 'sass-watch.pid'
+
+function Assert-BuildTools {
+    foreach ($exe in @($BunExe, $TscExe, $DartExe, (Join-Path $Root 'node_modules\preact\package.json'))) {
+        if (-not (Test-Path $exe)) { throw "Missing $exe. Run setup.cmd first." }
+    }
+}
+
+# Paths are relative to the repository root (callers run from there).
+function Get-BunBuildArgs([switch]$Watch) {
+    $a = @('build', 'assets/ts/front.tsx', '--outdir', 'www/build', '--target', 'browser',
+        '--format', 'esm', '--minify', '--sourcemap=linked')
+    if ($Watch) { $a += '--watch' }
+    return $a
+}
+
+function Get-SassArgs([switch]$Watch) {
+    $a = @('--style=compressed', '--quiet-deps', 'assets/scss:www/build')
+    if ($Watch) { $a = @('--watch') + $a }
+    return $a
+}
+
+# Background rebuilds on file changes (started by start.ps1, stopped by stop.ps1).
+function Start-Watchers {
+    foreach ($w in @(
+        @{ Name = 'bun build --watch'; Exe = $BunExe; Args = (Get-BunBuildArgs -Watch); Pid = $BunPidFile; Log = 'bun-watch' },
+        @{ Name = 'sass --watch'; Exe = $DartExe; Args = (@($SassSnapshot) + (Get-SassArgs -Watch)); Pid = $SassPidFile; Log = 'sass-watch' }
+    )) {
+        $procName = [IO.Path]::GetFileNameWithoutExtension($w.Exe)
+        if (Get-PidProcess $w.Pid $procName) { continue }
+        $argLine = ($w.Args | ForEach-Object { if ($_ -match ' ') { "`"$_`"" } else { $_ } }) -join ' '
+        $proc = Start-Process -FilePath $w.Exe -ArgumentList $argLine -WorkingDirectory $Root -WindowStyle Hidden -PassThru `
+            -RedirectStandardOutput (Join-Path $LogDir "$($w.Log).log") `
+            -RedirectStandardError (Join-Path $LogDir "$($w.Log).err.log")
+        Write-Utf8NoBom $w.Pid "$($proc.Id)"
+        Write-Ok "$($w.Name) is running"
+    }
+}
+
+function Stop-Watchers {
+    foreach ($w in @(@{ Pid = $BunPidFile; Name = 'bun' }, @{ Pid = $SassPidFile; Name = 'dart' })) {
+        $proc = Get-PidProcess $w.Pid $w.Name
+        if ($proc) {
+            Stop-Process -Id $proc.Id -Force
+            $proc.WaitForExit(5000) | Out-Null
+        }
+        Remove-Item $w.Pid -Force -ErrorAction SilentlyContinue
+    }
 }
