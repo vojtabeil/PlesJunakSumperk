@@ -74,6 +74,8 @@
 
 {* 2. Table of all seats *}
 <section class="card" aria-labelledby="seats-title">
+<details id="seat-table" class="seat-details" n:attr="open: $seatFilter || $presenter->seatSearch">
+	<summary>Tabulka všech míst ({$seatTotal}){if $seatFilter} – {$seatFilter|seatStatus}{/if}</summary>
 	<div class="page-head">
 		<h2 id="seats-title">Všechna místa{if $seatFilter} – {$seatFilter|seatStatus}{/if}</h2>
 		<form class="filter-form" method="get" action="{link this}">
@@ -106,7 +108,10 @@
 			</tbody>
 		</table>
 	</div>
-	<p n:if="!$seatRows" class="muted">Žádná místa neodpovídají filtru.</p>
+	<p n:if="!$seatRows" class="empty"><strong>Žádná místa neodpovídají filtru.</strong> <a n:href="this, seats: '', seatSearch: ''">Zobrazit všechna místa</a></p>
+</details>
+{* Wide screens show the table right away; phones keep it folded (96 cards). *}
+<script>if (matchMedia('(min-width: 901px)').matches) document.getElementById('seat-table').open = true;</script>
 </section>
 
 {* 3. Other sections *}

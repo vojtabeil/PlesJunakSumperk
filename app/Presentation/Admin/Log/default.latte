@@ -55,7 +55,8 @@
 			</tbody>
 		</table>
 	</div>
-	<p n:if="!$events" class="muted">Žádné záznamy.</p>
+	<p n:if="!$events" class="empty"><strong>Žádné záznamy.</strong>
+		{if $filterActive}Filtru nic neodpovídá – <a n:href="this, from: '', to: '', category: '', actorType: '', seat: '', reservation: '', page: 1">zrušit filtr</a>.{else}Sem se zapisuje vše, co se stane s rezervacemi, platbami a e-maily.{/if}</p>
 
 	<nav n:if="$pages > 1" class="pager" aria-label="Stránky">
 		<a n:if="$page > 1" n:href="this, page: $page - 1">← novější</a>

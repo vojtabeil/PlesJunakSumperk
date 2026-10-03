@@ -100,10 +100,19 @@ final class ReservationPresenter extends BasePresenter
 
 	protected function createComponentCancelForm(): Form
 	{
+		$r = $this->reservation;
+		$seats = count($r['seats'] ?? []);
+		$tickets = $seats + (int) $r['standing_tickets'];
 		return $this->createSimpleForm('Zrušit rezervaci', function (int $id): string {
 			$this->reservationAdmin->cancel($id);
 			return 'Rezervace je zrušená a místa jsou opět volná.';
-		}, confirmLabel: 'Opravdu zrušit (místa se uvolní)');
+		}, confirmLabel: sprintf(
+			'Opravdu zrušit rezervaci č. %d – %s, lístků: %d%s. Zrušení nejde vrátit, zákazníkovi nepřijde e-mail.',
+			$r['id'],
+			$r['name'] ?? $r['email'] ?? '',
+			$tickets,
+			$seats ? " (uvolní se $seats " . ($seats === 1 ? 'místo' : ($seats < 5 ? 'místa' : 'míst')) . ')' : '',
+		));
 	}
 
 

@@ -59,6 +59,11 @@ final class SitePresenter extends BasePresenter
 		return new Multiplier(function (string $value): Form {
 			$mode = SiteMode::tryFrom($value) ?? $this->error();
 			$form = $this->formFactory->create();
+			// Stopping the sale cancels what visitors are choosing right now: ask first.
+			if (!$mode->isSelling()) {
+				$form->addCheckbox('confirm', 'Opravdu – prodej se zastaví a rozpracované výběry míst se zruší')
+					->setRequired('Přepnutí potvrďte zaškrtnutím.');
+			}
 			$form->addSubmit('switch', 'Přepnout na „' . $mode->label() . '“');
 			$form->onSuccess[] = function () use ($mode): void {
 				$this->access->setMode($mode);

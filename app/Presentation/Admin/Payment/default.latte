@@ -68,7 +68,15 @@
 			</tbody>
 		</table>
 	</div>
-	<p n:if="!$payments" class="muted">Žádné platby.</p>
+	<div n:if="!$payments" class="empty">
+		{if $filter === 'problems'}
+			<strong>Žádné platby k vyřešení.</strong> Všechny platby jsou spárované nebo vyřízené.
+		{elseif $filter === ''}
+			<strong>Zatím žádné platby.</strong> Platby se objeví po načtení z banky – tlačítko „Načíst platby z banky“ nahoře.
+		{else}
+			<strong>V tomto filtru nejsou žádné platby.</strong> <a n:href="this, filter: ''">Zobrazit všechny platby</a>
+		{/if}
+	</div>
 </section>
 
 <details n:if="$canRewind" class="card">

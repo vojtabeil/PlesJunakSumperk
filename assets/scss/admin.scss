@@ -835,3 +835,137 @@ h3 {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 0.9rem;
 }
+
+// --- Phones: compact header, bottom tab bar -------------------------------------
+
+@include below($breakpoint-tablet) {
+  .admin-header {
+    gap: 0.5rem 1rem;
+    padding: 0.5rem 16px;
+
+    .admin-nav,
+    .admin-user {
+      display: none; // both are in the tab bar ("Více")
+    }
+  }
+
+  .admin-brand {
+    flex: 1;
+  }
+
+  .admin-search {
+    order: 3;
+    width: 100%;
+
+    input {
+      width: 100%;
+    }
+  }
+
+  .admin-main {
+    padding-bottom: 5.5rem; // room for the tab bar
+  }
+
+  // Dashboard: what needs attention first, then the chart.
+  .todo-card {
+    order: -1;
+  }
+
+  .overview {
+    display: flex;
+    flex-direction: column;
+  }
+
+  // Reservation detail: actions before the details.
+  .columns > .actions-card {
+    order: -1;
+  }
+
+  .columns {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.admin-tabbar {
+  display: none;
+
+  @include below($breakpoint-tablet) {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+
+    > a,
+    summary {
+      display: grid;
+      place-items: center;
+      min-height: 3.25rem;
+      padding: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      color: var(--muted);
+      text-decoration: none;
+      cursor: pointer;
+      list-style: none;
+
+      &.is-current {
+        color: var(--green);
+        box-shadow: inset 0 3px 0 var(--green);
+      }
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+  }
+}
+
+.admin-more {
+  position: relative;
+}
+
+.admin-more-menu {
+  position: absolute;
+  right: 0.5rem;
+  bottom: calc(100% + 0.5rem);
+  display: grid;
+  min-width: 13rem;
+  padding: 0.4rem 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+
+  a {
+    padding: 0.7rem 1rem;
+    color: var(--text);
+    text-decoration: none;
+  }
+}
+
+// Collapsible table of all seats on the dashboard.
+.seat-details > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--green);
+}
+
+// Empty states: what it means and what to do next.
+.empty {
+  padding: 1rem 0;
+  color: var(--muted);
+
+  strong {
+    display: block;
+    color: var(--text);
+  }
+}

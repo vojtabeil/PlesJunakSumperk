@@ -38,6 +38,28 @@
 	{/if}
 </header>
 
+{if $user->isLoggedIn()}
+	{* Phones: the main sections as a bottom tab bar (the top menu is hidden there). *}
+	<nav class="admin-tabbar" aria-label="Hlavní menu">
+		<a n:href="Dashboard:default" n:class="$presenter->isLinkCurrent('Dashboard:*') ? 'is-current'">Přehled</a>
+		<a n:href="Reservation:default" n:class="$presenter->isLinkCurrent('Reservation:*') ? 'is-current'">Rezervace</a>
+		<a n:href="Payment:default" n:class="$presenter->isLinkCurrent('Payment:*') ? 'is-current'">Platby</a>
+		<a n:href="Site:default" n:class="$presenter->isLinkCurrent('Site:*') ? 'is-current'">Stav webu</a>
+		<details class="admin-more">
+			<summary n:class="$presenter->isLinkCurrent('Customer:*') || $presenter->isLinkCurrent('Log:*') ? 'is-current'">Více</summary>
+			<div class="admin-more-menu">
+				<a n:href="Customer:default">Zákazníci</a>
+				<a n:href="Log:default">Log</a>
+				<a n:href="Settings:default">Nastavení</a>
+				<a n:href="User:default">Administrátoři</a>
+				<a n:href="Export:guests">Seznam hostů (CSV)</a>
+				<a n:href="Account:default">Můj účet</a>
+				<a n:href="Sign:out">Odhlásit</a>
+			</div>
+		</details>
+	</nav>
+{/if}
+
 <main class="admin-main">
 	<div n:foreach="$flashes as $flash" class="flash flash--{$flash->type}" role="status">{$flash->message}</div>
 	{include content}
