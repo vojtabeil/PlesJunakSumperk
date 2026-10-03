@@ -9,6 +9,7 @@ param([switch]$NoBrowser)
 Assert-Installed
 Write-MyIni
 Start-Db | Out-Null
+Start-Mailpit
 
 $url = "http://127.0.0.1:$WebPort"
 if (Get-PidProcess $WebPidFile 'php') {
@@ -38,6 +39,7 @@ Write-Host ''
 Write-Host "Web:      $url/"
 Write-Host "Old site: $url/original/"
 Write-Host "Adminer:  $url/adminer?server=127.0.0.1:$DbPort&username=$DbUser&db=$DbName  (password: $DbPass)"
+Write-Host "E-mails:  http://127.0.0.1:$MailPort/  (Mailpit, SMTP 127.0.0.1:$SmtpPort)"
 Write-Host "Logs:     $LogDir"
 Write-Host 'Stop:     stop.cmd'
 

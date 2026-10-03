@@ -22,6 +22,8 @@ CREATE TABLE reservations (
     created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     confirmed_at     DATETIME NULL,
+    email_sent_at    DATETIME NULL,
+    email_error      VARCHAR(1000) NULL,
     UNIQUE KEY uq_reservations_email (email),
     KEY ix_reservations_session (session_id)
 ) ENGINE=InnoDB;

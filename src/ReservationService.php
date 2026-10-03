@@ -281,6 +281,14 @@ final class ReservationService
         });
     }
 
+    /** Stores whether the confirmation e-mail went out ($error = null means sent). */
+    public function recordEmailResult(int $reservationId, ?string $error): void
+    {
+        $this->db->prepare(
+            'UPDATE reservations SET email_sent_at = IF(? IS NULL, NOW(), email_sent_at), email_error = ? WHERE id = ?'
+        )->execute([$error, $error === null ? null : mb_substr($error, 0, 1000), $reservationId]);
+    }
+
     /** Gives up the current draft and frees its seats. */
     public function cancel(): void
     {

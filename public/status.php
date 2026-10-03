@@ -66,6 +66,7 @@ try {
     <ul>
         <li><a href="/">Reservation page</a></li>
         <li><a href="/adminer?server=127.0.0.1:<?= (int) $db['port'] ?>&amp;username=<?= h($db['user']) ?>&amp;db=<?= h($db['name']) ?>">Adminer</a> (password <code><?= h($db['pass']) ?></code>)</li>
+        <li><a href="http://127.0.0.1:8025/">Mailpit</a> (captured e-mails; nothing is delivered)</li>
         <li><a href="/original/">Recovered original site</a> (look only, no backend)</li>
     </ul>
 </body>

@@ -13,6 +13,8 @@ if ($web) {
     Write-Ok 'PHP server stopped'
 }
 
+Stop-Mailpit
+
 if (Test-Path $MariaAdmin) {
     Write-MyIni
     Stop-Db

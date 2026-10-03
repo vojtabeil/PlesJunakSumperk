@@ -26,18 +26,20 @@ render_header('Rezervace přijata', $service);
     <dl class="totals">
         <dt>E-mail</dt><dd><?= h($reservation['email']) ?></dd>
         <dt>Místa u stolu</dt>
-        <dd><?= $reservation['seat_labels'] ? h(implode(', ', array_map(
-            static fn (string $label): string => 'stůl ' . str_replace('/', ', místo ', $label),
-            $reservation['seat_labels']
-        ))) : '–' ?></dd>
+        <dd><?= $reservation['seat_labels'] ? h(implode('; ', array_map('format_seat_label', $reservation['seat_labels']))) : '–' ?></dd>
         <dt>Bez místenky</dt><dd><?= (int) $reservation['standing_tickets'] ?></dd>
         <dt>Celkem lístků</dt><dd><?= $ticketCount ?></dd>
         <dt>K zaplacení</dt><dd><strong><?= h(format_price((int) $reservation['total_price'])) ?></strong></dd>
         <dt>Variabilní symbol</dt><dd><?= $id ?></dd>
     </dl>
 
-    <?php // TODO: payment instructions (bank account / QR payment) and confirmation e-mail. ?>
-    <p class="message">Pokyny k platbě zatím nejsou k dispozici.</p>
+    <?php if ($reservation['email_sent_at']): ?>
+        <p class="message">Potvrzení jsme poslali na <?= h($reservation['email']) ?>.</p>
+    <?php else: ?>
+        <p class="message message--error">Potvrzovací e-mail se nepodařilo odeslat. Rezervace je ale uložená, údaje si prosím poznamenejte.</p>
+    <?php endif; ?>
+    <?php // TODO: payment instructions (bank account / QR payment). ?>
+    <p>Pokyny k platbě zatím nejsou k dispozici.</p>
 
     <p><a class="button" href="./">Zpět na úvod</a></p>
 </section>

@@ -36,6 +36,11 @@ function Install-Php {
         elseif ($_ -match "^;extension=($enable)$") { $_.Substring(1) }
         elseif ($_ -match '^;date\.timezone\s*=') { 'date.timezone = Europe/Prague' }
         elseif ($_ -match '^;session\.save_path\s*=') { "session.save_path = `"$(ConvertTo-SlashPath $SessionDir)`"" }
+        elseif ($_ -match '^;\s*sys_temp_dir\s*=') { "sys_temp_dir = `"$(ConvertTo-SlashPath $TmpDir)`"" }
+        elseif ($_ -match '^;\s*upload_tmp_dir\s*=') { "upload_tmp_dir = `"$(ConvertTo-SlashPath $TmpDir)`"" }
+        # Even plain mail() ends up in Mailpit, never on the internet.
+        elseif ($_ -match '^SMTP\s*=') { 'SMTP = 127.0.0.1' }
+        elseif ($_ -match '^smtp_port\s*=') { "smtp_port = $SmtpPort" }
         else { $_ }
     }
     Write-Utf8NoBom $PhpIni (($ini -join "`r`n") + "`r`n")
@@ -68,6 +73,18 @@ function Install-MariaDb {
     Get-ChildItem $MariaDbDir -Recurse -Filter '*.pdb' | Remove-Item -Force
 }
 
+function Install-Mailpit {
+    $spec = $Versions.Mailpit
+    if (-not $Force -and (Test-ToolVersion $MailpitDir $spec.Version)) {
+        Write-Ok "Mailpit $($spec.Version) is already installed"
+        return
+    }
+    Write-Step "Installing Mailpit $($spec.Version)"
+    Stop-Mailpit
+    Expand-ZipTo (Get-VerifiedDownload $spec) $MailpitDir
+    Set-ToolVersion $MailpitDir $spec.Version
+}
+
 function Install-Adminer {
     $spec = $Versions.Adminer
     if (-not $Force -and (Test-ToolVersion $AdminerDir $spec.Version)) {
@@ -83,6 +100,7 @@ function Install-Adminer {
 
 Install-Php
 Install-MariaDb
+Install-Mailpit
 Install-Adminer
 
 $localConfig = Join-Path $Root 'config.local.php'

@@ -66,6 +66,7 @@ try {
                 ($input['consent'] ?? false) === true
             );
             $_SESSION['finished_reservations'][] = $id;
+            send_reservation_confirmation($service, $id);
             $extra['redirect'] = 'done.php?id=' . $id;
             break;
         case 'cancel':
