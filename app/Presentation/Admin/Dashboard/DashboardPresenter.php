@@ -37,7 +37,7 @@ final class DashboardPresenter extends BasePresenter
 		$this->template->stats = $stats;
 		$this->template->saleOpen = $this->settings->isSaleOpen();
 		$this->template->recentReservations = array_slice($this->reservationAdmin->search(), 0, 8);
-		$this->template->activity = $this->auditLog->recent(10);
+		$this->template->activity = $this->events->recent(10);
 		$this->template->paymentProblems = $this->payments->problemCount();
 		$this->template->lastImportAt = $this->importer->lastImportAt();
 		// Without a cron job someone has to press the button; remind when payments are waiting.

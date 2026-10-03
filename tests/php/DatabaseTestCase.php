@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests;
 
 use App\Bootstrap;
+use App\Model\Log\Actor;
+use App\Model\Log\EventLog;
 use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationService;
 use App\Model\Reservation\Settings;
@@ -23,12 +25,14 @@ abstract class DatabaseTestCase extends TestCase
 
 	protected PDO $db;
 
+	private ?Actor $actor = null;
+
 
 	protected function setUp(): void
 	{
 		$this->db = $this->service(PDO::class);
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 0');
-		foreach (['seats', 'hall_tables', 'bank_transactions', 'mock_bank_transactions', 'reservations', 'settings', 'audit_log', 'admin_users'] as $table) {
+		foreach (['seats', 'hall_tables', 'bank_transactions', 'mock_bank_transactions', 'reservations', 'settings', 'event_log_seats', 'event_log', 'admin_users'] as $table) {
 			$this->db->exec("TRUNCATE TABLE $table");
 		}
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 1');
@@ -66,13 +70,33 @@ abstract class DatabaseTestCase extends TestCase
 	/** Fresh services per test, so cached settings never leak between tests. */
 	protected function reservations(): ReservationService
 	{
-		return new ReservationService($this->db, $this->settings(), new VariableSymbol($this->settings()));
+		return new ReservationService($this->db, $this->settings(), new VariableSymbol($this->settings()), $this->eventLog());
 	}
 
 
 	protected function settings(): Settings
 	{
-		return new Settings($this->db);
+		return new Settings($this->db, $this->eventLog());
+	}
+
+
+	/** Shared per test, so a test can switch the actor (customer, admin, cron). */
+	protected function actor(): Actor
+	{
+		return $this->actor ??= new Actor;
+	}
+
+
+	protected function eventLog(): EventLog
+	{
+		return new EventLog($this->db, $this->actor());
+	}
+
+
+	/** @return list<string> logged actions, oldest first */
+	protected function loggedActions(): array
+	{
+		return $this->db->query('SELECT action FROM event_log ORDER BY id')->fetchAll(PDO::FETCH_COLUMN);
 	}
 
 

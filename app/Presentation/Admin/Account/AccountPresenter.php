@@ -49,7 +49,6 @@ final class AccountPresenter extends BasePresenter
 				return;
 			}
 			$this->users->changePassword($this->adminId(), $data->password);
-			$this->auditLog->record($this->adminId(), 'admin.password');
 			// The password change ends all sessions; keep this one logged in.
 			$fresh = $this->users->findById($this->adminId());
 			if ($fresh !== null) {

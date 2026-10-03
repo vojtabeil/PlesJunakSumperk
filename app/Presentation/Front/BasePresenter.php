@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Front;
 
+use App\Model\Log\Actor;
 use App\Model\Reservation\Settings;
 use Nette\Application\UI\Presenter;
 
@@ -17,9 +18,10 @@ abstract class BasePresenter extends Presenter
 	public Settings $settings;
 
 
-	public function injectSettings(Settings $settings): void
+	public function injectSettings(Settings $settings, Actor $actor): void
 	{
 		$this->settings = $settings;
+		$actor->asCustomer();
 	}
 
 

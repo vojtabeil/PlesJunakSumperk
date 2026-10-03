@@ -63,7 +63,7 @@
 	<ul class="activity" n:if="$activity">
 		<li n:foreach="$activity as $entry">
 			<time>{$entry['created_at']|date:'j. n. Y H:i'}</time>
-			{$entry['action']|auditLabel}
+			{$entry['action']|eventLabel}
 			<span class="muted">– {$entry['admin_name'] ?? 'systém'}</span>
 		</li>
 	</ul>

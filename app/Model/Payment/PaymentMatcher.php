@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Payment;
 
+use App\Model\Log\EventLog;
 use App\Model\Reservation\ReservationService;
 use PDO;
 
@@ -23,6 +24,7 @@ final class PaymentMatcher
 	public function __construct(
 		private readonly PDO $db,
 		private readonly VariableSymbol $variableSymbol,
+		private readonly EventLog $eventLog,
 	) {
 	}
 
@@ -38,6 +40,7 @@ final class PaymentMatcher
 
 		if (ltrim(trim((string) $tx['variable_symbol']), '0') === '') {
 			$this->setStatus($transactionId, 'no_vs');
+			$this->eventLog->record('payment.unmatched', null, $this->describe($tx), automatic: true);
 			return null;
 		}
 		$reservationId = $this->variableSymbol->reservationId($tx['variable_symbol']);
@@ -49,6 +52,7 @@ final class PaymentMatcher
 		$reservation = $this->lockReservation($reservationId);
 		if ($reservation === null) {
 			$this->setStatus($transactionId, 'unknown_vs');
+			$this->eventLog->record('payment.unmatched', null, $this->describe($tx), automatic: true);
 			return null;
 		}
 		return $this->assignTo($transactionId, $reservation);
@@ -67,6 +71,7 @@ final class PaymentMatcher
 		}
 		$reservation = $this->lockReservation($reservationId)
 			?? throw new PaymentError("Rezervace č. $reservationId neexistuje nebo není potvrzená.");
+		$this->eventLog->record('payment.assigned', $reservationId, $this->describe($tx));
 		return $this->assignTo($transactionId, $reservation);
 	}
 
@@ -79,6 +84,7 @@ final class PaymentMatcher
 			throw new PaymentError('Přiřazenou platbu nelze ignorovat.');
 		}
 		$this->setStatus($transactionId, 'ignored');
+		$this->eventLog->record('payment.ignored', null, $this->describe($tx));
 	}
 
 
@@ -119,7 +125,34 @@ final class PaymentMatcher
 			WHERE id = ?',
 		)->execute([$newStatus, number_format($paid / 100, 2, '.', ''), $newStatus, $reservationId]);
 
+		$tx = $this->transaction($transactionId);
+		$this->eventLog->record(
+			match ($txStatus) {
+				'overpaid' => 'payment.overpaid',
+				'underpaid' => 'payment.partial',
+				default => 'payment.matched',
+			},
+			$reservationId,
+			$this->describe($tx) + ['paid' => $paid / 100, 'total' => $total / 100],
+			automatic: true,
+		);
 		return new PaymentChange($reservationId, (string) $reservation['status'], $newStatus, $paid, $total);
+	}
+
+
+	/**
+	 * @param array<string, mixed> $tx
+	 * @return array<string, mixed>
+	 */
+	private function describe(array $tx): array
+	{
+		return [
+			'transaction' => (int) $tx['id'],
+			'amount' => (float) $tx['amount'],
+			'vs' => (string) ($tx['variable_symbol'] ?? ''),
+			'payer' => (string) ($tx['counter_name'] ?? ''),
+			'date' => (string) $tx['booked_on'],
+		];
 	}
 
 

@@ -27,6 +27,8 @@ CREATE TABLE reservations (
     paid_at          DATETIME NULL,
     paid_amount      DECIMAL(12, 2) NOT NULL DEFAULT 0,
     note             VARCHAR(1000) NULL,
+    -- Created through the tester link while the site was not public yet.
+    is_test          TINYINT(1) NOT NULL DEFAULT 0,
     KEY ix_reservations_email (email),
     KEY ix_reservations_session (session_id)
 ) ENGINE=InnoDB;
@@ -52,6 +54,7 @@ CREATE TABLE seats (
     state          ENUM('free', 'book', 'reserved') NOT NULL DEFAULT 'free',
     reservation_id INT UNSIGNED NULL,
     booked_at      DATETIME NULL,
+    updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY ix_seats_state (state, booked_at),
     KEY ix_seats_reservation (reservation_id),
     CONSTRAINT fk_seats_table FOREIGN KEY (table_id) REFERENCES hall_tables (id),
@@ -75,16 +78,29 @@ CREATE TABLE admin_users (
     UNIQUE KEY uq_admin_users_login (login)
 ) ENGINE=InnoDB;
 
--- Who changed what in the administration.
-CREATE TABLE audit_log (
+-- Log of everything that happens with reservations, payments, e-mails and the administration.
+-- actor_type: who caused it (customer = visitor of the site, admin, cron, system = automatic consequence).
+CREATE TABLE event_log (
     id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actor_type     ENUM('customer', 'admin', 'cron', 'system') NOT NULL,
     admin_user_id  INT UNSIGNED NULL,
     action         VARCHAR(64)  NOT NULL,
     reservation_id INT UNSIGNED NULL,
     details        VARCHAR(2000) NULL,
-    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    KEY ix_audit_log_reservation (reservation_id),
-    CONSTRAINT fk_audit_log_admin FOREIGN KEY (admin_user_id) REFERENCES admin_users (id) ON DELETE SET NULL
+    KEY ix_event_log_created (created_at),
+    KEY ix_event_log_action (action),
+    KEY ix_event_log_reservation (reservation_id),
+    CONSTRAINT fk_event_log_admin FOREIGN KEY (admin_user_id) REFERENCES admin_users (id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Seats an event refers to (e.g. all seats of a confirmed reservation), for filtering by seat.
+CREATE TABLE event_log_seats (
+    event_id INT UNSIGNED NOT NULL,
+    seat_id  INT UNSIGNED NOT NULL,
+    PRIMARY KEY (event_id, seat_id),
+    KEY ix_event_log_seats_seat (seat_id),
+    CONSTRAINT fk_event_log_seats_event FOREIGN KEY (event_id) REFERENCES event_log (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- Incoming and outgoing payments downloaded from the bank (Fio) or the mock bank.

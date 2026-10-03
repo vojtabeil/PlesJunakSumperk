@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Reservation;
 
+use App\Model\Log\EventLog;
 use App\Model\Payment\VariableSymbol;
 use PDO;
 use Throwable;
@@ -30,6 +31,7 @@ final class ReservationService
 		private readonly PDO $db,
 		private readonly Settings $settings,
 		private readonly VariableSymbol $variableSymbol,
+		private readonly EventLog $eventLog,
 	) {
 	}
 
@@ -283,6 +285,14 @@ final class ReservationService
 				WHERE id = ?",
 			)->execute([$name, $phone === '' ? null : $phone, $total, $draftId]);
 
+			$this->eventLog->record('reservation.confirmed', $draftId, [
+				'name' => $name,
+				'email' => $draft['email'],
+				'tickets' => $seats + $standing,
+				'standing' => $standing,
+				'total' => $total,
+				'test' => (bool) ($draft['is_test'] ?? false),
+			]);
 			return $draftId;
 		});
 	}

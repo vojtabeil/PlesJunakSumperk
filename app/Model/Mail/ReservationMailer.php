@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Mail;
 
+use App\Model\Log\EventLog;
 use App\Model\Payment\PaymentChange;
 use App\Model\Payment\QrPayment;
 use App\Model\Reservation\ReservationService;
@@ -30,6 +31,7 @@ final class ReservationMailer
 		private readonly LatteFactory $latteFactory,
 		private readonly QrPayment $qrPayment,
 		private readonly ILogger $logger,
+		private readonly EventLog $eventLog,
 	) {
 	}
 
@@ -38,8 +40,10 @@ final class ReservationMailer
 	public function sendConfirmation(int $reservationId): bool
 	{
 		$error = null;
+		$to = null;
 		try {
 			$reservation = $this->load($reservationId);
+			$to = (string) $reservation['email'];
 			$spayd = $this->spayd($reservation);
 			$params = $this->params($reservation) + ['qrCid' => self::QrCid];
 			$this->sender->send(new MailMessage(
@@ -56,6 +60,12 @@ final class ReservationMailer
 
 		try {
 			$this->reservations->recordEmailResult($reservationId, $error);
+			$this->eventLog->record(
+				$error === null ? 'email.confirmation_sent' : 'email.confirmation_failed',
+				$reservationId,
+				array_filter(['to' => $to, 'error' => $error]),
+				automatic: true,
+			);
 		} catch (Throwable $e) {
 			$this->logger->log($e, ILogger::EXCEPTION);
 		}
@@ -84,9 +94,15 @@ final class ReservationMailer
 				html: $this->render('paymentUpdate.html.latte', $params),
 				text: $this->render('paymentUpdate.txt.latte', $params),
 			));
+			$this->eventLog->record('email.payment_sent', $change->reservationId, ['to' => $reservation['email']], automatic: true);
 			return true;
 		} catch (Throwable $e) {
 			$this->logger->log("Payment e-mail for reservation $change->reservationId failed: {$e->getMessage()}", ILogger::WARNING);
+			try {
+				$this->eventLog->record('email.payment_failed', $change->reservationId, ['error' => $e->getMessage()], automatic: true);
+			} catch (Throwable $logError) {
+				$this->logger->log($logError, ILogger::EXCEPTION);
+			}
 			return false;
 		}
 	}

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin;
 
-use App\Model\Admin\AuditLog;
+use App\Model\Log\Actor;
+use App\Model\Log\EventLogRepository;
 use App\Model\Admin\Authenticator;
 use App\Presentation\Accessory\FormFactory;
 use Nette\Application\UI\Presenter;
@@ -17,13 +18,15 @@ use Nette\Application\UI\Presenter;
 abstract class BasePresenter extends Presenter
 {
 	protected FormFactory $formFactory;
-	protected AuditLog $auditLog;
+	protected EventLogRepository $events;
+	protected Actor $actor;
 
 
-	public function injectBase(FormFactory $formFactory, AuditLog $auditLog): void
+	public function injectBase(FormFactory $formFactory, EventLogRepository $events, Actor $actor): void
 	{
 		$this->formFactory = $formFactory;
-		$this->auditLog = $auditLog;
+		$this->events = $events;
+		$this->actor = $actor;
 	}
 
 
@@ -36,6 +39,10 @@ abstract class BasePresenter extends Presenter
 				$this->flashMessage('Byli jste odhlášeni kvůli nečinnosti. Přihlaste se prosím znovu.', 'info');
 			}
 			$this->redirect('Sign:in', ['backlink' => $this->storeRequest()]);
+		}
+		if ($user->isLoggedIn()) {
+			// Everything the model logs in this request is attributed to this administrator.
+			$this->actor->asAdmin($this->adminId());
 		}
 	}
 

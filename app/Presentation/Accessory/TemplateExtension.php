@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Presentation\Accessory;
 
-use App\Model\Admin\AuditLog;
+use App\Model\Log\EventFormatter;
+use App\Model\Log\EventTypes;
 use Latte\Extension;
 
 
@@ -24,7 +25,9 @@ final class TemplateExtension extends Extension
 			'seatLabel' => self::formatSeatLabel(...),
 			'statusLabel' => self::formatStatus(...),
 			'matchLabel' => self::formatMatchStatus(...),
-			'auditLabel' => static fn(string $action): string => AuditLog::Labels[$action] ?? $action,
+			'eventLabel' => EventTypes::label(...),
+			'eventDetails' => EventFormatter::details(...),
+			'actorLabel' => static fn(string $type): string => EventTypes::Actors[$type] ?? $type,
 		];
 	}
 

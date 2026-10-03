@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Admin;
 
+use App\Model\Log\EventLog;
 use Nette\Security\Passwords;
 use PDO;
 use PDOException;
@@ -22,6 +23,7 @@ final class AdminUsers
 	public function __construct(
 		private readonly PDO $db,
 		private readonly Passwords $passwords,
+		private readonly EventLog $eventLog,
 	) {
 	}
 
@@ -65,14 +67,9 @@ final class AdminUsers
 
 	public function create(string $login, string $name, string $password): int
 	{
-		$this->assertValid($login, $name, $password);
-		try {
-			$this->db->prepare('INSERT INTO admin_users (login, name, password_hash) VALUES (?, ?, ?)')
-				->execute([$login, trim($name), $this->passwords->hash($password)]);
-		} catch (PDOException $e) {
-			throw $this->duplicateLogin($e, $login);
-		}
-		return (int) $this->db->lastInsertId();
+		$id = $this->insert($login, $name, $password);
+		$this->eventLog->record('admin.created', details: ['login' => $login, 'name' => trim($name)]);
+		return $id;
 	}
 
 
@@ -90,7 +87,9 @@ final class AdminUsers
 			if ($this->exists()) {
 				throw new AdminError('Web už je nastavený, přihlaste se.');
 			}
-			return $this->create($login, $name, $password);
+			$id = $this->insert($login, $name, $password);
+			$this->eventLog->record('admin.setup', details: ['login' => $login], adminId: $id);
+			return $id;
 		} finally {
 			$this->db->query("SELECT RELEASE_LOCK('" . self::SetupLock . "')");
 		}
@@ -106,6 +105,7 @@ final class AdminUsers
 		} catch (PDOException $e) {
 			throw $this->duplicateLogin($e, $login);
 		}
+		$this->eventLog->record('admin.updated', details: ['login' => $login, 'name' => trim($name)]);
 	}
 
 
@@ -117,6 +117,7 @@ final class AdminUsers
 			'UPDATE admin_users SET password_hash = ?, session_version = session_version + 1,
 			failed_logins = 0, last_failed_at = NULL WHERE id = ?',
 		)->execute([$this->passwords->hash($password), $id]);
+		$this->eventLog->record('admin.password', details: ['login' => $this->loginOf($id)]);
 	}
 
 
@@ -133,6 +134,7 @@ final class AdminUsers
 	{
 		$this->db->prepare('UPDATE admin_users SET failed_logins = 0, last_failed_at = NULL WHERE id = ?')
 			->execute([$id]);
+		$this->eventLog->record('admin.unlocked', details: ['login' => $this->loginOf($id)]);
 	}
 
 
@@ -149,7 +151,8 @@ final class AdminUsers
 			if (count($ids) === 1) {
 				throw new AdminError('Poslední účet nelze smazat. Nejdřív založte jiný.');
 			}
-			// audit_log keeps the entries (foreign key ON DELETE SET NULL).
+			// Logged before deleting; the log keeps its entries (foreign key ON DELETE SET NULL).
+			$this->eventLog->record('admin.deleted', details: ['login' => $this->loginOf($id)]);
 			$this->db->prepare('DELETE FROM admin_users WHERE id = ?')->execute([$id]);
 			$this->db->commit();
 		} catch (Throwable $e) {
@@ -172,6 +175,25 @@ final class AdminUsers
 		$this->db->prepare(
 			'UPDATE admin_users SET failed_logins = 0, last_failed_at = NULL, last_login_at = NOW() WHERE id = ?',
 		)->execute([$id]);
+	}
+
+
+	private function insert(string $login, string $name, string $password): int
+	{
+		$this->assertValid($login, $name, $password);
+		try {
+			$this->db->prepare('INSERT INTO admin_users (login, name, password_hash) VALUES (?, ?, ?)')
+				->execute([$login, trim($name), $this->passwords->hash($password)]);
+		} catch (PDOException $e) {
+			throw $this->duplicateLogin($e, $login);
+		}
+		return (int) $this->db->lastInsertId();
+	}
+
+
+	private function loginOf(int $id): string
+	{
+		return (string) ($this->findById($id)['login'] ?? '');
 	}
 
 

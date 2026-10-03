@@ -19,7 +19,7 @@ final class ReservationAdminTest extends DatabaseTestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->admin = new ReservationAdmin($this->db, $this->settings(), new VariableSymbol($this->settings()));
+		$this->admin = new ReservationAdmin($this->db, $this->settings(), new VariableSymbol($this->settings()), $this->eventLog());
 	}
 
 

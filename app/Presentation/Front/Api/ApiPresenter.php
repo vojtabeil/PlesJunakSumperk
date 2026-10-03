@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Front\Api;
 
+use App\Model\Log\Actor;
 use App\Model\Mail\ReservationMailer;
 use App\Model\Reservation\ReservationError;
 use App\Model\Reservation\ReservationService;
@@ -34,8 +35,10 @@ final class ApiPresenter extends Presenter
 		private readonly ReservationSession $reservationSession,
 		private readonly ReservationMailer $mailer,
 		private readonly ILogger $logger,
+		Actor $actor,
 	) {
 		parent::__construct();
+		$actor->asCustomer();
 	}
 
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Model\Payment;
 
 use App\Model\Clock\Clock;
+use App\Model\Log\Actor;
+use App\Model\Log\EventLog;
 use App\Model\Mail\ReservationMailer;
 use App\Model\Reservation\Settings;
 use DateTimeImmutable;
@@ -26,6 +28,8 @@ final class PaymentImporter
 		private readonly Settings $settings,
 		private readonly Clock $clock,
 		private readonly PDO $db,
+		private readonly EventLog $eventLog,
+		private readonly Actor $actor,
 	) {
 	}
 
@@ -33,7 +37,7 @@ final class PaymentImporter
 	public function import(): ImportResult
 	{
 		$this->guardInterval();
-		$this->settings->save(['bank_last_fetch_at' => $this->clock->now()->format('Y-m-d H:i:s')]);
+		$this->settings->remember('bank_last_fetch_at', $this->clock->now()->format('Y-m-d H:i:s'));
 
 		$fetched = $this->source->fetchNew();
 		$result = new ImportResult(fetched: count($fetched));
@@ -64,6 +68,10 @@ final class PaymentImporter
 			if ($change->isNotable()) {
 				$this->mailer->sendPaymentUpdate($change);
 			}
+		}
+		// Cron runs every few minutes: log only imports that brought something.
+		if ($result->fetched > 0 || $this->actor->type() !== Actor::Cron) {
+			$this->eventLog->record('payments.imported', details: ['summary' => $result->summary()] + (array) $result);
 		}
 		return $result;
 	}
@@ -106,8 +114,9 @@ final class PaymentImporter
 			throw new PaymentError(sprintf('Zvolte datum mezi %s a dneškem.', $oldest->format('j. n. Y')));
 		}
 		$this->guardInterval();
-		$this->settings->save(['bank_last_fetch_at' => $this->clock->now()->format('Y-m-d H:i:s')]);
+		$this->settings->remember('bank_last_fetch_at', $this->clock->now()->format('Y-m-d H:i:s'));
 		$this->source->rewind($since);
+		$this->eventLog->record('payments.rewound', details: ['since' => $since->format('Y-m-d')]);
 	}
 
 

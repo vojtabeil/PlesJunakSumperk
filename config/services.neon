@@ -18,8 +18,12 @@ services:
 
 	- App\Model\Admin\AdminUsers
 	- App\Model\Admin\Authenticator
-	- App\Model\Admin\AuditLog
 	- App\Model\Admin\SetupConfig(%setup%)
+
+	# Event log; Actor = who acts in the current request (set by the entry points).
+	- App\Model\Log\Actor
+	- App\Model\Log\EventLog
+	- App\Model\Log\EventLogRepository
 
 	- App\Model\Clock\SystemClock
 

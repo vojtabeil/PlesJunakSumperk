@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Model\Admin;
 
 use App\Model\Admin\AdminUsers;
-use App\Model\Admin\AuditLog;
 use App\Model\Admin\Authenticator;
 use App\Tests\DatabaseTestCase;
 use Nette\Security\AuthenticationException;
@@ -22,8 +21,8 @@ final class AuthenticatorTest extends DatabaseTestCase
 	{
 		parent::setUp();
 		$passwords = new Passwords(PASSWORD_BCRYPT, ['cost' => 4]); // fast hashing in tests
-		$this->users = new AdminUsers($this->db, $passwords);
-		$this->authenticator = new Authenticator($this->users, $passwords, new AuditLog($this->db));
+		$this->users = new AdminUsers($this->db, $passwords, $this->eventLog());
+		$this->authenticator = new Authenticator($this->users, $passwords, $this->eventLog());
 		$this->users->create('jana', 'Jana Organizátorka', 'spravne-heslo');
 	}
 
@@ -34,7 +33,7 @@ final class AuthenticatorTest extends DatabaseTestCase
 
 		self::assertSame([Authenticator::Role], $identity->getRoles());
 		self::assertSame('Jana Organizátorka', $identity->getData()['name']);
-		self::assertSame('admin.login', $this->db->query('SELECT action FROM audit_log')->fetchColumn());
+		self::assertContains('admin.login', $this->loggedActions());
 		self::assertNotNull($this->users->findByLogin('jana')['last_login_at'] ?? null);
 	}
 

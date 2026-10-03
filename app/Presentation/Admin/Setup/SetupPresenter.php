@@ -58,7 +58,6 @@ final class SetupPresenter extends BasePresenter
 				$form->addError($e->getMessage());
 				return;
 			}
-			$this->auditLog->record($id, 'admin.setup', null, ['login' => $data->login]);
 			$this->users->recordLogin($id);
 			$account = $this->users->findById($id) ?? throw new \LogicException('Account just created is missing.');
 			$this->getUser()->login($this->authenticator->identity($account));

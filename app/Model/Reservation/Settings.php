@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 namespace App\Model\Reservation;
 
+use App\Model\Log\EventLog;
 use PDO;
 
 
 /** Key/value settings from the `settings` table (event info, prices, limits, sale switch). */
 final class Settings
 {
+	/** Values that are secrets: their changes are logged without the value. */
+	private const Secret = ['tester_token'];
+
 	/** @var array<string, string>|null */
 	private ?array $values = null;
 
 
 	public function __construct(
 		private readonly PDO $db,
+		private readonly EventLog $eventLog,
 	) {
 	}
 
@@ -48,16 +53,26 @@ final class Settings
 	{
 		$current = $this->all();
 		$changed = [];
-		$stmt = $this->db->prepare('REPLACE INTO settings (name, value) VALUES (?, ?)');
 		foreach ($values as $name => $value) {
 			$old = $current[$name] ?? '';
 			if ($old !== $value) {
-				$stmt->execute([$name, $value]);
+				$this->remember($name, $value);
 				$changed[$name] = [$old, $value];
 			}
 		}
-		$this->values = null;
+		if ($changed) {
+			$visible = array_diff_key($changed, array_flip(self::Secret));
+			$this->eventLog->record('settings.changed', details: ['changed' => array_keys($changed), 'values' => $visible]);
+		}
 		return $changed;
+	}
+
+
+	/** Internal value (e.g. time of the last bank import): stored without logging. */
+	public function remember(string $name, string $value): void
+	{
+		$this->db->prepare('REPLACE INTO settings (name, value) VALUES (?, ?)')->execute([$name, $value]);
+		$this->values = null;
 	}
 
 

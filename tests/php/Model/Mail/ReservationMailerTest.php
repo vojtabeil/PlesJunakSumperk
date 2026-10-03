@@ -79,6 +79,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 			$this->service(LatteFactory::class),
 			new QrPayment($this->settings()),
 			$logger,
+			$this->eventLog(),
 		);
 	}
 

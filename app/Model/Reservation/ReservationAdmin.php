@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Reservation;
 
+use App\Model\Log\EventLog;
 use App\Model\Payment\VariableSymbol;
 use PDO;
 use Throwable;
@@ -19,6 +20,7 @@ final class ReservationAdmin
 		private readonly PDO $db,
 		private readonly Settings $settings,
 		private readonly VariableSymbol $variableSymbol,
+		private readonly EventLog $eventLog,
 	) {
 	}
 
@@ -102,14 +104,18 @@ final class ReservationAdmin
 	/** Payment received outside the bank (e.g. cash). */
 	public function markPaid(int $id): void
 	{
+		$reservation = $this->get($id);
 		$stmt = $this->db->prepare(
 			"UPDATE reservations SET status = 'paid', paid_at = NOW(), paid_amount = total_price
 			WHERE id = ? AND status IN ('confirmed', 'partially_paid')",
 		);
 		$stmt->execute([$id]);
-		if ($stmt->rowCount() === 0) {
+		if ($stmt->rowCount() === 0 || $reservation === null) {
 			throw new ReservationError('Zaplacenou lze označit jen potvrzenou nezaplacenou rezervaci.');
 		}
+		$this->eventLog->record('reservation.paid_manually', $id, [
+			'amount' => (int) $reservation['total_price'] - (int) $reservation['paid_amount'],
+		]);
 	}
 
 
@@ -125,6 +131,8 @@ final class ReservationAdmin
 			if ($stmt->rowCount() === 0) {
 				throw new ReservationError('Rezervace neexistuje nebo už je zrušená.');
 			}
+			// The log keeps which seats were freed.
+			$this->eventLog->record('reservation.cancelled', $id);
 			$this->db->prepare(
 				"UPDATE seats SET state = 'free', reservation_id = NULL, booked_at = NULL WHERE reservation_id = ?",
 			)->execute([$id]);
@@ -141,6 +149,7 @@ final class ReservationAdmin
 		$note = trim($note);
 		$this->db->prepare('UPDATE reservations SET note = ? WHERE id = ?')
 			->execute([$note === '' ? null : mb_substr($note, 0, 1000), $id]);
+		$this->eventLog->record('reservation.note', $id, ['note' => mb_substr($note, 0, 200)]);
 	}
 
 

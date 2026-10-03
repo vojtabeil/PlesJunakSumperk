@@ -3,6 +3,9 @@
 
 INSERT INTO settings (name, value) VALUES
     ('sale_open', '0'),
+    -- testers = only visitors with the tester link see the site (a new installation starts so).
+    ('public_access', 'testers'),
+    ('tester_token', ''),
     ('closed_message', 'Prodej lístků zatím nezačal.'),
     ('event_name', 'Šumperský skautský ples'),
     ('event_intro', 'Šumperští skauti si vás dovolují pozvat do víru tance a zábavy. Chybět nebude ani tradičně vynikající občerstvení, klasická i skautská tombola a bohatý program.'),

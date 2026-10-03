@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Admin;
 
+use App\Model\Log\EventLog;
 use Nette\Security\AuthenticationException;
 use Nette\Security\Authenticator as NetteAuthenticator;
 use Nette\Security\IdentityHandler;
@@ -34,7 +35,7 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 	public function __construct(
 		private readonly AdminUsers $users,
 		private readonly Passwords $passwords,
-		private readonly AuditLog $auditLog,
+		private readonly EventLog $eventLog,
 	) {
 	}
 
@@ -44,6 +45,7 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 		$account = $this->users->findByLogin(trim($user));
 		if ($account === null) {
 			$this->passwords->verify($password, self::DummyHash);
+			$this->eventLog->record('admin.login_failed', details: ['login' => mb_substr(trim($user), 0, 64)]);
 			throw new AuthenticationException(self::InvalidCredentials);
 		}
 
@@ -57,6 +59,10 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 
 		if (!$this->passwords->verify($password, (string) $account['password_hash'])) {
 			$this->users->recordFailedLogin($id);
+			$this->eventLog->record('admin.login_failed', details: ['login' => $account['login']], adminId: $id);
+			if ((int) $account['failed_logins'] + 1 === self::MaxFailures) {
+				$this->eventLog->record('admin.locked', details: ['login' => $account['login']], adminId: $id);
+			}
 			throw new AuthenticationException(self::InvalidCredentials);
 		}
 
@@ -64,7 +70,7 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 			$this->users->rehashPassword($id, $password);
 		}
 		$this->users->recordLogin($id);
-		$this->auditLog->record($id, 'admin.login');
+		$this->eventLog->record('admin.login', adminId: $id);
 		return $this->identity($account);
 	}
 

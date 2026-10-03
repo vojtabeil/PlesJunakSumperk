@@ -51,7 +51,7 @@ final class ReservationPresenter extends BasePresenter
 	public function renderDetail(): void
 	{
 		$this->template->reservation = $this->reservation;
-		$this->template->activity = $this->auditLog->recent(50, (int) $this->reservation['id']);
+		$this->template->activity = $this->events->recent(100, (int) $this->reservation['id']);
 		$this->template->payments = $this->payments->forReservation((int) $this->reservation['id']);
 	}
 
@@ -81,7 +81,6 @@ final class ReservationPresenter extends BasePresenter
 	{
 		return $this->createSimpleForm('Označit jako zaplacené (hotově)', function (int $id): string {
 			$this->reservationAdmin->markPaid($id);
-			$this->auditLog->record($this->adminId(), 'reservation.paid', $id, ['method' => 'manual']);
 			return 'Rezervace je označená jako zaplacená.';
 		});
 	}
@@ -91,7 +90,6 @@ final class ReservationPresenter extends BasePresenter
 	{
 		return $this->createSimpleForm('Zrušit rezervaci', function (int $id): string {
 			$this->reservationAdmin->cancel($id);
-			$this->auditLog->record($this->adminId(), 'reservation.cancelled', $id);
 			return 'Rezervace je zrušená a místa jsou opět volná.';
 		}, confirmLabel: 'Opravdu zrušit (místa se uvolní)');
 	}
@@ -101,7 +99,6 @@ final class ReservationPresenter extends BasePresenter
 	{
 		return $this->createSimpleForm('Znovu poslat potvrzovací e-mail', function (int $id): string {
 			$sent = $this->mailer->sendConfirmation($id);
-			$this->auditLog->record($this->adminId(), 'reservation.email', $id, ['sent' => $sent]);
 			if (!$sent) {
 				throw new ReservationError('E-mail se nepodařilo odeslat, chyba je uložená u rezervace.');
 			}
@@ -120,7 +117,6 @@ final class ReservationPresenter extends BasePresenter
 		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
 			$id = (int) $this->reservation['id'];
 			$this->reservationAdmin->saveNote($id, (string) $data->note);
-			$this->auditLog->record($this->adminId(), 'reservation.note', $id);
 			$this->flashMessage('Poznámka je uložená.', 'success');
 			$this->redirect('this');
 		};

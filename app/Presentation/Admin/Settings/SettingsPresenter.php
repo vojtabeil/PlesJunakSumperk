@@ -68,7 +68,6 @@ final class SettingsPresenter extends BasePresenter
 			);
 			$changed = $this->settings->save($values);
 			if ($changed) {
-				$this->auditLog->record($this->adminId(), 'settings.changed', null, $changed);
 				$this->flashMessage('Nastavení je uložené.', 'success');
 			} else {
 				$this->flashMessage('Nic se nezměnilo.', 'info');

@@ -73,7 +73,6 @@ final class PaymentPresenter extends BasePresenter
 			try {
 				$since = \DateTimeImmutable::createFromInterface($data->since);
 				$this->importer->rewind($since);
-				$this->auditLog->record($this->adminId(), 'payments.rewound', null, ['since' => $since->format('Y-m-d')]);
 				$this->flashMessage(sprintf(
 					'Banka pošle pohyby od %s znovu. Klikněte na „Načíst platby z banky“%s; už uložené platby se nezdvojí.',
 					$since->format('j. n. Y'),
@@ -101,7 +100,6 @@ final class PaymentPresenter extends BasePresenter
 		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
 			$this->inTransaction(function () use ($data): void {
 				$change = $this->matcher->assign((int) $data->transaction, (int) $data->reservation);
-				$this->auditLog->record($this->adminId(), 'payment.assigned', $change->reservationId, ['transaction' => $data->transaction]);
 				$this->notify($change);
 				$this->flashMessage("Platba je přiřazená k rezervaci č. {$change->reservationId}.", 'success');
 			});
@@ -120,7 +118,6 @@ final class PaymentPresenter extends BasePresenter
 		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
 			$this->inTransaction(function () use ($data): void {
 				$this->matcher->ignore((int) $data->transaction);
-				$this->auditLog->record($this->adminId(), 'payment.ignored', null, ['transaction' => $data->transaction]);
 				$this->flashMessage('Platba je označená jako ignorovaná.', 'success');
 			});
 		};

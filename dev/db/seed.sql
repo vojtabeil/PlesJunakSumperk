@@ -2,6 +2,7 @@
 -- Event info comes from the recovered 2024 landing page; prices and capacities are made up.
 
 UPDATE settings SET value = '1' WHERE name = 'sale_open';
+UPDATE settings SET value = 'public' WHERE name = 'public_access';
 UPDATE settings SET value = '3. 2. 2024 od 19:00' WHERE name = 'event_date';
 UPDATE settings SET value = 'Tomáš Slavický' WHERE name = 'organizer';
 UPDATE settings SET value = 'Děkujeme za Vaši účast na našem plese.' WHERE name = 'closed_message';

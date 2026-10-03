@@ -37,7 +37,7 @@ final class PaymentImporterTest extends DatabaseTestCase
 	{
 		parent::setUp();
 		$this->bank = new MockBank($this->db);
-		$this->matcher = new PaymentMatcher($this->db, new VariableSymbol($this->settings()));
+		$this->matcher = new PaymentMatcher($this->db, new VariableSymbol($this->settings()), $this->eventLog());
 		$this->clock = new FrozenClock;
 		$this->sender = new RecordingMailSender;
 	}
@@ -239,6 +239,7 @@ final class PaymentImporterTest extends DatabaseTestCase
 			$this->service(LatteFactory::class),
 			new QrPayment($this->settings()),
 			$logger,
+			$this->eventLog(),
 		);
 		return new PaymentImporter(
 			$source ?? new MockBankSource($this->db),
@@ -247,6 +248,8 @@ final class PaymentImporterTest extends DatabaseTestCase
 			$this->settings(),
 			$this->clock,
 			$this->db,
+			$this->eventLog(),
+			$this->actor(),
 		);
 	}
 

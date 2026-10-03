@@ -82,9 +82,6 @@ final class UserPresenter extends BasePresenter
 				$this->flashMessage($e->getMessage(), 'error');
 				$this->redirect('this');
 			}
-			$this->auditLog->record($this->adminId() === $id ? null : $this->adminId(), 'admin.deleted', null, [
-				'login' => $this->account['login'],
-			]);
 			if ($id === $this->adminId()) {
 				$this->getUser()->logout(clearIdentity: true);
 				$this->flashMessage('Váš účet byl smazán.', 'info');
@@ -102,7 +99,6 @@ final class UserPresenter extends BasePresenter
 		try {
 			if ($this->account === null) {
 				$id = $this->users->create($data->login, $data->name, $data->password);
-				$this->auditLog->record($this->adminId(), 'admin.created', null, ['login' => $data->login]);
 				$this->flashMessage("Účet {$data->login} je vytvořený.", 'success');
 				$this->redirect('edit', $id);
 			}
@@ -123,7 +119,6 @@ final class UserPresenter extends BasePresenter
 			return;
 		}
 
-		$this->auditLog->record($this->adminId(), 'admin.updated', null, $changes);
 		if ($id === $this->adminId()) {
 			$this->refreshOwnIdentity();
 		}

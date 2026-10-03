@@ -6,7 +6,6 @@ namespace App\Tests\Model\Admin;
 
 use App\Model\Admin\AdminError;
 use App\Model\Admin\AdminUsers;
-use App\Model\Admin\AuditLog;
 use App\Model\Admin\Authenticator;
 use App\Tests\DatabaseTestCase;
 use Nette\Security\Passwords;
@@ -23,8 +22,8 @@ final class AdminUsersTest extends DatabaseTestCase
 	{
 		parent::setUp();
 		$passwords = new Passwords(PASSWORD_BCRYPT, ['cost' => 4]);
-		$this->users = new AdminUsers($this->db, $passwords);
-		$this->authenticator = new Authenticator($this->users, $passwords, new AuditLog($this->db));
+		$this->users = new AdminUsers($this->db, $passwords, $this->eventLog());
+		$this->authenticator = new Authenticator($this->users, $passwords, $this->eventLog());
 	}
 
 

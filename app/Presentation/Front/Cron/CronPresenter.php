@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Front\Cron;
 
-use App\Model\Admin\AuditLog;
+use App\Model\Log\Actor;
 use App\Model\Payment\PaymentError;
 use App\Model\Payment\PaymentImporter;
 use App\Model\Payment\PaymentRepository;
@@ -25,7 +25,7 @@ final class CronPresenter extends Presenter
 		private readonly array $config,
 		private readonly PaymentImporter $importer,
 		private readonly PaymentRepository $payments,
-		private readonly AuditLog $auditLog,
+		private readonly Actor $actor,
 	) {
 		parent::__construct();
 	}
@@ -43,10 +43,8 @@ final class CronPresenter extends Presenter
 		$response->setContentType('text/plain', 'UTF-8');
 		$response->setHeader('Cache-Control', 'no-store');
 		try {
+			$this->actor->asCron();
 			$result = $this->importer->import();
-			if ($result->fetched > 0) {
-				$this->auditLog->record(null, 'payments.imported', null, (array) $result + ['by' => 'cron']);
-			}
 			$text = $result->summary() . "\nPlateb k vyřešení: " . $this->payments->problemCount() . "\n";
 		} catch (PaymentError $e) {
 			$response->setCode(IResponse::S503_ServiceUnavailable);

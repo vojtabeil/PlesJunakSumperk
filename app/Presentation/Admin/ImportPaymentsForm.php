@@ -23,7 +23,6 @@ trait ImportPaymentsForm
 		$form->onSuccess[] = function (): void {
 			try {
 				$result = $this->paymentImporter()->import();
-				$this->auditLog->record($this->adminId(), 'payments.imported', null, (array) $result);
 				$this->flashMessage($result->summary(), $result->unmatched ? 'info' : 'success');
 			} catch (PaymentError $e) {
 				$this->flashMessage($e->getMessage(), 'error');
