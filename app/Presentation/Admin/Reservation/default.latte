@@ -1,0 +1,21 @@
+{templateType App\Presentation\Admin\Reservation\ReservationTemplate}
+
+{block title}Rezervace{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Rezervace</h1>
+	<a class="button" n:href="Export:guests">Stáhnout seznam hostů (CSV)</a>
+</div>
+
+<form n:name="filterForm" class="filter-form">
+	<label n:name="status">Stav <select n:name="status"></select></label>
+	<label n:name="q">Hledat <input n:name="q"></label>
+	<button n:name="filter" class="button">Filtrovat</button>
+</form>
+
+<section class="card">
+	<p class="muted">Počet: {count($reservations)}</p>
+	{include 'table.latte', reservations: $reservations}
+</section>
+{/block}

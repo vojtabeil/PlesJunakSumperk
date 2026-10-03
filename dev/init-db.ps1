@@ -3,7 +3,7 @@
     Recreates the local database (deletes data!). Safe to run repeatedly.
 
 .PARAMETER Import
-    Imports the given SQL dump (e.g. a phpMyAdmin export from Lebeda) instead of migrations + seed.sql.
+    Imports the given SQL dump (e.g. a phpMyAdmin export from Lebeda) instead of schema.sql + seed.sql.
 
 .PARAMETER NoSeed
     Creates empty tables only, without test data.

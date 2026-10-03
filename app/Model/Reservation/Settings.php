@@ -39,6 +39,28 @@ final class Settings
 	}
 
 
+	/**
+	 * Stores the given values and returns the ones that actually changed (name => [old, new]).
+	 * @param array<string, string> $values
+	 * @return array<string, array{string, string}>
+	 */
+	public function save(array $values): array
+	{
+		$current = $this->all();
+		$changed = [];
+		$stmt = $this->db->prepare('REPLACE INTO settings (name, value) VALUES (?, ?)');
+		foreach ($values as $name => $value) {
+			$old = $current[$name] ?? '';
+			if ($old !== $value) {
+				$stmt->execute([$name, $value]);
+				$changed[$name] = [$old, $value];
+			}
+		}
+		$this->values = null;
+		return $changed;
+	}
+
+
 	public function isSaleOpen(): bool
 	{
 		return $this->get('sale_open') === '1';

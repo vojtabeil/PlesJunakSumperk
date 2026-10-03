@@ -1,0 +1,59 @@
+{templateType App\Presentation\Admin\Reservation\ReservationTemplate}
+
+{block title}Rezervace č. {$reservation['id']}{/block}
+
+{block content}
+{var $r = $reservation}
+<p><a n:href="default">← Zpět na seznam</a></p>
+<div class="page-head">
+	<h1>Rezervace č. {$r['id']}</h1>
+	<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
+</div>
+
+<div class="columns">
+	<section class="card">
+		<h2>Údaje</h2>
+		<dl class="details">
+			<dt>Jméno</dt><dd>{$r['name'] ?? '–'}</dd>
+			<dt>E-mail</dt><dd><a href="mailto:{$r['email']}">{$r['email']}</a></dd>
+			<dt>Telefon</dt><dd>{$r['phone'] ?? '–'}</dd>
+			<dt>Místa</dt><dd>{$r['seats'] ? implode('; ', array_map(fn($l) => ($l|seatLabel), $r['seats'])) : '–'}</dd>
+			<dt>Bez místenky</dt><dd>{$r['standing_tickets']}</dd>
+			<dt>Cena</dt><dd>{(int) $r['total_price']|price}</dd>
+			<dt>Variabilní symbol</dt><dd>{$r['id']}</dd>
+			<dt>Vytvořeno</dt><dd>{$r['created_at']|date:'j. n. Y H:i'}</dd>
+			<dt>Potvrzeno</dt><dd>{if $r['confirmed_at']}{$r['confirmed_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
+			<dt>Zaplaceno</dt><dd>{if $r['paid_at']}{$r['paid_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
+			<dt>Potvrzovací e-mail</dt>
+			<dd>
+				{if $r['email_sent_at']}odeslán {$r['email_sent_at']|date:'j. n. Y H:i'}{else}neodeslán{/if}
+				<span n:if="$r['email_error']" class="error-text">({$r['email_error']})</span>
+			</dd>
+		</dl>
+	</section>
+
+	<section class="card">
+		<h2>Akce</h2>
+		<div class="actions">
+			{if $r['status'] === 'confirmed'}{control markPaidForm}{/if}
+			{if in_array($r['status'], ['confirmed', 'paid'], true)}{control resendForm}{/if}
+			{if $r['status'] !== 'cancelled'}
+				<div class="danger-zone">{control cancelForm}</div>
+			{/if}
+		</div>
+		{control noteForm}
+	</section>
+</div>
+
+<section class="card">
+	<h2>Historie změn</h2>
+	<ul class="activity" n:if="$activity">
+		<li n:foreach="$activity as $entry">
+			<time>{$entry['created_at']|date:'j. n. Y H:i'}</time>
+			{$entry['action']|auditLabel}
+			<span class="muted">– {$entry['admin_name'] ?? 'systém'}</span>
+		</li>
+	</ul>
+	<p n:if="!$activity" class="muted">Zatím žádné změny.</p>
+</section>
+{/block}

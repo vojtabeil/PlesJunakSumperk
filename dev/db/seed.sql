@@ -53,3 +53,9 @@ INSERT INTO reservations (id, email, name, standing_tickets, status, total_price
 
 UPDATE seats SET state = 'reserved', reservation_id = 1 WHERE id IN (101, 102);
 UPDATE seats SET state = 'reserved', reservation_id = 2 WHERE id IN (501, 502, 503, 504);
+
+-- Local administrator: login "admin", password "admin".
+INSERT INTO admin_users (login, name, password_hash) VALUES
+    ('admin', 'Testovací Organizátor', '$2y$12$0dzo6iQBXaEx2QIunet7P.rVyXI5H5K52wlJ/bG6umC0LijyaoSea');
+
+UPDATE reservations SET paid_at = NOW() WHERE status = 'paid';

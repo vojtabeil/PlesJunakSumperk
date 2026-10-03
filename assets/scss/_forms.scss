@@ -8,7 +8,11 @@ label {
 
 input[type='email'],
 input[type='text'],
-input[type='tel'] {
+input[type='tel'],
+input[type='password'],
+input[type='number'],
+select,
+textarea {
   width: 100%;
   padding: 0.6rem 0.75rem;
   font: inherit;

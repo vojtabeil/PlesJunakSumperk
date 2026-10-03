@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Accessory;
 
+use App\Model\Admin\AuditLog;
 use Latte\Extension;
 
 
@@ -21,6 +22,8 @@ final class TemplateExtension extends Extension
 		return [
 			'price' => self::formatPrice(...),
 			'seatLabel' => self::formatSeatLabel(...),
+			'statusLabel' => self::formatStatus(...),
+			'auditLabel' => static fn(string $action): string => AuditLog::Labels[$action] ?? $action,
 		];
 	}
 
@@ -45,6 +48,19 @@ final class TemplateExtension extends Extension
 	{
 		[$table, $seat] = array_pad(explode('/', $label, 2), 2, '');
 		return "stůl $table, místo $seat";
+	}
+
+
+	/** Czech name of a reservation status. */
+	public static function formatStatus(string $status): string
+	{
+		return match ($status) {
+			'draft' => 'rozpracovaná',
+			'confirmed' => 'nezaplacená',
+			'paid' => 'zaplacená',
+			'cancelled' => 'zrušená',
+			default => $status,
+		};
 	}
 
 

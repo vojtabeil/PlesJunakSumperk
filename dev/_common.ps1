@@ -341,22 +341,13 @@ FLUSH PRIVILEGES;
     Invoke-DbSql $bootstrap | Out-Null
 }
 
-# Applies migrations/*.sql through the application (bin/migrate.php).
-function Invoke-Migrations([switch]$Test) {
-    $argList = @('-c', $PhpIni, (Join-Path $Root 'bin\migrate.php'))
-    if ($Test) { $argList += '--test' }
-    $r = Invoke-Native $PhpExe $argList
-    if ($r.Code -ne 0) { throw "Migrations failed:`n$($r.Output)" }
-    Write-Info $r.Output.Trim()
-}
-
-# Recreates the application database: migrations + seed data, or a raw SQL dump.
+# Recreates the application database: schema + seed data, or a raw SQL dump.
 function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
     Reset-Database $DbName
     if ($Import) {
         Import-DbFile $Import $DbName
     } else {
-        Invoke-Migrations
+        Import-DbFile (Join-Path $PSScriptRoot 'db\schema.sql') $DbName
         if (-not $NoSeed) { Import-DbFile (Join-Path $PSScriptRoot 'db\seed.sql') $DbName }
     }
     Write-Ok 'Database ready'
@@ -365,7 +356,7 @@ function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
 # Recreates the empty test database used by PHPUnit (config/test.neon).
 function Reset-TestDatabase {
     Reset-Database $TestDbName
-    Invoke-Migrations -Test
+    Import-DbFile (Join-Path $PSScriptRoot 'db\schema.sql') $TestDbName
     Write-Ok 'Test database ready'
 }
 

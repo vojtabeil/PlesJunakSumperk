@@ -4,11 +4,17 @@ services:
 	- App\Core\RouterFactory::createRouter
 
 	database: App\Model\Database\ConnectionFactory::create(%database%)
-	- App\Model\Database\Migrator(%rootDir%/migrations)
 
 	- App\Model\Reservation\Settings
 	- App\Model\Reservation\ReservationService
 	- App\Model\Reservation\ReservationSession
+	- App\Model\Reservation\ReservationAdmin
+
+	- App\Model\Admin\AdminUsers
+	- App\Model\Admin\Authenticator
+	- App\Model\Admin\AuditLog
+
+	- App\Presentation\Accessory\FormFactory
 
 	mailSender:
 		type: App\Model\Mail\MailSender

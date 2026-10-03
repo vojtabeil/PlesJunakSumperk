@@ -1,0 +1,56 @@
+{templateType App\Presentation\Admin\Dashboard\DashboardTemplate}
+
+{block title}Přehled{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Přehled</h1>
+	<p n:class="'badge', $saleOpen ? 'badge--paid' : 'badge--cancelled'">
+		Prodej {$saleOpen ? 'je otevřený' : 'je uzavřený'}
+		· <a n:href="Settings:default">změnit</a>
+	</p>
+</div>
+
+<section class="stats" aria-label="Souhrn">
+	<div class="stat">
+		<span class="stat-value">{$stats['reserved']} / {$stats['total']}</span>
+		<span class="stat-label">rezervovaných míst</span>
+		<span class="stat-note">volných {$stats['free']}{if $stats['held']}, právě vybíraných {$stats['held']}{/if}</span>
+	</div>
+	<div class="stat">
+		<span class="stat-value">{$stats['standing']} / {$stats['standing_capacity']}</span>
+		<span class="stat-label">lístků bez místenky</span>
+	</div>
+	<div class="stat">
+		<span class="stat-value">{$stats['paid']}</span>
+		<span class="stat-label">zaplacených rezervací</span>
+		<span class="stat-note">{$stats['paid_amount']|price}</span>
+	</div>
+	<div class="stat stat--warning">
+		<span class="stat-value">{$stats['confirmed']}</span>
+		<span class="stat-label">čeká na platbu</span>
+		<span class="stat-note">{$stats['unpaid_amount']|price}</span>
+	</div>
+</section>
+
+<div class="columns">
+	<section class="card">
+		<h2>Poslední rezervace</h2>
+		{include '../Reservation/table.latte', reservations: $recentReservations}
+		<p><a n:href="Reservation:default">Všechny rezervace →</a></p>
+	</section>
+
+	<section class="card">
+		<h2>Poslední změny</h2>
+		<ul class="activity" n:if="$activity">
+			<li n:foreach="$activity as $entry">
+				<time>{$entry['created_at']|date:'j. n. H:i'}</time>
+				{$entry['action']|auditLabel}
+				<a n:if="$entry['reservation_id']" n:href="Reservation:detail $entry['reservation_id']">č. {$entry['reservation_id']}</a>
+				<span class="muted">– {$entry['admin_name'] ?? 'systém'}</span>
+			</li>
+		</ul>
+		<p n:if="!$activity" class="muted">Zatím žádné změny.</p>
+	</section>
+</div>
+{/block}

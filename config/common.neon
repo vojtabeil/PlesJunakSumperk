@@ -20,6 +20,12 @@ latte:
 		- App\Presentation\Accessory\TemplateExtension(%rootDir%/www)
 
 
+security:
+	authentication:
+		# Organizers are logged out after 2 hours of inactivity.
+		expiration: 2 hours
+
+
 session:
 	name: ples_session
 	cookieSamesite: Lax

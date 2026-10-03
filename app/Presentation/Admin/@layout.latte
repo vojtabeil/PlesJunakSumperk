@@ -1,0 +1,32 @@
+{templateType App\Presentation\Admin\BaseTemplate}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex">
+	<title>{ifset title}{include title|stripHtml} – {/ifset}Administrace plesu</title>
+	<link rel="icon" type="image/svg+xml" href="{$basePath}/img/icons/organizer.svg">
+	<link rel="stylesheet" href="{$basePath}/{asset('build/admin.css')}">
+</head>
+<body>
+<header class="admin-header">
+	<a class="admin-brand" n:href="Dashboard:default">Administrace plesu</a>
+	<nav n:if="$user->isLoggedIn()" class="admin-nav" aria-label="Hlavní menu">
+		<a n:href="Dashboard:default" n:class="$presenter->isLinkCurrent('Dashboard:*') ? 'is-current'">Přehled</a>
+		<a n:href="Reservation:default" n:class="$presenter->isLinkCurrent('Reservation:*') ? 'is-current'">Rezervace</a>
+		<a n:href="Settings:default" n:class="$presenter->isLinkCurrent('Settings:*') ? 'is-current'">Nastavení</a>
+		<a n:href="Export:guests">Export hostů (CSV)</a>
+	</nav>
+	<div n:if="$user->isLoggedIn()" class="admin-user">
+		<a n:href="Account:default">{$adminName}</a>
+		<a n:href="Sign:out">Odhlásit</a>
+	</div>
+</header>
+
+<main class="admin-main">
+	<div n:foreach="$flashes as $flash" class="flash flash--{$flash->type}" role="status">{$flash->message}</div>
+	{include content}
+</main>
+</body>
+</html>

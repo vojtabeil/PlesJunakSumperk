@@ -1,6 +1,5 @@
--- Initial schema (reservations, hall layout, seats, settings).
+-- Database schema (greenfield project: edit this file directly, then run init-db.cmd).
 -- Based on the reconstruction in docs/legacy-backend.md. Must work on MariaDB and MySQL 8.
--- Never edit after it has been applied anywhere; add a new migration instead.
 
 -- Key/value configuration (event info, prices, limits, sale switch).
 CREATE TABLE settings (
@@ -24,6 +23,8 @@ CREATE TABLE reservations (
     confirmed_at     DATETIME NULL,
     email_sent_at    DATETIME NULL,
     email_error      VARCHAR(1000) NULL,
+    paid_at          DATETIME NULL,
+    note             VARCHAR(1000) NULL,
     UNIQUE KEY uq_reservations_email (email),
     KEY ix_reservations_session (session_id)
 ) ENGINE=InnoDB;
@@ -54,4 +55,29 @@ CREATE TABLE seats (
     CONSTRAINT fk_seats_table FOREIGN KEY (table_id) REFERENCES hall_tables (id),
     CONSTRAINT fk_seats_reservation FOREIGN KEY (reservation_id)
         REFERENCES reservations (id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Organizers with access to the administration. Passwords via password_hash().
+CREATE TABLE admin_users (
+    id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    login          VARCHAR(64)  NOT NULL,
+    name           VARCHAR(255) NOT NULL,
+    password_hash  VARCHAR(255) NOT NULL,
+    failed_logins  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    last_failed_at DATETIME NULL,
+    last_login_at  DATETIME NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_admin_users_login (login)
+) ENGINE=InnoDB;
+
+-- Who changed what in the administration.
+CREATE TABLE audit_log (
+    id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    admin_user_id  INT UNSIGNED NULL,
+    action         VARCHAR(64)  NOT NULL,
+    reservation_id INT UNSIGNED NULL,
+    details        VARCHAR(2000) NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY ix_audit_log_reservation (reservation_id),
+    CONSTRAINT fk_audit_log_admin FOREIGN KEY (admin_user_id) REFERENCES admin_users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

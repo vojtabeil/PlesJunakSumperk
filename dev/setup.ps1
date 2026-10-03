@@ -204,8 +204,7 @@ Write-MyIni
 $started = Start-Db
 try {
     if (Test-DatabaseExists $DbName) {
-        Write-Ok "Database '$DbName' already exists, keeping it"
-        Invoke-Migrations
+        Write-Ok "Database '$DbName' already exists, keeping it (reset with init-db.cmd)"
     } else {
         Reset-AppDatabase
     }

@@ -1,0 +1,30 @@
+{* Reservation table, shared by the list and the dashboard. Parameter: $reservations *}
+{parameters array $reservations}
+<div class="table-scroll" n:if="$reservations">
+	<table class="data-table">
+		<thead>
+			<tr>
+				<th scope="col">Č.</th>
+				<th scope="col">Jméno / e-mail</th>
+				<th scope="col">Místa</th>
+				<th scope="col" class="num">Bez míst.</th>
+				<th scope="col" class="num">Cena</th>
+				<th scope="col">Stav</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr n:foreach="$reservations as $r">
+				<td><a n:href="Reservation:detail $r['id']">{$r['id']}</a></td>
+				<td>
+					<a n:href="Reservation:detail $r['id']">{$r['name'] ?? '–'}</a><br>
+					<span class="muted">{$r['email']}</span>
+				</td>
+				<td>{$r['seat_labels'] ?? '–'}</td>
+				<td class="num">{$r['standing_tickets']}</td>
+				<td class="num">{(int) $r['total_price']|price}</td>
+				<td><span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span></td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+<p n:if="!$reservations" class="muted">Žádné rezervace.</p>

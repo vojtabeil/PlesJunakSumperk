@@ -1,0 +1,382 @@
+// Styles of the administration. Built to www/build/admin.css.
+
+@use 'tokens' as *;
+@use 'forms';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--body-font);
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+a {
+  color: var(--green);
+}
+
+:focus-visible {
+  outline: 3px solid var(--orange);
+  outline-offset: 2px;
+}
+
+h1,
+h2 {
+  margin-top: 0;
+  font-family: var(--heading-font);
+  font-weight: 400;
+  color: var(--green);
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.3rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error-text {
+  color: var(--error);
+}
+
+// --- Header -----------------------------------------------------------------
+
+.admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding: 0.75rem 16px;
+  color: #fff;
+  background: var(--green);
+
+  a {
+    color: #fff;
+  }
+}
+
+.admin-brand {
+  font-family: var(--heading-font);
+  font-size: 1.25rem;
+  text-decoration: none;
+}
+
+.admin-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  flex: 1;
+
+  a {
+    padding: 0.25rem 0;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+
+    &:hover,
+    &.is-current {
+      border-bottom-color: #fff;
+    }
+  }
+}
+
+.admin-user {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.admin-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 16px 3rem;
+}
+
+// --- Layout pieces ----------------------------------------------------------
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.card {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  &--narrow {
+    max-width: 28rem;
+  }
+
+  &--form {
+    max-width: 48rem;
+  }
+
+  &--centered {
+    margin: 2rem auto;
+  }
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 0 1.5rem;
+}
+
+.flash {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-small);
+  background: rgba(40, 114, 52, 0.12);
+
+  &--error {
+    color: var(--error);
+    background: rgba(179, 38, 30, 0.12);
+  }
+}
+
+// --- Stats --------------------------------------------------------------------
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--green);
+  border-radius: var(--radius);
+
+  &--warning {
+    border-left-color: var(--orange);
+  }
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-weight: 600;
+}
+
+.stat-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+// --- Tables and badges --------------------------------------------------------
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem 0.5rem 0;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--taken);
+
+  &--paid {
+    color: #fff;
+    background: var(--green);
+  }
+
+  &--confirmed {
+    background: var(--orange);
+  }
+
+  &--cancelled {
+    color: #fff;
+    background: var(--error);
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+
+  dt {
+    color: var(--muted);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.activity {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  time {
+    display: inline-block;
+    min-width: 7.5rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// --- Forms (Nette Forms rendered by FormFactory) -------------------------------
+
+.form-fields {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.form-field {
+  label {
+    margin-bottom: 0.25rem;
+  }
+
+  // Checkbox: label wraps the input.
+  label:has(input[type='checkbox']) {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-weight: 400;
+  }
+
+  &--error input,
+  &--error textarea {
+    border-color: var(--error);
+  }
+}
+
+.form-error,
+.form-errors {
+  color: var(--error);
+}
+
+.form-errors {
+  padding-left: 1.25rem;
+}
+
+.form-description {
+  display: block;
+  color: var(--muted);
+}
+
+textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+fieldset {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  legend {
+    padding: 0 0.5rem;
+    font-weight: 700;
+    color: var(--green);
+  }
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  label {
+    margin: 0;
+  }
+
+  select,
+  input {
+    margin-top: 0.25rem;
+  }
+}
+
+.actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+
+  .button--primary {
+    width: auto;
+  }
+}
+
+.danger-zone {
+  padding: 0.75rem;
+  border: 1px dashed var(--error);
+  border-radius: var(--radius-small);
+
+  .button--primary {
+    background: var(--error);
+  }
+}

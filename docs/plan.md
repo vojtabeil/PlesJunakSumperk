@@ -1,6 +1,6 @@
 # Implementation plan: Nette, admin, payments, frontend build
 
-Status: phase 1 (tooling) and phase 2 (Nette skeleton) done; next is phase 3 (admin). Decisions were made in discussion with the
+Status: phases 1-3 (tooling, Nette skeleton, admin) done; next is phase 4 (payments). Decisions were made in discussion with the
 project owner on 2026-10-03; this file is the reference for the next steps.
 
 ## 1. Decisions
@@ -15,7 +15,7 @@ project owner on 2026-10-03; this file is the reference for the next steps.
 | Frontend | **Preact + @preact/signals** only for the seat picker "island"; everything else is server-rendered Latte + Nette Forms, Naja where AJAX helps in admin. No SPA. |
 | Build | **Bun** (bundler for TS/TSX, `bun test`), **Dart Sass** standalone (SCSS), **TypeScript 7** standalone (type checking only). No Node.js. |
 | Portability | Every tool in `.tools/`, every cache/temp in `.devdata/`; nothing is installed system-wide. |
-| Database changes | Numbered SQL migrations from now on; `init-db` stays for local resets. |
+| Database changes | Greenfield (decided 2026-10-03): no migrations, `dev/db/schema.sql` is edited directly and `init-db` recreates the databases. |
 
 ### Pinned versions (as of 2026-10-03)
 
@@ -29,7 +29,6 @@ project owner on 2026-10-03; this file is the reference for the next steps.
 | latte/latte | 3.1.6 | |
 | tracy/tracy | 2.12.1 | |
 | chillerlan/php-qrcode | 6.0.1 | QR Platba image |
-| nextras/migrations | 3.5.0 | or own tiny runner (see 4.2) |
 | phpunit/phpunit | 13.4.0 | dev only, needs PHP 8.4.1+ locally |
 | phpstan/phpstan | 2.2.x | dev only |
 | Bun | 1.4.2 | `bun-windows-x64.zip` |
@@ -68,7 +67,6 @@ config/
   services.neon       service definitions (interfaces -> implementations)
   local.neon          git-ignored: DB, SMTP, bank driver (mock|fio), Fio token, debug
   local.neon.example
-migrations/           001_initial.sql, 002_..., applied in order
 assets/
   ts/                 front.tsx (seat picker island), admin.ts
   ts/seat-picker/     components, state (signals), api client, types
@@ -139,7 +137,7 @@ new code), e-mail still lands in Mailpit, `tsc --noEmit` and PHPStan (level 6+) 
 
 ### Phase 3 - Admin
 
-1. Migration: `admin_users` (id, login, password_hash, name, created_at, last_login_at),
+1. Schema: `admin_users` (id, login, password_hash, name, created_at, last_login_at),
    `audit_log` (id, admin_user_id, action, entity, entity_id, details JSON, created_at),
    `reservations.note`.
 2. `dev/create-admin.ps1` (and a CLI command) to create the first admin; seed creates `admin/admin` locally only.
@@ -158,7 +156,7 @@ Done when: an organizer can run the whole sale from the admin without Adminer.
 
 ### Phase 4 - Payments (mock bank first)
 
-1. Migration:
+1. Schema changes:
    - `bank_transactions` (id, source `fio|mock`, external_id UNIQUE, booked_on, amount, currency,
      variable_symbol, counter_account, counter_name, message, raw JSON, imported_at,
      reservation_id NULL, match_status `matched|underpaid|overpaid|unknown_vs|no_vs|ignored`);
@@ -200,12 +198,14 @@ Done when: a full cycle works locally: reserve -> QR in e-mail -> pay on `/dev/b
    Tested against recorded sample responses (from the Fio manual), never the live API in tests.
 2. Optional cron endpoint `/cron/payments?key=<secret>` (secret in `local.neon`) if Lebeda supports cron.
 3. `build.cmd -Release` -> `dist/`: `composer install --no-dev --optimize-autoloader`, built assets,
-   `app/`, `config/` (without `local.neon`), `migrations/`, `www/`, `.htaccess` that denies everything
+   `app/`, `config/` (without `local.neon`), `www/`, `.htaccess` that denies everything
    outside `www/` (or maps the document root to `www/` if Lebeda allows it).
-4. `docs/deploy.md`: first deployment on Lebeda (FTP upload, `local.neon`, DB import, migrations,
+4. `docs/deploy.md`: first deployment on Lebeda (FTP upload, `local.neon`, import of `dev/db/schema.sql`,
    creating the admin account, Fio token, SMTP), and updates.
 5. Production checklist: `debug: false`, HTTPS only (secure cookies), SMTP from a domain address,
    Fio token "Sledování účtu" with auto-renewal, backups.
+   **Delete `var/temp/cache` after every upload**: in production mode Nette does not detect
+   config/code changes and keeps using the old compiled DI container and templates.
 
 ## 4. Cross-cutting rules
 
@@ -217,10 +217,10 @@ Done when: a full cycle works locally: reserve -> QR in e-mail -> pay on `/dev/b
 - Secrets (DB password, SMTP, Fio token, cron key) only in `config/local.neon`.
 - `/dev/*` presenters are not registered unless `bank.driver: mock` **and** debug mode.
 
-### 4.2 Migrations
-- Files `migrations/NNN_description.sql`, applied in order, recorded in a `migrations` table
-  (`nextras/migrations` or a ~50-line own runner; decide in phase 2, prefer the smaller one).
-- Never edit an applied migration; add a new one.
+### 4.2 Database schema
+- Greenfield project: `dev/db/schema.sql` is the single source of the schema and is edited directly.
+  A migration runner (implemented in phase 2) was removed again on 2026-10-03; reconsider only
+  once production holds data that must survive schema changes.
 
 ### 4.3 Testing and checks (`check.cmd`)
 - `tsc --noEmit`, `bun test`, `vendor/bin/phpunit`, `vendor/bin/phpstan analyse`.
