@@ -66,4 +66,13 @@ final class EventLog
 			}
 		}
 	}
+
+
+	/** Whether the action was logged in the last $seconds (to rate-limit noisy events). */
+	public function recordedWithin(string $action, int $seconds): bool
+	{
+		$stmt = $this->db->prepare('SELECT 1 FROM event_log WHERE action = ? AND created_at > NOW() - INTERVAL ? SECOND LIMIT 1');
+		$stmt->execute([$action, $seconds]);
+		return $stmt->fetchColumn() !== false;
+	}
 }

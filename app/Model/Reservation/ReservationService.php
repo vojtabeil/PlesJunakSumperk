@@ -278,14 +278,17 @@ final class ReservationService
 			}
 
 			$total = $seats * $this->settings->int('price_seat') + $standing * $this->settings->int('price_standing');
+			// The stage at confirmation decides the channel: a draft started by a tester and confirmed
+			// after the launch is a real reservation (it must not be deleted with the test ones).
+			$channel = $this->settings->mode()->channel();
 			$this->db->prepare(
 				"UPDATE seats SET state = 'reserved', booked_at = NULL WHERE reservation_id = ? AND state = 'book'",
 			)->execute([$draftId]);
 			$this->db->prepare(
 				"UPDATE reservations
-				SET status = 'confirmed', name = ?, phone = ?, total_price = ?, confirmed_at = NOW(), session_id = NULL
+				SET status = 'confirmed', name = ?, phone = ?, total_price = ?, channel = ?, confirmed_at = NOW(), session_id = NULL
 				WHERE id = ?",
-			)->execute([$name, $phone === '' ? null : $phone, $total, $draftId]);
+			)->execute([$name, $phone === '' ? null : $phone, $total, $channel, $draftId]);
 
 			$this->eventLog->record('reservation.confirmed', $draftId, [
 				'name' => $name,
@@ -293,7 +296,7 @@ final class ReservationService
 				'tickets' => $seats + $standing,
 				'standing' => $standing,
 				'total' => $total,
-				'channel' => $draft['channel'] ?? 'public',
+				'channel' => $channel,
 			]);
 			return $draftId;
 		});

@@ -57,7 +57,7 @@ final class SitePresenter extends BasePresenter
 	protected function createComponentModeForm(): Multiplier
 	{
 		return new Multiplier(function (string $value): Form {
-			$mode = SiteMode::from($value);
+			$mode = SiteMode::tryFrom($value) ?? $this->error();
 			$form = $this->formFactory->create();
 			$form->addSubmit('switch', 'Přepnout na „' . $mode->label() . '“');
 			$form->onSuccess[] = function () use ($mode): void {

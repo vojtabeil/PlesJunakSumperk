@@ -37,7 +37,7 @@ final class EventFormatter
 				},
 			],
 			'reservation.paid_manually' => [isset($d['amount']) ? $money($d['amount']) . ' hotově' : null],
-			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.unmatched', 'payment.assigned', 'payment.ignored' => [
+			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.unmatched', 'payment.assigned', 'payment.ignored', 'payment.settled' => [
 				isset($d['amount']) ? $money($d['amount']) : null,
 				isset($d['vs']) && $d['vs'] !== '' ? "VS {$d['vs']}" : 'bez VS',
 				isset($d['payer']) ? (string) $d['payer'] : null,
@@ -52,7 +52,7 @@ final class EventFormatter
 			],
 			'site.mode_changed' => [isset($d['from'], $d['to']) ? "{$d['from']} → {$d['to']}" : null],
 			'settings.changed' => [isset($d['changed']) && is_array($d['changed']) ? 'změněno: ' . implode(', ', $d['changed']) : null],
-			'admin.created', 'admin.updated', 'admin.password', 'admin.unlocked', 'admin.deleted', 'admin.setup', 'admin.login_failed', 'admin.locked'
+			'admin.created', 'admin.updated', 'admin.password', 'admin.unlocked', 'admin.deleted', 'admin.setup', 'admin.login_failed', 'admin.login_unknown', 'admin.locked'
 				=> [isset($d['login']) ? "účet {$d['login']}" : null],
 			default => [],
 		};

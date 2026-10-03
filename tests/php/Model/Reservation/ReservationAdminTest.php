@@ -41,6 +41,20 @@ final class ReservationAdminTest extends DatabaseTestCase
 	}
 
 
+	public function testCashPaymentSettlesAnUnderpaidBankPayment(): void
+	{
+		$id = $this->confirmed('alice@example.com', [101]);
+		$this->db->prepare(
+			"INSERT INTO bank_transactions (source, external_id, booked_on, amount, reservation_id, match_status)
+			VALUES ('mock', 'part', CURDATE(), 100, ?, 'underpaid')",
+		)->execute([$id]);
+
+		$this->admin->markPaid($id);
+
+		self::assertSame('matched', $this->db->query('SELECT match_status FROM bank_transactions')->fetchColumn());
+	}
+
+
 	public function testMarkPaidOnlyForConfirmed(): void
 	{
 		$id = $this->confirmed('alice@example.com', [101]);

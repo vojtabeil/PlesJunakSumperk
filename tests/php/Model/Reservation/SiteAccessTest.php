@@ -80,6 +80,19 @@ final class SiteAccessTest extends DatabaseTestCase
 	}
 
 
+	public function testDraftOfATesterConfirmedAfterTheLaunchIsReal(): void
+	{
+		$this->setSettings(['site_mode' => 'testing']);
+		$this->reservations()->start('tester', 'tester@example.com');
+		$this->reservations()->hold('tester', 101);
+
+		$this->setSettings(['site_mode' => 'public']);
+		$id = $this->reservations()->confirm('tester', 'Tester', '', true);
+
+		self::assertSame('public', $this->db->query("SELECT channel FROM reservations WHERE id = $id")->fetchColumn());
+	}
+
+
 	public function testUnknownStageIsTreatedAsTesting(): void
 	{
 		$this->setSettings(['site_mode' => 'nonsense']);

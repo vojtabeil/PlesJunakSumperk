@@ -32,6 +32,10 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 	private const DummyHash = '$2y$12$0dzo6iQBXaEx2QIunet7P.rVyXI5H5K52wlJ/bG6umC0LijyaoSea';
 
 
+	/** Logins of non-existent accounts are logged at most once per this many seconds. */
+	private const UnknownLoginLogSeconds = 60;
+
+
 	public function __construct(
 		private readonly AdminUsers $users,
 		private readonly Passwords $passwords,
@@ -45,7 +49,10 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 		$account = $this->users->findByLogin(trim($user));
 		if ($account === null) {
 			$this->passwords->verify($password, self::DummyHash);
-			$this->eventLog->record('admin.login_failed', details: ['login' => mb_substr(trim($user), 0, 64)]);
+			// Anybody can try unknown logins without a lockout, so they must not flood the log.
+			if (!$this->eventLog->recordedWithin('admin.login_unknown', self::UnknownLoginLogSeconds)) {
+				$this->eventLog->record('admin.login_unknown', details: ['login' => mb_substr(trim($user), 0, 64)]);
+			}
 			throw new AuthenticationException(self::InvalidCredentials);
 		}
 
@@ -59,9 +66,10 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 
 		if (!$this->passwords->verify($password, (string) $account['password_hash'])) {
 			$this->users->recordFailedLogin($id);
-			$this->eventLog->record('admin.login_failed', details: ['login' => $account['login']], adminId: $id);
+			// Not attributed to the account: whoever typed the password is not known.
+			$this->eventLog->record('admin.login_failed', details: ['login' => $account['login']]);
 			if ((int) $account['failed_logins'] + 1 === self::MaxFailures) {
-				$this->eventLog->record('admin.locked', details: ['login' => $account['login']], adminId: $id);
+				$this->eventLog->record('admin.locked', details: ['login' => $account['login']]);
 			}
 			throw new AuthenticationException(self::InvalidCredentials);
 		}

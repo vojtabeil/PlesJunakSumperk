@@ -35,6 +35,7 @@ final class EventTypes
 		'payment.unmatched' => ['payment', 'Platbu nelze přiřadit'],
 		'payment.assigned' => ['payment', 'Platba přiřazena ručně'],
 		'payment.ignored' => ['payment', 'Platba označena jako nesouvisející'],
+		'payment.settled' => ['payment', 'Nedoplatek / přeplatek vyřízen'],
 		'payments.imported' => ['payment', 'Načtení plateb z banky'],
 		'payments.rewound' => ['payment', 'Nové stažení pohybů od data'],
 
@@ -51,6 +52,7 @@ final class EventTypes
 
 		'admin.login' => ['login', 'Přihlášení'],
 		'admin.login_failed' => ['login', 'Neúspěšné přihlášení'],
+		'admin.login_unknown' => ['login', 'Přihlášení neexistujícím účtem (nejvýš 1 záznam za minutu)'],
 		'admin.locked' => ['login', 'Účet zablokován po špatných heslech'],
 	];
 

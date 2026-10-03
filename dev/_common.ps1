@@ -454,13 +454,28 @@ function Stop-Watchers {
 # --- Release verification -------------------------------------------------------
 # Serves the package from a separate PHP server in production mode (APP_ENV=production)
 # against the local database and checks what the hosting would serve.
-function Test-ReleasePackage([string]$Web) {
+$ReleaseDbName = 'ples_release'
+
+# Runs the release package like a new installation: a fresh database from the install/ SQL files
+# (no test data), production mode, PHP built-in server. Checks the first run (no administrator),
+# the testing stage and the public sale. The database is dropped afterwards.
+function Test-ReleasePackage([string]$Web, [string]$Install) {
     $port = 8099
     if (Test-PortInUse $port) { throw "Port $port is already used by another program." }
     if (-not (Test-DbRunning)) { throw 'MariaDB must be running for the verification (start.cmd).' }
 
+    Reset-Database $ReleaseDbName
+    foreach ($file in @('schema.sql', 'defaults.sql', 'hall.sql')) {
+        Import-DbFile (Join-Path $Install $file) $ReleaseDbName
+    }
+
+    # Local configuration, but with the fresh database.
     $config = Join-Path $Web 'config\local.neon'
-    Copy-Item (Join-Path $Root 'config\local.neon') $config
+    $neon = Get-Content (Join-Path $Root 'config\local.neon') -Raw -Encoding UTF8
+    $neon = [regex]::Replace($neon, "(?m)^(\s+name:\s*)$DbName\s*$", "`${1}$ReleaseDbName")
+    if ($neon -notmatch "name:\s*$ReleaseDbName") { throw "config/local.neon: database name '$DbName' not found." }
+    Write-Utf8NoBom $config $neon
+
     $router = Join-Path $TmpDir 'release-router.php'
     Write-Utf8NoBom $router @'
 <?php
@@ -483,28 +498,42 @@ require $www . '/index.php';
     try {
         for ($i = 0; $i -lt 20 -and -not (Test-PortInUse $port); $i++) { Start-Sleep -Milliseconds 250 }
         $base = "http://127.0.0.1:$port"
-        $checks = @(
-            @{ Path = '/'; Status = 200; Expect = 'class="hero"'; Forbid = 'tracy-debug' },
+        $failed = @()
+
+        Write-Info 'New installation (no administrator): everything leads to the first-run wizard'
+        $failed += Invoke-HttpChecks $base @(
+            @{ Path = '/'; Status = 302; Expect = '/admin/setup' },
+            @{ Path = '/admin/setup/'; Status = 200; Expect = 'type="password"'; Forbid = 'tracy-debug' },
+            @{ Path = '/api/state'; Status = 503 },
             @{ Path = '/build/front.css'; Status = 200 },
             @{ Path = '/build/front.js'; Status = 200 },
-            @{ Path = '/api/state'; Status = 200; Expect = '"ok":true' },
-            @{ Path = '/admin/'; Status = 302 },
+            @{ Path = '/build/admin.css'; Status = 200 },
             @{ Path = '/dev/bank'; Status = 404; Forbid = 'tracy-debug' },
             @{ Path = '/dev/status'; Status = 404 },
-            @{ Path = '/cron/payments'; Status = 404 },
+            @{ Path = '/cron/payments'; Status = 503 },
             @{ Path = '/neexistuje'; Status = 404; Forbid = 'tracy-debug' }
         )
-        $failed = @()
-        foreach ($check in $checks) {
-            $r = Invoke-Native 'curl.exe' @('-s', '-o', '-', '-w', "`n%{http_code}", "$base$($check.Path)")
-            $lines = $r.Output -split "`n"
-            $status = [int]$lines[-1]
-            $body = ($lines[0..($lines.Length - 2)]) -join "`n"
-            $ok = $status -eq $check.Status
-            if ($check.Expect -and -not $body.Contains($check.Expect)) { $ok = $false }
-            if ($check.Forbid -and $body.Contains($check.Forbid)) { $ok = $false }
-            if ($ok) { Write-Ok "$($check.Path) -> $status" } else { $failed += "$($check.Path) -> $status"; Write-Host "    FAILED $($check.Path) -> $status" -ForegroundColor Red }
-        }
+
+        # An administrator exists (the hash is never used for a login here).
+        Invoke-DbSql "INSERT INTO admin_users (login, name, password_hash) VALUES ('release-check', 'Release check', 'x')" $ReleaseDbName | Out-Null
+        Write-Info 'Testing stage (default): visitors see the page, the API is closed'
+        $failed += Invoke-HttpChecks $base @(
+            @{ Path = '/'; Status = 200; Expect = 'class="panel site-page"'; Forbid = 'seat-picker-data' },
+            @{ Path = '/api/state'; Status = 503 },
+            @{ Path = '/admin/'; Status = 302; Expect = '/admin/sign/in' },
+            @{ Path = '/admin/sign/in'; Status = 200; Forbid = 'tracy-debug' },
+            @{ Path = '/cron/payments'; Status = 404 },
+            @{ Path = '/tester/00000000000000000000000000000000'; Status = 404 },
+            @{ Path = '/vip/00000000000000000000000000000000'; Status = 404 }
+        )
+
+        Invoke-DbSql "UPDATE settings SET value = 'public' WHERE name = 'site_mode'" $ReleaseDbName | Out-Null
+        Write-Info 'Public sale: the seat picker and the API work'
+        $failed += Invoke-HttpChecks $base @(
+            @{ Path = '/'; Status = 200; Expect = 'seat-picker-data'; Forbid = 'tracy-debug' },
+            @{ Path = '/api/state'; Status = 200; Expect = '"ok":true' }
+        )
+
         if ($failed) { throw "Release verification failed: $($failed -join ', ')" }
     } finally {
         Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
@@ -512,5 +541,28 @@ require $www . '/index.php';
         Remove-Item $config -Force
         Remove-Item (Join-Path $Web 'var\temp\*') -Recurse -Force -ErrorAction SilentlyContinue
         Get-ChildItem (Join-Path $Web 'var\log') -Exclude '.htaccess' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+        Invoke-DbSql "DROP DATABASE IF EXISTS ``$ReleaseDbName``" | Out-Null
     }
+}
+
+# Requests each path (without following redirects) and returns the failed ones.
+# A check: Path, Status, optional Expect / Forbid (text in the body or in the Location header).
+function Invoke-HttpChecks([string]$Base, [hashtable[]]$Checks) {
+    $failed = @()
+    foreach ($check in $Checks) {
+        $r = Invoke-Native 'curl.exe' @('-s', '-o', '-', '-w', "`n%{redirect_url}`n%{http_code}", "$Base$($check.Path)")
+        $lines = $r.Output -split "`n"
+        $status = [int]$lines[-1]
+        $text = ($lines[0..($lines.Length - 2)]) -join "`n"
+        $ok = $status -eq $check.Status
+        if ($check.Expect -and -not $text.Contains($check.Expect)) { $ok = $false }
+        if ($check.Forbid -and $text.Contains($check.Forbid)) { $ok = $false }
+        if ($ok) {
+            Write-Ok "$($check.Path) -> $status"
+        } else {
+            $failed += "$($check.Path) -> $status"
+            Write-Host "    FAILED $($check.Path) -> $status" -ForegroundColor Red
+        }
+    }
+    return , $failed
 }

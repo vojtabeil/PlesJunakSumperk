@@ -52,6 +52,10 @@
 					<td data-label="Rezervace">
 						{if $p['reservation_id']}
 							<a n:href="Reservation:detail $p['reservation_id']">č. {$p['reservation_id']}</a>
+							<form n:if="in_array($p['match_status'], ['underpaid', 'overpaid'], true)" n:name="'settle-' . $p['id']" class="inline-form"
+								title="Rozdíl je vyřešený (vrácený přeplatek, doplatek hotově…)">
+								<button n:name="settle" class="link-button">vyřízeno</button>
+							</form>
 						{elseif in_array($p['match_status'], ['unknown_vs', 'no_vs'], true)}
 							<form n:name="'resolve-' . $p['id']" class="inline-form">
 								<input n:name="reservation" size="6">

@@ -8,7 +8,8 @@
 
     Left out on purpose: dev tools (app/Presentation/Dev, /dev/* routes), tests, sources of
     assets, source maps, Composer dev dependencies and every local config file.
-    The package is verified by running it locally in production mode before zipping.
+    The package is verified like a new installation before zipping: fresh database from
+    install/*.sql, production mode, first run, testing stage and public sale.
 
 .PARAMETER SkipVerify
     Skips the local production-mode check (not recommended).
@@ -94,13 +95,14 @@ Write-Ok 'No dev tools, tests, local config or dev dependencies'
 
 if (-not $SkipVerify) {
     Write-Step 'Running the package locally in production mode'
-    Test-ReleasePackage $web
+    Test-ReleasePackage $web $install
 }
 
 Write-Step 'Creating ZIP'
 $zip = Join-Path $distDir "ples-$version.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
-$r = Invoke-Native 'tar.exe' @('-a', '-c', '-f', $zip, '-C', $distDir, "ples-$version")
+# Windows bsdtar (System32) creates ZIP; a GNU tar from Git Bash on PATH would not.
+$r = Invoke-Native (Join-Path $env:SystemRoot 'System32\tar.exe') @('-a', '-c', '-f', $zip, '-C', $distDir, "ples-$version")
 if ($r.Code -ne 0) { throw "Creating ZIP failed: $($r.Output)" }
 Write-Ok $zip
 Write-Host ''

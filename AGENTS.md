@@ -60,7 +60,7 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | `stop.cmd` | Stops everything (MariaDB is shut down cleanly). |
 | `build.cmd` | Type check + bundle + SCSS into `www/build`. |
 | `check.cmd` | `tsc`, `bun test`, PHPUnit, PHPStan (level 6). Run before every commit. |
-| `release.cmd` | Release package `dist/ples-<version>/` (+ ZIP): `web/` to upload (no dev tools, tests, sources, maps, dev dependencies or local config) and `install/` (SQL + `docs/deploy.md`). Verifies the package locally in production mode first. |
+| `release.cmd` | Release package `dist/ples-<version>/` (+ ZIP): `web/` to upload (no dev tools, tests, sources, maps, dev dependencies or local config) and `install/` (SQL + `docs/deploy.md`). Verifies the package first like a new installation: fresh database `ples_release` from `install/*.sql`, production mode, checks of the first run, the testing stage and the public sale (MariaDB must run). |
 | `init-db.cmd` | Recreates `ples` (schema + seed). `-Test` recreates `ples_test`, `-NoSeed`, `-Import dump.sql`, `-Clean` (wipe data dir). |
 | `php.cmd`, `composer.cmd`, `bun.cmd`, `tsc.cmd`, `sass.cmd` | Run the portable tools with the project environment. |
 

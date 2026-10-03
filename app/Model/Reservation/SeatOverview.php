@@ -42,6 +42,7 @@ final class SeatOverview
 		)->fetchAll();
 
 		$query = mb_strtolower(trim($query));
+		$seatLabel = preg_match('~^\d+\s*/\s*\d+$~', $query) ? preg_replace('~\s+~', '', $query) : null;
 		$result = [];
 		foreach ($rows as $row) {
 			$seatStatus = self::status((string) $row['state'], $row['status']);
@@ -60,7 +61,9 @@ final class SeatOverview
 			if ($status !== null && $item['status'] !== $status) {
 				continue;
 			}
-			if ($query !== '' && !str_contains(mb_strtolower($item['label'] . ' ' . ($item['name'] ?? '')), $query)) {
+			if ($seatLabel !== null ? $item['label'] !== $seatLabel
+				: $query !== '' && !str_contains(mb_strtolower($item['label'] . ' ' . ($item['name'] ?? '')), $query)
+			) {
 				continue;
 			}
 			$result[] = $item;

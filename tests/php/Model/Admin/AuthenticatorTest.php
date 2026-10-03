@@ -53,6 +53,24 @@ final class AuthenticatorTest extends DatabaseTestCase
 	}
 
 
+	public function testFailedLoginsAreNotAttributedToTheAccountAndUnknownOnesAreRateLimited(): void
+	{
+		foreach (['jana', 'neexistuje', 'jina', 'dalsi'] as $login) {
+			try {
+				$this->authenticator->authenticate($login, 'spatne');
+			} catch (AuthenticationException) {
+			}
+		}
+
+		$rows = $this->db->query(
+			"SELECT action, actor_type, admin_user_id FROM event_log WHERE action LIKE 'admin.login%' ORDER BY id",
+		)->fetchAll();
+		self::assertSame(['admin.login_failed', 'admin.login_unknown'], array_column($rows, 'action'), 'Unknown logins: one row per minute');
+		self::assertSame(['system', 'system'], array_column($rows, 'actor_type'));
+		self::assertSame([null, null], array_column($rows, 'admin_user_id'));
+	}
+
+
 	public function testAccountIsLockedAfterTooManyFailures(): void
 	{
 		for ($i = 0; $i < Authenticator::MaxFailures; $i++) {

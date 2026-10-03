@@ -47,6 +47,7 @@ final class SeatOverviewTest extends DatabaseTestCase
 
 		self::assertSame(['1/1', '1/2'], array_column($overview->seats(null, 'alice'), 'label'));
 		self::assertSame(['2/1'], array_column($overview->seats(null, '2/1'), 'label'));
+		self::assertSame(['1/1'], array_column($overview->seats(null, ' 1 / 1 '), 'label'), 'A seat label matches exactly');
 		self::assertSame($paid, $overview->seats('paid')[0]['reservation_id']);
 	}
 }

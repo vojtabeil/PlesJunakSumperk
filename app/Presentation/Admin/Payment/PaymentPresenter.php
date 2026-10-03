@@ -93,8 +93,10 @@ final class PaymentPresenter extends BasePresenter
 	}
 
 
-	/** Small form in the row of an unmatched payment: assign it to a reservation, or mark it as not ours. */
-	/** @return Multiplier<Form> */
+	/**
+	 * Small form in the row of an unmatched payment: assign it to a reservation, or mark it as not ours.
+	 * @return Multiplier<Form>
+	 */
 	protected function createComponentResolve(): Multiplier
 	{
 		return new Multiplier(function (string $transactionId): Form {
@@ -104,22 +106,50 @@ final class PaymentPresenter extends BasePresenter
 				->addCondition($form::Filled)
 				->addRule($form::Min, 'Zadejte číslo rezervace.', 1);
 			$assign = $form->addSubmit('assign', 'Přiřadit');
-			$form->addSubmit('ignore', 'Nepatří k plesu')->setValidationScope([]);
-			$form->onSuccess[] = function (Form $form, \stdClass $data) use ($transactionId, $assign): void {
+			$ignore = $form->addSubmit('ignore', 'Nepatří k plesu');
+			$ignore->setValidationScope([]);
+			$form->onSuccess[] = function (Form $form, \stdClass $data) use ($transactionId, $assign, $ignore): void {
 				$id = (int) $transactionId;
-				$this->inTransaction(function () use ($id, $data, $form, $assign): void {
-					if ($form->isSubmitted() === $assign) {
+				// Only a known button does something (a submit without a button name changes nothing).
+				if ($form->isSubmitted() === $assign) {
+					$this->inTransaction(function () use ($id, $data): PaymentChange {
 						if (!$data->reservation) {
 							throw new PaymentError('Zadejte číslo rezervace.');
 						}
 						$change = $this->matcher->assign($id, (int) $data->reservation);
-						$this->notify($change);
 						$this->flashMessage("Platba je přiřazená k rezervaci č. {$change->reservationId}.", 'success');
-					} else {
+						return $change;
+					});
+				} elseif ($form->isSubmitted() === $ignore) {
+					$this->inTransaction(function () use ($id): null {
 						$this->matcher->ignore($id);
 						$this->flashMessage('Platba je označená jako nesouvisející s plesem.', 'success');
-					}
+						return null;
+					});
+				}
+				$this->redirect('this');
+			};
+			return $form;
+		});
+	}
+
+
+	/**
+	 * Button in the row of an underpaid or overpaid payment: the organizer has dealt with it.
+	 * @return Multiplier<Form>
+	 */
+	protected function createComponentSettle(): Multiplier
+	{
+		return new Multiplier(function (string $transactionId): Form {
+			$form = $this->formFactory->create();
+			$form->addSubmit('settle', 'vyřízeno');
+			$form->onSuccess[] = function () use ($transactionId): void {
+				$this->inTransaction(function () use ($transactionId): null {
+					$this->matcher->settle((int) $transactionId);
+					$this->flashMessage('Platba je označená jako vyřízená.', 'success');
+					return null;
 				});
+				$this->redirect('this');
 			};
 			return $form;
 		});
@@ -134,20 +164,27 @@ final class PaymentPresenter extends BasePresenter
 	}
 
 
-	/** Runs a matcher operation in a DB transaction and redirects; PaymentError becomes a flash message. */
+	/**
+	 * Runs a matcher operation in a DB transaction; PaymentError becomes a flash message.
+	 * The payment e-mail goes out only after the commit.
+	 * @param callable(): ?PaymentChange $operation
+	 */
 	private function inTransaction(callable $operation): void
 	{
 		$this->db->beginTransaction();
 		try {
-			$operation();
+			$change = $operation();
 			$this->db->commit();
 		} catch (PaymentError $e) {
 			$this->db->rollBack();
 			$this->flashMessage($e->getMessage(), 'error');
+			return;
 		} catch (Throwable $e) {
 			$this->db->rollBack();
 			throw $e;
 		}
-		$this->redirect('this');
+		if ($change !== null) {
+			$this->notify($change);
+		}
 	}
 }

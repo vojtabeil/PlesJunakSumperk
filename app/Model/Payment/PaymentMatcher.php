@@ -77,6 +77,21 @@ final class PaymentMatcher
 
 
 	/** The payment does not belong to the ball (e.g. a donation); keep it out of the problem list. */
+	/**
+	 * Underpaid or overpaid payment that the organizer has dealt with (refunded the difference,
+	 * got the rest in cash...): it stays with its reservation but is no longer a problem.
+	 */
+	public function settle(int $transactionId): void
+	{
+		$tx = $this->transaction($transactionId);
+		if ($tx['reservation_id'] === null || !in_array($tx['match_status'], ['underpaid', 'overpaid'], true)) {
+			throw new PaymentError('Vyřízenou lze označit jen přiřazenou platbu s nedoplatkem nebo přeplatkem.');
+		}
+		$this->setStatus($transactionId, 'matched');
+		$this->eventLog->record('payment.settled', (int) $tx['reservation_id'], $this->describe($tx));
+	}
+
+
 	public function ignore(int $transactionId): void
 	{
 		$tx = $this->transaction($transactionId);

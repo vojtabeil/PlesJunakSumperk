@@ -193,6 +193,9 @@ final class ReservationAdmin
 		if ($stmt->rowCount() === 0 || $reservation === null) {
 			throw new ReservationError('Zaplacenou lze označit jen potvrzenou nezaplacenou rezervaci.');
 		}
+		// The rest was paid in cash, so its partial bank payments are no longer a problem.
+		$this->db->prepare("UPDATE bank_transactions SET match_status = 'matched' WHERE reservation_id = ? AND match_status = 'underpaid'")
+			->execute([$id]);
 		$this->eventLog->record('reservation.paid_manually', $id, [
 			'amount' => (int) $reservation['total_price'] - (int) $reservation['paid_amount'],
 		]);

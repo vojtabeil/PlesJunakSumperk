@@ -84,7 +84,7 @@ final class LogPresenter extends BasePresenter
 			return null;
 		}
 		$stmt = $this->db->prepare('SELECT id FROM seats WHERE label = ?');
-		$stmt->execute([trim($this->seat)]);
+		$stmt->execute([preg_replace('~\s+~', '', $this->seat)]); // "3 / 5" = "3/5"
 		$id = $stmt->fetchColumn();
 		return $id === false ? null : (int) $id;
 	}
@@ -102,6 +102,7 @@ final class LogPresenter extends BasePresenter
 
 	private static function date(string $value): ?DateTimeImmutable
 	{
-		return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? new DateTimeImmutable($value) : null;
+		$date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+		return $date !== false && $date->format('Y-m-d') === $value ? $date : null;
 	}
 }

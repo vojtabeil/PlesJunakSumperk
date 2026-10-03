@@ -90,6 +90,15 @@ final class PaymentImporterTest extends DatabaseTestCase
 		self::assertSame(['paid', 700], $this->reservationState($id));
 		self::assertSame('overpaid', $this->lastStatus());
 		self::assertCount(1, $this->sender->sent, 'Only the first full payment is announced');
+
+		// The organizer refunds the difference and marks it as dealt with.
+		$overpaid = (int) $this->db->query("SELECT id FROM bank_transactions WHERE match_status = 'overpaid'")->fetchColumn();
+		$this->matcher->settle($overpaid);
+		self::assertSame('matched', $this->lastStatus());
+		self::assertContains('payment.settled', $this->loggedActions());
+
+		$this->expectException(PaymentError::class);
+		$this->matcher->settle($overpaid);
 	}
 
 
