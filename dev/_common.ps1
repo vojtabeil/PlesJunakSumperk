@@ -1,0 +1,286 @@
+# Shared configuration and helpers for the local development environment.
+# Dot-sourced by the scripts in dev/ (. "$PSScriptRoot\_common.ps1").
+# Keep this file ASCII-only: Windows PowerShell 5.1 reads BOM-less files as ANSI.
+
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+
+# --- Versions and checksums (update the SHA256 together with the version) ----
+$Versions = @{
+    Php = @{
+        Version = '8.4.26'
+        File    = 'php-8.4.26-nts-Win32-vs17-x64.zip'
+        Sha256  = 'da68394f9193b7f6b89d0c76861a4034ae10efee7fd55a7255d8118c2acf70d7'
+        Urls    = @(
+            'https://windows.php.net/downloads/releases/php-8.4.26-nts-Win32-vs17-x64.zip',
+            'https://windows.php.net/downloads/releases/archives/php-8.4.26-nts-Win32-vs17-x64.zip'
+        )
+    }
+    MariaDb = @{
+        Version = '11.8.9'
+        File    = 'mariadb-11.8.9-winx64.zip'
+        Sha256  = '830c46727d9278eae212ae3eca44eeb9e71b2a68704e95f344a64fba7b1963f5'
+        Urls    = @(
+            'https://archive.mariadb.org/mariadb-11.8.9/winx64-packages/mariadb-11.8.9-winx64.zip',
+            'https://downloads.mariadb.org/rest-api/mariadb/11.8.9/mariadb-11.8.9-winx64.zip'
+        )
+    }
+    Adminer = @{
+        Version = '6.1.1'
+        File    = 'adminer-6.1.1-mysql.php'
+        Sha256  = '2d092e713717c8106ae276ca5780b77970d3378817a792c6bc584651d4039cc6'
+        Urls    = @('https://github.com/vrana/adminer/releases/download/v6.1.1/adminer-6.1.1-mysql.php')
+    }
+}
+
+# --- Paths and ports -----------------------------------------------------------
+$Root       = Split-Path -Parent $PSScriptRoot
+$ToolsDir   = Join-Path $Root '.tools'
+$CacheDir   = Join-Path $ToolsDir '_downloads'
+$PhpDir     = Join-Path $ToolsDir 'php'
+$MariaDbDir = Join-Path $ToolsDir 'mariadb'
+$AdminerDir = Join-Path $ToolsDir 'adminer'
+
+$DataDir    = Join-Path $Root '.devdata'
+$DbDataDir  = Join-Path $DataDir 'mariadb'
+$LogDir     = Join-Path $DataDir 'logs'
+$RunDir     = Join-Path $DataDir 'run'
+$SessionDir = Join-Path $DataDir 'sessions'
+$MyIni      = Join-Path $DataDir 'my.ini'
+
+$PhpExe     = Join-Path $PhpDir 'php.exe'
+$PhpIni     = Join-Path $PhpDir 'php.ini'
+$MariaDbd   = Join-Path $MariaDbDir 'bin\mariadbd.exe'
+$MariaDbCli = Join-Path $MariaDbDir 'bin\mariadb.exe'
+$MariaAdmin = Join-Path $MariaDbDir 'bin\mariadb-admin.exe'
+$MariaInst  = Join-Path $MariaDbDir 'bin\mariadb-install-db.exe'
+
+$DbPort  = 3307
+$WebPort = 8000
+$DbName  = 'ples'
+$DbUser  = 'ples'
+$DbPass  = 'ples'
+
+$DbPidFile  = Join-Path $RunDir 'mariadb.pid'
+$WebPidFile = Join-Path $RunDir 'php.pid'
+
+# --- Output --------------------------------------------------------------------
+function Write-Step([string]$Text) { Write-Host "==> $Text" -ForegroundColor Cyan }
+function Write-Ok([string]$Text)   { Write-Host "    $Text" -ForegroundColor Green }
+function Write-Info([string]$Text) { Write-Host "    $Text" }
+
+# Forward-slash path (MariaDB prefers it in my.ini and in the SOURCE command).
+function ConvertTo-SlashPath([string]$Path) { $Path -replace '\\', '/' }
+
+function Write-Utf8NoBom([string]$Path, [string]$Content) {
+    [IO.File]::WriteAllText($Path, $Content, (New-Object Text.UTF8Encoding $false))
+}
+
+# Runs a native program without letting stderr output abort the script in PS 5.1.
+# Note: PS 5.1 strips embedded double quotes from native arguments - avoid them.
+function Invoke-Native([string]$Exe, [string[]]$ArgList) {
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $out = & $Exe @ArgList 2>&1 | ForEach-Object { "$_" }
+        return [pscustomobject]@{ Code = $LASTEXITCODE; Output = ($out -join "`n") }
+    } finally {
+        $ErrorActionPreference = $old
+    }
+}
+
+function Test-PortInUse([int]$Port) {
+    $client = New-Object Net.Sockets.TcpClient
+    try {
+        $client.Connect('127.0.0.1', $Port)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        $client.Close()
+    }
+}
+
+function Get-PidProcess([string]$PidFile, [string]$Name) {
+    if (-not (Test-Path $PidFile)) { return $null }
+    $id = [int](Get-Content $PidFile -Raw).Trim()
+    $proc = Get-Process -Id $id -ErrorAction SilentlyContinue
+    if ($proc -and $proc.ProcessName -eq $Name) { return $proc }
+    Remove-Item $PidFile -Force
+    return $null
+}
+
+# --- Downloading and installing tools ------------------------------------------
+function Get-VerifiedDownload([hashtable]$Spec) {
+    New-Item -ItemType Directory -Force $CacheDir | Out-Null
+    $target = Join-Path $CacheDir $Spec.File
+
+    if (Test-Path $target) {
+        if ((Get-FileHash $target -Algorithm SHA256).Hash -eq $Spec.Sha256) {
+            Write-Info "Using cached $($Spec.File)"
+            return $target
+        }
+        Remove-Item $target -Force
+    }
+
+    foreach ($url in $Spec.Urls) {
+        Write-Info "Downloading $url"
+        $partial = "$target.part"
+        $r = Invoke-Native 'curl.exe' @('-fL', '--retry', '3', '--silent', '--show-error', '-o', $partial, $url)
+        if ($r.Code -ne 0) {
+            Write-Info "  failed: $($r.Output)"
+            Remove-Item $partial -Force -ErrorAction SilentlyContinue
+            continue
+        }
+        $hash = (Get-FileHash $partial -Algorithm SHA256).Hash
+        if ($hash -ne $Spec.Sha256) {
+            Remove-Item $partial -Force
+            throw "Checksum mismatch for $($Spec.File) (expected $($Spec.Sha256), got $hash)."
+        }
+        Move-Item $partial $target -Force
+        return $target
+    }
+    throw "Could not download $($Spec.File) from any source."
+}
+
+# Extracts a ZIP into the destination; a single top-level folder in the ZIP is flattened.
+function Expand-ZipTo([string]$Zip, [string]$Destination) {
+    $tmp = "$Destination.tmp"
+    if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+    New-Item -ItemType Directory -Force $tmp | Out-Null
+    $r = Invoke-Native 'tar.exe' @('-xf', $Zip, '-C', $tmp)
+    if ($r.Code -ne 0) { throw "Extracting $Zip failed: $($r.Output)" }
+
+    $items = @(Get-ChildItem $tmp)
+    $source = if ($items.Count -eq 1 -and $items[0].PSIsContainer) { $items[0].FullName } else { $tmp }
+
+    if (Test-Path $Destination) { Remove-Item $Destination -Recurse -Force }
+    Move-Item $source $Destination
+    if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+}
+
+function Test-ToolVersion([string]$Dir, [string]$Version) {
+    $marker = Join-Path $Dir '.version'
+    (Test-Path $marker) -and ((Get-Content $marker -Raw).Trim() -eq $Version)
+}
+
+function Set-ToolVersion([string]$Dir, [string]$Version) {
+    Write-Utf8NoBom (Join-Path $Dir '.version') $Version
+}
+
+function Assert-Installed {
+    foreach ($exe in @($PhpExe, $MariaDbd, (Join-Path $AdminerDir 'adminer.php'))) {
+        if (-not (Test-Path $exe)) { throw "Missing $exe. Run setup.cmd first." }
+    }
+}
+
+# --- MariaDB -------------------------------------------------------------------
+function Write-MyIni {
+    New-Item -ItemType Directory -Force $DataDir, $LogDir, $RunDir, $SessionDir | Out-Null
+    $ini = @"
+# Generated by dev/_common.ps1 - manual changes will be overwritten.
+[mysqld]
+basedir=$(ConvertTo-SlashPath $MariaDbDir)
+datadir=$(ConvertTo-SlashPath $DbDataDir)
+port=$DbPort
+bind-address=127.0.0.1
+character-set-server=utf8mb4
+collation-server=utf8mb4_czech_ci
+log-error=$(ConvertTo-SlashPath (Join-Path $LogDir 'mariadb.err'))
+innodb_buffer_pool_size=128M
+
+[client]
+host=127.0.0.1
+port=$DbPort
+user=root
+default-character-set=utf8mb4
+"@
+    Write-Utf8NoBom $MyIni $ini
+}
+
+function Test-DbRunning {
+    (Invoke-Native $MariaAdmin @("--defaults-file=$MyIni", '--connect-timeout=2', 'ping')).Code -eq 0
+}
+
+function Initialize-DbDataDir {
+    if (Test-Path (Join-Path $DbDataDir 'mysql')) { return }
+    Write-Step 'Initializing MariaDB data directory'
+    if (Test-Path $DbDataDir) { Remove-Item $DbDataDir -Recurse -Force }
+    $r = Invoke-Native $MariaInst @("--datadir=$DbDataDir", "--port=$DbPort")
+    if ($r.Code -ne 0) { throw "mariadb-install-db failed:`n$($r.Output)" }
+    Write-Ok "Created in $DbDataDir (root without password, 127.0.0.1 only)"
+}
+
+# Returns $true if this call started the server (the caller should then stop it again).
+function Start-Db {
+    if (Test-DbRunning) { return $false }
+    if (Test-PortInUse $DbPort) { throw "Port $DbPort is already used by another program." }
+    Initialize-DbDataDir
+    Write-Step "Starting MariaDB on port $DbPort"
+    $proc = Start-Process -FilePath $MariaDbd -ArgumentList "--defaults-file=`"$MyIni`"" -WindowStyle Hidden -PassThru
+    Write-Utf8NoBom $DbPidFile "$($proc.Id)"
+    for ($i = 0; $i -lt 60; $i++) {
+        if (Test-DbRunning) { Write-Ok 'MariaDB is running'; return $true }
+        if ($proc.HasExited) { break }
+        Start-Sleep -Milliseconds 500
+    }
+    $log = Join-Path $LogDir 'mariadb.err'
+    $tail = if (Test-Path $log) { (Get-Content $log -Tail 20) -join "`n" } else { '' }
+    throw "MariaDB did not start. Log tail:`n$tail"
+}
+
+function Stop-Db {
+    $proc = Get-PidProcess $DbPidFile 'mariadbd'
+    if (-not (Test-DbRunning) -and -not $proc) { return }
+    Write-Step 'Stopping MariaDB'
+    Invoke-Native $MariaAdmin @("--defaults-file=$MyIni", 'shutdown') | Out-Null
+    if ($proc -and -not $proc.WaitForExit(30000)) { Stop-Process -Id $proc.Id -Force }
+    Remove-Item $DbPidFile -Force -ErrorAction SilentlyContinue
+    Write-Ok 'MariaDB stopped'
+}
+
+function Invoke-DbSql([string]$Sql, [string]$Database) {
+    $argList = @("--defaults-file=$MyIni", '--batch', '--skip-column-names')
+    if ($Database) { $argList += "--database=$Database" }
+    $argList += @('-e', $Sql)
+    $r = Invoke-Native $MariaDbCli $argList
+    if ($r.Code -ne 0) { throw "SQL failed:`n$($r.Output)" }
+    return $r.Output
+}
+
+# The client reads the file itself (SOURCE) so UTF-8 is not mangled by PowerShell piping.
+function Import-DbFile([string]$Path, [string]$Database) {
+    $full = (Resolve-Path $Path).Path
+    Write-Info "Importing $full"
+    Invoke-DbSql "SOURCE $(ConvertTo-SlashPath $full)" $Database | Out-Null
+}
+
+function Test-DatabaseExists {
+    (Invoke-DbSql "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$DbName'") -eq '1'
+}
+
+# Drops and recreates the application database and user, then loads data.
+function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
+    Write-Step "Creating database '$DbName' and user '$DbUser'"
+    $bootstrap = @"
+DROP DATABASE IF EXISTS ``$DbName``;
+CREATE DATABASE ``$DbName`` CHARACTER SET utf8mb4 COLLATE utf8mb4_czech_ci;
+CREATE USER IF NOT EXISTS '$DbUser'@'localhost' IDENTIFIED BY '$DbPass';
+CREATE USER IF NOT EXISTS '$DbUser'@'127.0.0.1' IDENTIFIED BY '$DbPass';
+ALTER USER '$DbUser'@'localhost' IDENTIFIED BY '$DbPass';
+ALTER USER '$DbUser'@'127.0.0.1' IDENTIFIED BY '$DbPass';
+GRANT ALL PRIVILEGES ON ``$DbName``.* TO '$DbUser'@'localhost';
+GRANT ALL PRIVILEGES ON ``$DbName``.* TO '$DbUser'@'127.0.0.1';
+FLUSH PRIVILEGES;
+"@
+    Invoke-DbSql $bootstrap | Out-Null
+
+    $dbScripts = Join-Path $PSScriptRoot 'db'
+    if ($Import) {
+        Import-DbFile $Import $DbName
+    } else {
+        Import-DbFile (Join-Path $dbScripts 'schema.sql') $DbName
+        if (-not $NoSeed) { Import-DbFile (Join-Path $dbScripts 'seed.sql') $DbName }
+    }
+    Write-Ok 'Database ready'
+}
