@@ -9,17 +9,22 @@ use PDO;
 
 
 /**
- * Stage of the site and the two secret links: the tester link (token in the database, can be
- * regenerated in the administration) and the VIP link (token in the configuration file).
+ * Stage of the site and the two secret links: the tester link (testing stage) and the VIP link
+ * (VIP sale). Their tokens are in the settings and organizers can replace them in the administration.
  */
 final class SiteAccess
 {
-	/** A shorter VIP token is treated as not configured, so a weak one never opens the sale. */
-	public const MinVipTokenLength = 16;
+	public const Tester = 'tester';
+	public const Vip = 'vip';
+
+	/** Link => [settings key, logged action when replaced]. */
+	private const Links = [
+		self::Tester => ['tester_token', 'tester.link_regenerated'],
+		self::Vip => ['vip_token', 'vip.link_regenerated'],
+	];
 
 
 	public function __construct(
-		private readonly string $vipToken,
 		private readonly Settings $settings,
 		private readonly EventLog $eventLog,
 		private readonly PDO $db,
@@ -48,50 +53,36 @@ final class SiteAccess
 	}
 
 
-	/** Secret part of the tester link; created on first use. */
-	public function testerToken(): string
+	/**
+	 * Secret part of the link (self::Tester or self::Vip); created on first use.
+	 */
+	public function token(string $link): string
 	{
-		$token = $this->settings->get('tester_token');
+		$key = self::Links[$link][0];
+		$token = $this->settings->get($key);
 		if ($token === '') {
 			$token = self::newToken();
-			$this->settings->remember('tester_token', $token);
+			$this->settings->remember($key, $token);
 		}
 		return $token;
 	}
 
 
-	public function isTester(?string $token): bool
+	public function isValid(string $link, ?string $token): bool
 	{
-		return self::matches($this->settings->get('tester_token'), $token);
-	}
-
-
-	/** New tester link; the old one and all tester cookies stop working. */
-	public function regenerateTesterToken(): string
-	{
-		$token = self::newToken();
-		$this->settings->remember('tester_token', $token);
-		$this->eventLog->record('tester.link_regenerated');
-		return $token;
-	}
-
-
-	/** Secret part of the VIP link from the configuration (site.vipToken); null = not configured. */
-	public function vipToken(): ?string
-	{
-		return strlen($this->vipToken) >= self::MinVipTokenLength ? $this->vipToken : null;
-	}
-
-
-	public function isVip(?string $token): bool
-	{
-		return self::matches($this->vipToken() ?? '', $token);
-	}
-
-
-	private static function matches(string $expected, ?string $token): bool
-	{
+		$expected = $this->settings->get(self::Links[$link][0]);
 		return $expected !== '' && $token !== null && hash_equals($expected, $token);
+	}
+
+
+	/** New link; the old one and all cookies set by it stop working. */
+	public function regenerate(string $link): string
+	{
+		[$key, $action] = self::Links[$link];
+		$token = self::newToken();
+		$this->settings->remember($key, $token);
+		$this->eventLog->record($action);
+		return $token;
 	}
 
 

@@ -18,17 +18,16 @@ use Nette\Security\UserStorage;
 /** Who may buy in which stage: visitor without a link, tester, VIP, administrator. */
 final class VisitorGateTest extends DatabaseTestCase
 {
-	private const VipToken = 'vip-token-0123456789';
-
-
 	public function testWhoCanBuyInEveryStage(): void
 	{
-		$tester = $this->access()->testerToken();
+		$tester = $this->access()->token(SiteAccess::Tester);
+		$vip = $this->access()->token(SiteAccess::Vip);
 		$visitors = [
 			'nobody' => [],
 			'tester' => [VisitorGate::TesterCookie => $tester],
-			'vip' => [VisitorGate::VipCookie => self::VipToken],
-			'forged' => [VisitorGate::TesterCookie => str_repeat('0', 32), VisitorGate::VipCookie => 'x' . self::VipToken],
+			'vip' => [VisitorGate::VipCookie => $vip],
+			// each token in the other cookie, plus a made-up one
+			'forged' => [VisitorGate::TesterCookie => $vip, VisitorGate::VipCookie => str_repeat('0', 32)],
 		];
 		$expected = [
 			'testing' => ['nobody' => false, 'tester' => true, 'vip' => false, 'forged' => false, 'admin' => true],
@@ -52,12 +51,14 @@ final class VisitorGateTest extends DatabaseTestCase
 
 	public function testLinksAdmitOnlyWithTheRightToken(): void
 	{
-		$token = $this->access()->testerToken();
+		$tester = $this->access()->token(SiteAccess::Tester);
+		$vip = $this->access()->token(SiteAccess::Vip);
 		$gate = $this->gate([]);
 		self::assertFalse($gate->admitTester(str_repeat('a', 32)));
-		self::assertTrue($gate->admitTester($token));
-		self::assertFalse($gate->admitVip('wrong-token-0123456789'));
-		self::assertTrue($gate->admitVip(self::VipToken));
+		self::assertFalse($gate->admitTester($vip));
+		self::assertTrue($gate->admitTester($tester));
+		self::assertFalse($gate->admitVip($tester));
+		self::assertTrue($gate->admitVip($vip));
 	}
 
 
@@ -78,6 +79,6 @@ final class VisitorGateTest extends DatabaseTestCase
 
 	private function access(): SiteAccess
 	{
-		return new SiteAccess(self::VipToken, $this->settings(), $this->eventLog(), $this->db);
+		return new SiteAccess($this->settings(), $this->eventLog(), $this->db);
 	}
 }

@@ -12,7 +12,7 @@ use PDO;
 final class Settings
 {
 	/** Values not copied into the log: secrets and long HTML pages (only their names are logged). */
-	private const NotLogged = ['tester_token', 'page_testing', 'page_vip', 'page_closed', 'page_after'];
+	private const NotLogged = ['tester_token', 'vip_token', 'page_testing', 'page_vip', 'page_closed', 'page_after'];
 
 	/** @var array<string, string>|null */
 	private ?array $values = null;

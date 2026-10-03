@@ -32,7 +32,10 @@
 		<p class="muted">Platí jen ve stavu Testování. Kdo ho otevře, může 30 dní testovat nákup;
 			jeho rezervace jsou testovací a nejsou v seznamu hostů.</p>
 		<p class="copy-line"><input type="text" readonly value="{$testerLink}" aria-label="Testerský odkaz" onclick="this.select()"></p>
-		{control regenerateLinkForm}
+		<details>
+			<summary>Změnit odkaz</summary>
+			{control regenerateLinkForm-tester}
+		</details>
 
 		<h3>Testovací rezervace</h3>
 		{if $testCount}
@@ -47,13 +50,11 @@
 	<section class="card" aria-labelledby="vip-title">
 		<h2 id="vip-title">VIP odkaz</h2>
 		<p class="muted">Platí jen ve stavu VIP prodej (můžete ho rozeslat předem). VIP nemají limit lístků.</p>
-		{if $vipLink}
-			<p class="copy-line"><input type="text" readonly value="{$vipLink}" aria-label="VIP odkaz" onclick="this.select()"></p>
-			<p class="muted">Odkaz se mění v konfiguraci na serveru (<code>config/local.neon</code>, <code>site › vipToken</code>).</p>
-		{else}
-			<p class="error-text">VIP odkaz není nastavený. Doplňte <code>site › vipToken</code> (aspoň 16 znaků)
-				v <code>config/local.neon</code> na serveru.</p>
-		{/if}
+		<p class="copy-line"><input type="text" readonly value="{$vipLink}" aria-label="VIP odkaz" onclick="this.select()"></p>
+		<details>
+			<summary>Změnit odkaz</summary>
+			{control regenerateLinkForm-vip}
+		</details>
 	</section>
 </div>
 

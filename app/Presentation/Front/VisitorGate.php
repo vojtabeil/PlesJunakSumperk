@@ -42,8 +42,8 @@ final class VisitorGate
 		$mode = $this->access->mode();
 		return match ($mode) {
 			SiteMode::Public => true,
-			SiteMode::Testing => $this->user->isLoggedIn() || $this->access->isTester($this->request->getCookie(self::TesterCookie)),
-			SiteMode::Vip => $this->user->isLoggedIn() || $this->access->isVip($this->request->getCookie(self::VipCookie)),
+			SiteMode::Testing => $this->user->isLoggedIn() || $this->access->isValid(SiteAccess::Tester, $this->request->getCookie(self::TesterCookie)),
+			SiteMode::Vip => $this->user->isLoggedIn() || $this->access->isValid(SiteAccess::Vip, $this->request->getCookie(self::VipCookie)),
 			SiteMode::Closed, SiteMode::After => false,
 		};
 	}
@@ -52,14 +52,14 @@ final class VisitorGate
 	/** Opens the testing stage for this browser for 30 days when the token of the tester link is right. */
 	public function admitTester(string $token): bool
 	{
-		return $this->access->isTester($token) && $this->setCookie(self::TesterCookie, $token, '30 days');
+		return $this->access->isValid(SiteAccess::Tester, $token) && $this->setCookie(self::TesterCookie, $token, '30 days');
 	}
 
 
 	/** Opens the VIP sale for this browser; the link may be sent out before the VIP stage starts. */
 	public function admitVip(string $token): bool
 	{
-		return $this->access->isVip($token) && $this->setCookie(self::VipCookie, $token, '120 days');
+		return $this->access->isValid(SiteAccess::Vip, $token) && $this->setCookie(self::VipCookie, $token, '120 days');
 	}
 
 

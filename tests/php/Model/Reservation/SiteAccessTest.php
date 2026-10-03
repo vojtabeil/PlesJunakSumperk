@@ -12,49 +12,42 @@ use App\Tests\DatabaseTestCase;
 
 final class SiteAccessTest extends DatabaseTestCase
 {
-	private const VipToken = 'vip-token-0123456789';
-
-
-	public function testTesterTokenIsCreatedOnceAndCheckedExactly(): void
+	public function testTokensAreCreatedOnceAndCheckedExactly(): void
 	{
 		$access = $this->access();
-		self::assertFalse($access->isTester(''), 'No token yet = nobody is a tester');
+		self::assertFalse($access->isValid(SiteAccess::Tester, ''), 'No token yet = nobody is a tester');
 
-		$token = $access->testerToken();
-		self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $token);
-		self::assertSame($token, $this->access()->testerToken());
-		self::assertTrue($access->isTester($token));
-		self::assertFalse($access->isTester(strtoupper($token)));
-		self::assertFalse($access->isTester(null));
-		self::assertSame([], $this->loggedActions(), 'The first token is not a change worth logging');
+		$tester = $access->token(SiteAccess::Tester);
+		$vip = $access->token(SiteAccess::Vip);
+		self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $tester);
+		self::assertNotSame($tester, $vip);
+		self::assertSame($tester, $this->access()->token(SiteAccess::Tester));
+		self::assertTrue($access->isValid(SiteAccess::Tester, $tester));
+		self::assertTrue($access->isValid(SiteAccess::Vip, $vip));
+		self::assertFalse($access->isValid(SiteAccess::Vip, $tester), 'The tester link is not a VIP link');
+		self::assertFalse($access->isValid(SiteAccess::Tester, strtoupper($tester)));
+		self::assertFalse($access->isValid(SiteAccess::Tester, null));
+		self::assertSame([], $this->loggedActions(), 'The first tokens are not a change worth logging');
 	}
 
 
-	public function testRegenerateInvalidatesTheOldTesterLink(): void
+	public function testRegenerateInvalidatesTheOldLink(): void
 	{
 		$access = $this->access();
-		$old = $access->testerToken();
+		$oldTester = $access->token(SiteAccess::Tester);
+		$oldVip = $access->token(SiteAccess::Vip);
 
-		$new = $access->regenerateTesterToken();
+		$newVip = $access->regenerate(SiteAccess::Vip);
 
-		self::assertNotSame($old, $new);
-		self::assertFalse($access->isTester($old));
-		self::assertTrue($access->isTester($new));
-		self::assertSame(['tester.link_regenerated'], $this->loggedActions());
-		self::assertStringNotContainsString($new, (string) $this->db->query('SELECT details FROM event_log')->fetchColumn());
-	}
+		self::assertNotSame($oldVip, $newVip);
+		self::assertFalse($access->isValid(SiteAccess::Vip, $oldVip));
+		self::assertTrue($access->isValid(SiteAccess::Vip, $newVip));
+		self::assertTrue($access->isValid(SiteAccess::Tester, $oldTester), 'The other link is kept');
 
-
-	public function testVipTokenComesFromConfigurationAndMustBeLongEnough(): void
-	{
-		self::assertTrue($this->access()->isVip(self::VipToken));
-		self::assertFalse($this->access()->isVip('vip-token'));
-		self::assertSame(self::VipToken, $this->access()->vipToken());
-
-		$weak = $this->access('short');
-		self::assertNull($weak->vipToken());
-		self::assertFalse($weak->isVip('short'));
-		self::assertFalse($this->access('')->isVip(''));
+		$access->regenerate(SiteAccess::Tester);
+		self::assertFalse($access->isValid(SiteAccess::Tester, $oldTester));
+		self::assertSame(['vip.link_regenerated', 'tester.link_regenerated'], $this->loggedActions());
+		self::assertStringNotContainsString($newVip, (string) $this->db->query("SELECT GROUP_CONCAT(COALESCE(details, '')) FROM event_log")->fetchColumn());
 	}
 
 
@@ -101,8 +94,8 @@ final class SiteAccessTest extends DatabaseTestCase
 	}
 
 
-	private function access(string $vipToken = self::VipToken): SiteAccess
+	private function access(): SiteAccess
 	{
-		return new SiteAccess($vipToken, $this->settings(), $this->eventLog(), $this->db);
+		return new SiteAccess($this->settings(), $this->eventLog(), $this->db);
 	}
 }

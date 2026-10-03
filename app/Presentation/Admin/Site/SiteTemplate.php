@@ -17,7 +17,7 @@ final class SiteTemplate extends BaseTemplate
 
 	public string $testerLink;
 
-	public ?string $vipLink;
+	public string $vipLink;
 
 	public int $testCount;
 

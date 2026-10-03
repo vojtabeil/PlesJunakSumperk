@@ -18,7 +18,7 @@ final class RouterFactory
 		$router->addRoute('cron/payments', 'Front:Cron:payments');
 		$router->addRoute('hotovo/<id \d+>', 'Front:Done:default');
 		$router->addRoute('tester/<token [0-9a-f]{32}>', 'Front:Access:tester');
-		$router->addRoute('vip/<token [A-Za-z0-9_-]{16,}>', 'Front:Access:vip');
+		$router->addRoute('vip/<token [0-9a-f]{32}>', 'Front:Access:vip');
 		// Dev tools are not part of the release build (dev/release.ps1 leaves app/Presentation/Dev out).
 		if (class_exists(\App\Presentation\Dev\Status\StatusPresenter::class)) {
 			$router->addRoute('dev/status', 'Dev:Status:default');

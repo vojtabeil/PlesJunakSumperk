@@ -32,11 +32,6 @@ parameters:
 	cron:
 		key: ''
 
-	# VIP link https://<site>/vip/<vipToken>: in the "VIP prodej" stage only its holders can buy.
-	# Letters, digits, "-" and "_", at least 16 characters; empty = no VIP link.
-	site:
-		vipToken: ''
-
 	# Password of the first-run wizard (/admin/setup), used only while no administrator exists.
 	# Change it on the hosting before uploading.
 	setup:

@@ -43,9 +43,8 @@ final class SitePresenter extends BasePresenter
 		$t = $this->template;
 		$t->mode = $this->access->mode();
 		$t->modes = SiteMode::cases();
-		$t->testerLink = $this->link('//:Front:Access:tester', ['token' => $this->access->testerToken()]);
-		$vipToken = $this->access->vipToken();
-		$t->vipLink = $vipToken !== null ? $this->link('//:Front:Access:vip', ['token' => $vipToken]) : null;
+		$t->testerLink = $this->link('//:Front:Access:tester', ['token' => $this->access->token(SiteAccess::Tester)]);
+		$t->vipLink = $this->link('//:Front:Access:vip', ['token' => $this->access->token(SiteAccess::Vip)]);
 		$t->testCount = $this->reservationAdmin->testCount();
 		$t->tickets = $this->reservationAdmin->ticketsByChannel();
 	}
@@ -71,17 +70,28 @@ final class SitePresenter extends BasePresenter
 	}
 
 
-	protected function createComponentRegenerateLinkForm(): Form
+	/**
+	 * "New link" button of the tester and the VIP link.
+	 * @return Multiplier<Form>
+	 */
+	protected function createComponentRegenerateLinkForm(): Multiplier
 	{
-		$form = $this->formFactory->create();
-		$form->addSubmit('regenerate', 'Vytvořit nový testerský odkaz (starý přestane fungovat)')
-			->setHtmlAttribute('class', 'link-button');
-		$form->onSuccess[] = function (): void {
-			$this->access->regenerateTesterToken();
-			$this->flashMessage('Testerský odkaz je nový; testeři ho musí otevřít znovu.', 'success');
-			$this->redirect('this');
-		};
-		return $form;
+		return new Multiplier(function (string $link): Form {
+			if ($link !== SiteAccess::Tester && $link !== SiteAccess::Vip) {
+				$this->error();
+			}
+			$name =$link === SiteAccess::Vip ? 'VIP' : 'testerský';
+			$form = $this->formFactory->create();
+			$form->addCheckbox('confirm', 'Opravdu – starý odkaz přestane fungovat i těm, kdo ho už otevřeli')
+				->setRequired('Akci potvrďte zaškrtnutím.');
+			$form->addSubmit('regenerate', "Vytvořit nový $name odkaz");
+			$form->onSuccess[] = function () use ($link, $name): void {
+				$this->access->regenerate($link);
+				$this->flashMessage("Nový $name odkaz je vytvořený; rozešlete ho znovu.", 'success');
+				$this->redirect('this');
+			};
+			return $form;
+		});
 	}
 
 

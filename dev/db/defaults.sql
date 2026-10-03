@@ -4,7 +4,9 @@
 INSERT INTO settings (name, value) VALUES
     -- testing | vip | public | closed | after (App\Model\Reservation\SiteMode)
     ('site_mode', 'testing'),
+    -- Secret parts of the tester and VIP links, created on first use.
     ('tester_token', ''),
+    ('vip_token', ''),
     -- Pages (HTML) for visitors who cannot buy in the given stage.
     ('page_testing', '<h2>Připravujeme</h2>\n<p>Rezervace lístků na ples brzy spustíme. Zkuste to prosím později.</p>'),
     ('page_vip', '<h2>Prodej lístků brzy začne</h2>\n<p>Veřejný prodej lístků spustíme v nejbližších dnech. Sledujte nás.</p>'),

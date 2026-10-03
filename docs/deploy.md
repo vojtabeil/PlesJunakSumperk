@@ -58,7 +58,6 @@ Copy `config/local.neon.example` to `config/local.neon` on the server and fill i
 | `bank` | `driver: fio`, `token: <Fio token>` (step 6); until then `driver: mock` is safe |
 | `setup.password` | **a new secret** for the first-run wizard (default `skaut-sumperk`) |
 | `cron.key` | a long random string, e.g. 40 letters and digits (step 7) |
-| `site.vipToken` | secret part of the VIP link `https://<site>/vip/<token>`: letters, digits, `-`, `_`, at least 16 characters; empty = no VIP sale |
 
 The release always runs in production mode (it contains the file `VERSION`): no debugger,
 no `/dev/*` pages, errors only in `var/log/`.
@@ -79,15 +78,17 @@ no `/dev/*` pages, errors only in `var/log/`.
 | Stage | Who can buy | Everybody else sees |
 |---|---|---|
 | Testování (new installation) | testers with the tester link, logged-in organizers; reservations are test ones | page "Testování" |
-| VIP prodej | holders of the VIP link (`site.vipToken`), logged-in organizers; no ticket limit | page "VIP prodej" |
+| VIP prodej | holders of the VIP link, logged-in organizers; no ticket limit | page "VIP prodej" |
 | Veřejný prodej | anybody | - |
 | Prodej ukončen | nobody | page "Prodej ukončen" |
 | Po plese | nobody | page "Po plese", event facts hidden |
 
 The confirmation page with the payment QR code and the payment import keep working in every stage.
 
-1. **Testování**: send the tester link (works 30 days per browser; "Vytvořit nový testerský
-   odkaz" invalidates it). Make a test reservation and check the confirmation e-mail (incl. QR code).
+Both links are on the Stav webu page; "Změnit odkaz" creates a new one and the old one (and every
+browser that opened it) stops working.
+
+1. **Testování**: send the tester link (works 30 days per browser). Make a test reservation and check the confirmation e-mail (incl. QR code).
 2. Delete the test reservations (their seats become free and their bank payments are set aside as
    ignored - refund real ones by hand).
 3. **VIP prodej**: send the VIP link (it can be sent earlier; it works only in this stage).

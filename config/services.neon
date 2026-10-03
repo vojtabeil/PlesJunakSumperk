@@ -16,7 +16,7 @@ services:
 	- App\Model\Reservation\ReservationSession
 	- App\Model\Reservation\ReservationAdmin
 	- App\Model\Reservation\SeatOverview
-	- App\Model\Reservation\SiteAccess(%site.vipToken%)
+	- App\Model\Reservation\SiteAccess
 
 	- App\Model\Admin\AdminUsers
 	- App\Model\Admin\Authenticator

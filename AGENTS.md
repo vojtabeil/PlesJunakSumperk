@@ -126,8 +126,8 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   in `EventTypes::Types`.
 - Stages of the site (`SiteMode`, setting `site_mode`, switched by hand in admin -> Stav webu):
   testing (default) -> vip -> public -> closed -> after. `Front\VisitorGate::canBuy()` decides who may
-  buy: testing = tester cookie (`/tester/<token>`, token in the DB), vip = VIP cookie (`/vip/<token>`,
-  token `site.vipToken` in the configuration, min. 16 characters), public = anybody, closed/after =
+  buy: testing = tester cookie (`/tester/<token>`), vip = VIP cookie (`/vip/<token>`); both tokens are
+  settings (`tester_token`, `vip_token`) replaceable in the administration; public = anybody, closed/after =
   nobody; logged-in administrators in every selling stage. Others see the stage's page
   (`page_<stage>` settings, HTML written by organizers and printed unescaped - trusted content).
   The API answers 503; `ReservationService` also refuses changes when the stage does not sell.

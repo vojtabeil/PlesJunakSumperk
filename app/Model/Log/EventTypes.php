@@ -40,7 +40,8 @@ final class EventTypes
 
 		'site.mode_changed' => ['admin', 'Změna stavu webu'],
 		'settings.changed' => ['admin', 'Změna nastavení'],
-		'tester.link_regenerated' => ['admin', 'Nový odkaz pro testery'],
+		'tester.link_regenerated' => ['admin', 'Nový testerský odkaz'],
+		'vip.link_regenerated' => ['admin', 'Nový VIP odkaz'],
 		'admin.setup' => ['admin', 'Nastavení webu (první účet)'],
 		'admin.created' => ['admin', 'Nový administrátor'],
 		'admin.updated' => ['admin', 'Úprava administrátora'],
