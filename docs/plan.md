@@ -269,3 +269,19 @@ Done when: a full cycle works locally: reserve -> QR in e-mail -> pay on `/dev/b
 5. Real hall layout of the venue (tables, seats) and real prices / capacities.
 6. Should unpaid reservations expire automatically after N days (releasing seats)? If yes, how many days
    and should a reminder e-mail be sent first? (Not in the plan yet.)
+
+## 6. Backlog: legacy features not yet in the new site
+
+Features of the old site (`original-web/`) that the new site does not have yet. Data import from the
+legacy database is out of scope. Each item names the legacy code it replaces.
+
+1. **Entrance check.** QR scanner at the door, record the use of a seat or ticket, detect a second entry.
+   Legacy: `original-web/ftp/www/check/tets.php` (jsQR camera scanner), `place.usedTime`.
+2. **Alcohol wristbands.** Count issued and remaining wristbands per reservation.
+   Legacy: `ticket.alcohol_strip_count`.
+3. **Discounted tickets.** A product type with its own price.
+   Legacy: `loweredCount` / `loweredPrice` in `Model\Tickets::orderTickets`.
+4. **Z-tickets** (guests and sponsors) with a record of pick-up.
+   Legacy: table `zTicket`, `Admin\TicketsPresenter::handleToggleZTaken`.
+5. **E-mail templates for the 2027 ball.** Legacy templates in `original-web/ftp/include/app/email/`
+   still carry the 2023 date, the old account and the old signatory.
