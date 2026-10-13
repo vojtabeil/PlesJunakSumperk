@@ -19,3 +19,6 @@
 /original-web/ftp/www/admin/db.php
 /original-web/ftp/www/ticket/db.php
 /original-web/ftp/www/mailSet.php
+
+# Secrets of the legacy site copy (local only, see original-web/ftp/include/.env.example)
+/original-web/**/.env

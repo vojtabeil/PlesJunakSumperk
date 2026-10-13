@@ -3,6 +3,7 @@
 namespace Model;
 
 include "QRPlatba.php";
+require_once __DIR__ . "/../../env.php";
 
 use Nette;
 use Nette\Mail\SmtpMailer;
@@ -89,7 +90,7 @@ class Tickets extends Nette\NetteObject {
             "secure" => "ssl",
             "port" => 465,
             "username" => "ples@junak-sumperk.cz",
-            "password" => 'dJM5kPh4H#$J',
+            "password" => env("SMTP_PASSWORD"),
         ));
 
         $mailer->send($message);
