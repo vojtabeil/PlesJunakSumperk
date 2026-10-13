@@ -1,0 +1,282 @@
+/* Tvoje původní styly */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #2d3436;
+    color: #ffffff;
+}
+
+.header {
+    background-color: #292b2c;
+    text-align: center;
+    padding: 20px;
+    border-bottom: 2px solid #1f1f1f;
+}
+
+.forms {
+    width: 50%;
+    margin: auto;
+    background-color: #2c3e50;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+form {
+    border: none;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    color: #27ae60;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #34495e;
+    border-radius: 5px;
+    box-sizing: border-box;
+    background-color: #2c3e50;
+    color: #ffffff;
+    min-width: 80px;
+}
+
+button {
+    background-color: #e67e22;
+    color: #ffffff;
+    padding: 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #d35400;
+}
+
+/* Přidaný styl pro tlačítko typu "submit" */
+input[type="submit"] {
+    cursor: pointer;
+}
+
+
+.table-container {
+    width: 80%;
+    margin: auto;
+    background-color: #2c3e50;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #34495e;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+}
+
+th {
+    background-color: #292b2c;
+}
+
+tr.first {
+    background-color: #3498db;
+}
+
+a {
+    color: #27ae60;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #2ecc71;
+}
+
+.zTicket {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.zTicket label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.zTicket input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+}
+
+.zTicket input[type="submit"] {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.zTicket input[type="submit"]:hover {
+    background-color: #45a049;
+}
+
+ .info {
+            width: 20cm;
+            margin: 0 auto 1cm;
+            font-style: italic;
+        }
+
+        .ticket {
+            overflow: hidden;
+            width: 20cm;
+            height: 8cm;
+            margin: 0.5cm auto;
+            border: 0.07cm dashed rgba(40, 114, 52, 1);
+            border-radius: 15px;
+            display: flex;
+            padding-bottom: 0.5cm;
+            background-image: url('bcg.svg');
+            /* Zde zkontroluj cestu */
+            background-size: cover;
+            /* Přizpůsobí velikost obrázku */
+            background-repeat: no-repeat;
+            /* Zabrání opakování obrázku */
+            background-position: center;
+            /* Umístí obrázek doprostřed */
+        }
+
+
+        .number,
+        .right-image {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            color: black;
+
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            height: 100%;
+            color: black;
+
+        }
+
+        .number p {
+            margin: 0;
+        }
+
+        .details {
+            height: 100%;
+            width: 8.3cm;
+            background-image: url('/img/ticket1.png');
+            background-size: 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin-left: 10px;
+        }
+
+        .fr {
+            margin-bottom: 0.38cm;
+            font-size: 1.25rem;
+        }
+
+        .ticket table {
+            padding-left: 0.2cm;
+
+        }
+
+        .details td {
+            background-color: white;
+            border-radius: 20%;
+
+        }
+
+        .nz {
+            margin-top: 0.2cm;
+            padding-left: 0.2cm;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: rgba(40, 114, 52, 0.5);
+            font-family: 'Calistoga', sans-serif;
+            padding-bottom: 0;
+            padding-top: 0;
+        }
+
+        .right-image img {
+            /* Set maximum width for the image */
+            height: 6.5cm;
+            /* Maintain aspect ratio */
+
+            width: auto;
+        }
+
+        .nz2 {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: Arial, Helvetica, sans-serif;
+            color: rgba(40, 114, 52, 1);
+            font-family: 'Calistoga', sans-serif;
+        }
+
+        .ikon {
+            width: 1.4rem;
+        }
+
+        table {
+            border-collapse: collapse;
+            border: none;
+            /*color: black;*/
+            height: 0.1cm;
+        }
+
+        th,
+        td {
+            border: none;
+        }
+
+.save-trigger {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #333;
+    
+    text-decoration: none;
+}
+
+.save-trigger:hover {
+    background: #d0d0d0;
+        text-decoration: none;
+
+}

@@ -1,0 +1,18 @@
+<h1>Rezervace lístk{= $ticket->count == 1 ? "u" : "ů"} na skautský ples JEŠTĚ NEbyla přiajata</h1>
+<p>Dobrý den,<br>zatím jsme nepřijali platbu za rezervaci lístk{= $ticket->count == 1 ? "u" : "ů"} na ples. Přišel Vám však potvrzující email, protože jsem Vaši rezervaci omylem označil za zaplacenou. <strong>Je potřeba za líst{= $ticket->count == 1 ? "ek" : "ky"} zaplatit do {= date('j. n. Y', strtotime("+ 7 days", $ticket->reserved->getTimestamp()))}!</strong> Jinak rezervace propadne.</p>
+<ul>
+	<li>Rezervováno na jméno: {$ticket->name}</li>
+	<li>Počet lístků: {$ticket->count}</li>
+	<li>Datum plesu: 4. 2. 2023</li>
+	<li>Celková cena: <strong>{$ticket->price}</strong> Kč</li>
+	<li>Variabilní symbol: <strong>{$ticket->variable_symbol}</strong></li>
+	<li>Číslo účtu pro platbu: <strong>2501895120/2010</strong> (Fio Banka)</li>
+</ul>
+<p>Jakmile přijmeme a identifikujeme vaši platbu, budeme vás informovat dalším emailem, ve které se dozvíte, jak přesně od nás lístky v den plesu u vchodu dostanete (už jste jeden sice dostal(a), ale přijde vám (snad už jen) ještě jednou).</p>
+
+<p>Těšíme se na Vás!<br>Tomáš Slavický</p> 
+
+<p>Junák - český skaut<br>
+Středisko Rudy Knotka Šumperk, z. s.<br>
+Nám. Jana Zajíce 11<br>
+787 01 Šumperk</p>

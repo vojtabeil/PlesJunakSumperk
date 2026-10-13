@@ -1,0 +1,3 @@
+<span n:inner-foreach="$chairs as $chair">
+    <button data-href="{link toggleChair! $chair->id}" n:class="toggle-chair, btn, btn-mini, $chair->ticked ? btn-success : btn-default">{$chair->id}</button>
+</span>

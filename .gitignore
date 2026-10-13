@@ -8,3 +8,14 @@
 /var/
 /www/build/
 /dist/
+
+# Legacy site copy (original-web): credentials, personal data and logs stay local
+/original-web/mysql/
+/original-web/ftp/__log/
+/original-web/ftp/include/log/
+/original-web/ftp/include/tmp/
+/original-web/ftp/include/app/config/
+/original-web/ftp/www/db.php
+/original-web/ftp/www/admin/db.php
+/original-web/ftp/www/ticket/db.php
+/original-web/ftp/www/mailSet.php

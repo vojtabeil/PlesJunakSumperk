@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /check/
+
+    # Přesměrování na index.php s hodnotami z URL
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(\d+)/([^/]+)$ index.php?check=$1&email=$2 [L,QSA]
+</IfModule>

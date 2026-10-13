@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 430 334" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;">
+    <g transform="matrix(4.16667,0,0,4.16667,0,0)">
+        <g id="kalendar">
+        </g>
+        <g transform="matrix(6.91543,0,0,6.91543,-2012.79,-2870.33)">
+            <path d="M302.742,415.64C303.019,415.64 303.285,415.749 303.48,415.945C303.675,416.141 303.786,416.407 303.786,416.684L303.786,425.038C303.785,425.314 303.676,425.58 303.478,425.774C303.283,425.97 303.016,426.08 302.74,426.079C300.443,426.079 298.148,426.078 295.852,426.077C295.575,426.078 295.337,425.967 295.113,425.772C294.635,425.356 294.202,423.11 294.194,420.859C294.187,418.655 294.594,416.446 295.114,415.944C295.314,415.751 295.577,415.637 295.855,415.637C298.149,415.638 300.447,415.639 302.742,415.64Z" style="fill:none;fill-rule:nonzero;stroke:rgb(1,2,2);stroke-width:0.21px;"/>
+        </g>
+        <g transform="matrix(6.91543,0,0,6.91543,-2012.79,-2870.33)">
+            <path d="M295.113,415.945C294.848,415.908 294.583,415.872 294.318,415.836C293.881,415.985 293.232,418.432 293.254,420.859C293.276,423.286 293.828,425.735 294.318,425.881C294.583,425.844 294.848,425.809 295.113,425.772" style="fill:none;fill-rule:nonzero;stroke:rgb(1,2,2);stroke-width:0.21px;"/>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,24 @@
+{extends ../@adminLayout.latte}
+
+{block #content}
+
+<h2>{block #title}Spravovat uživatele{/block}</h2>
+<p><a n:href="add" class="btn">+ přidat uživatele</a></p>
+
+<table class="table">
+    <tbody>
+        <tr n:foreach="$users as $user">
+            <td>{$user->id}</td><td>{$user->username}</td><td>{$user->role}</td>
+            <td>
+                <a n:href="update, $user->id" class="btn">upravit</a>
+                <a n:href="delete!, $user->id" class="btn btn-danger">smazat</a>
+            </td>
+        </tr>
+    </tbody>
+
+    <thead>
+        <tr>
+            <th>#</th><th>uživatelské jméno</th><th>role</th><th>akce</th>
+        </tr>
+    </thead>
+</table>

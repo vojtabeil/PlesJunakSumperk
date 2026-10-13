@@ -1,0 +1,205 @@
+{extends ../@adminLayout.latte}
+
+{block #content}
+
+<h2>{block #title}Rozmístění židlí v sále{/block}</h2>
+
+<p>
+	<label for="add"><input type="checkbox" name="add" id="add"> Přidávat další sedadla?</label>
+</p>
+<div id="map">
+	{snippet chairs}
+	<span n:foreach="$chairs as $chair" n:class="chair, ($chair->ticket_id === NULL || $chair->ticket->state === 'rejected') ? 'free' : 'taken'" style="top: {!$chair->y}%; left: {!$chair->x}%" data-id="{$chair->id}" data-moving="false" data-lower-price="{= $chair->is_lower_price ? 'true' : 'false'}">
+		{$chair->id}
+	</span>
+	{/snippet}
+
+	<img src="{$baseUrl}/img/hall.png">
+</div>
+
+<script>
+$(function() {
+
+	// setup the img
+	var width = $("#map").width();
+	$("#map img").width(width);
+
+	var size2 = 6;
+	$("#map img").on("click", function(e) {
+		if($("#add").prop("checked") == true) {			
+			if(e.offsetX==undefined) { // firefox fix
+				e.offsetX = e.pageX - $(this).offset().left;
+			    e.offsetY = e.pageY - $(this).offset().top;
+			}    
+
+			var pos = getPos.call(this, {
+				left: e.offsetX - size2,
+				top: e.offsetY - size2
+			});
+
+			$.nette.ajax({
+				type: "GET",
+				url: {link add!},
+				data: {
+					x: pos.x,
+					y: pos.y
+				}
+			});
+		}
+	});
+
+	var getPos = function(pos) {
+		return {
+			x: pos.left / $(this).width() * 100,
+			y: pos.top / $(this).height() * 100
+		};
+	};
+
+	/*
+	$(".chair").livequery(function() {
+		var id = $(this).data("id");
+		var img = $("#map img").get(0);
+		$(this).draggable({
+			stop: function(e, ui) {
+				var pos = getPos.call(img, ui.position);
+				$.nette.ajax({
+					type: "GET",
+					url: {link move!},
+					data: {
+						x: pos.x,
+						y: pos.y,
+						id: id
+					}
+				});
+			}
+		});
+	});
+	*/
+
+	$("body").on("click", ".chair", function() {
+		var _this = $(this);
+		$(".moving").each(function() {
+			savePos($(this), function() {
+				_this.addClass("moving");
+			});
+		});
+
+		if($(this).hasClass("moving")) {
+			$(this).removeClass("moving");			
+		} else {
+			$(".moving").removeClass("moving");
+			$(this).addClass("moving");
+		}
+	});
+
+	var speed = {
+		x: 0,
+		y: 0
+	};
+
+	$(window).on("keydown", function(e) {
+		switch(e.keyCode) {
+			case 37: // left
+				speed.x = Math.min(0, speed.x);
+				speed.x--;
+				speed.y = 0;
+				move();
+				return false;
+				break;
+			case 38: // up
+				speed.y = Math.min(0, speed.y);
+				speed.y--;
+				speed.x = 0;
+				move();
+				return false;
+				break;
+			case 39: // right
+				speed.x = Math.max(0, speed.x);
+				speed.x++;
+				speed.y = 0;
+				move();
+				return false;
+				break;
+			case 40: // down
+				speed.y = Math.max(0, speed.y);
+				speed.y++;
+				speed.x = 0;
+				move();
+				return false;
+				break;
+			case 68: // "d"		
+				$(".moving").each(function() {
+					del($(this));
+				});				
+				break;
+			case 76: // "l"
+				toggleLowerPrice();
+				speed = {
+					x: 0, y: 0
+				};
+				break;
+			case 83: // "s"				
+				$(".moving").each(function() {
+					savePos($(this));
+				});
+				break;
+			default:
+				speed = {
+					x: 0, y: 0
+				};
+		}
+
+	});
+
+	var move = function() {
+		$(".moving").each(function() {
+			var pos = $(this).position();
+			$(this).css({
+				left: pos.left + speed.x + "px",
+				top: pos.top + speed.y + "px"
+			});
+		});
+	};
+
+	var toggleLowerPrice = function() {
+		$(".moving").each(function() {
+			$.nette.ajax({
+				type: "GET",
+				url: {link toggleLowerPrice!},
+				data: {
+					id: $(this).data("id")
+				}
+			});
+		});
+	};
+
+	var img = $("#map img");
+	var savePos = function(item, complete) {
+		var pos = getPos.call(img, item.position());
+		$.nette.ajax({
+			type: "GET",
+			url: {link move!},
+			data: {
+				x: pos.x,
+				y: pos.y,
+				id: item.data("id"),
+				complete: complete
+			}
+		});
+	};
+
+	var del = function (item) {		
+		$.nette.ajax({
+			type: "GET",
+			url: {link delete!},
+			data: {
+				id: item.data("id"),
+				complete: function() {
+					item.fadeOut();
+				}
+			}
+		});
+	};
+
+});
+</script>

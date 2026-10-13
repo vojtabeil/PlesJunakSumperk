@@ -1,0 +1,208 @@
+{block #content}
+
+    <div id="header">
+        <div class="container">
+            <div class="row">
+                <div class="span12">
+                    <h1>Šumperský skautský ples</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="content">
+        <div class="container" onmouseover="predprodej()">
+            <div class="row">    
+                <div class="span12">
+                    <h2>Základní informace</h2>
+                    {if ($free/*-175*/) <= 0}
+                        <p class="alert alert-warning">Lístky na ples jsou vyprodány.</p>
+                    {/if}	
+                    <div class="row">
+                        <div class="span6">
+                            <blockquote>
+                                Šumperští skauti si vás dovolují pozvat do víru tance a zábavy. Letos již 12. ročníkem plesu šumperských skautů se protančíme za doprovodu skupiny Lucky Band. Chybět nebude ani tradičně vynikající občerstvení, klasická i skautská tombola a bohatý program. Přijďte se pobavit, setkat s práteli a stravit příjemný večer v pohodové atmosféře!
+                            </blockquote>
+
+                            {foreach $flashes as $flash}
+                            <p class="alert alert-{$flash->type}">{$flash->message}</p>
+                            {/foreach}
+                        </div>
+                        <div class="span6">
+                            <ul class="drop">
+                                <li><i class="icon-time"></i>&nbsp;Kdy – <strong>4. 2. 2023 od 19:00</strong></li>
+                                <li><i class="icon-map-marker"></i>&nbsp;Kde – <a href="http://mapy.cz/s/dN9B" target="_blank">Kulturní centrum Rapotín</a></li>
+                                <li><i class="icon-music"></i>&nbsp;Hraje - skupina <a href="http://www.luckyband.cz/" target="_blank">Lucky Band</a></li>
+                                
+                                <li><i class="icon-user"></i>&nbsp;Hlavní organizátoři - <strong>Tomáš Slavický</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="span12">
+                    <p>
+                        <!--a href="https://www.facebook.com/events/579788222155250/"--><img src="/web-cover.png" alt="šumperský skautský ples" width="100%" id="cover"><!--/a-->
+                    </p>
+                </div>
+            </div>
+
+            {if ($free/*-175*/) <= 0}
+		<blockquote>Lístky na ples jsou vyprodány.</blockquote>   
+            {else}
+
+            <div class="row">
+                <div class="span12">
+                                    
+                        {form reservationForm}
+                        <div class="row">
+                            <div class="span6">
+                                <h2>Rezervace lístků</h2>
+                                
+                                <div class="form-group">
+                                    {input name, placeholder => $form["name"]->caption, class => "input-block-level"}
+                                </div>
+
+                                <div class="form-group">
+                                    {input email, placeholder => $form["email"]->caption, class => "input-block-level"}
+                                </div>
+
+                                <div class="form-group">	
+                                <p class="alert alert-info">Platbu <b>převodem</b> je třeba provést <b>do týdne od rezervace</b> lístků.</p>
+                                    {input payment_method, placeholder => $form["payment_method"]->caption, class => "input-block-level"}                                    
+                                </div>
+
+                                <div class="form-group">
+                                    <p>
+                                        {label alcoholStripCount, class => "text-left"}Počet osob ve věku 18 -   let (počet pásků pro možnost kupování alkoholu):{/label}
+                                        {input alcoholStripCount, class => "input-block-level price-field"}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="span6">
+                                <h3>Cena vstupenek</h3>                                
+                                <ul>
+                                    <li>U stolu: <strong>{if time() < strtotime("2020-02-01")}{$price}{else}{$secondPrice}{/if}</strong> Kč</li>
+                                    <li>Na stání: <strong>{if time() < strtotime("2020-02-01")}{!$lowerPrice}{else}{!$secondLowerPrice}{/if}</strong> Kč</li>
+                                </ul>
+                                <blockquote>Můžete si zarezervovat až {$maxTicketsCount} lístky na osobu.<br>Kapacita plesu je {$capacity} zbývajících volných míst k rezervaci je <b>{$free/*-175*/}</b>.</blockquote>
+                                <blockquote>Pokud budete mít s rezervací lístků <b>problém nebo budete potřebovat poradit</b>, napište email <b>Janu Pospíšilovi (ples@junak-sumperk.cz), případně mu volejte na&nbsp;číslo&nbsp;731&nbsp;493&nbsp;190</b>.</blockquote>
+                            </div>
+                        </div>
+
+                            {foreach $form->getErrors() as $error}
+                            <p class="alert alert-warning">{$error}</p>
+                            {/foreach}
+                            
+                        <h3>Vyberte si svá místa u stolu nebo na stání</h3>
+                        <p>Své místo vyberete kliknutím na zelené (resp. modré) čtverečky na plánku. Zelená místa označují volná místa u stolu, modrá pak místa na stání. Šedé čtverečky označují místa, která jsou již zarezervovaná.</p>
+
+                        <div id="map">
+                            {foreach $form["seats"]->getControls() as $chair}
+                                <span class="chair {$chair->getOption('status')}" data-lower-price="{= $chair->getOption('lower-price') ? 'true' : 'false'}">
+                                    {input $chair} {$chair->getOption('id')}
+                                </span>
+                            {/foreach}
+                            <img src="{$baseUrl}/img/hall.png" width="100%">
+                        </div>
+
+                        <div class="form-group">
+                            <p>
+                                {input price, placeholder => $form["price"]->caption, class => "input-block-level price-field"}
+                            </p>
+                        </div>
+
+                        <div class="form-group text-center">
+                            <input type="submit" class="btn btn-large btn-success" name="send" id="frmreservationForm-send" value="Dokončit rezervaci" onmouseover="predprodej()" />
+                        </div>
+                         <p id="pred"></p>
+                        {/form}
+
+                        <script>
+
+                            $("input[type=checkbox]").each(function() {
+                                var c = $(this).parent();
+                                c.css("left", $(this).data("x") + "%");
+                                c.css("top", $(this).data("y") + "%");
+                            });
+
+                            {if time() < strtotime("2020-02-01")}
+                            const price = {!$price};
+                            const lowerPrice = {!$lowerPrice};
+                            {else}
+                            const price = {!$secondPrice};
+                            const lowerPrice = {!$secondLowerPrice};
+                            {/if}
+
+                            const max = {!$maxTicketsCount};
+                            var chairs = 0;
+                            var lowerPriceChairs = 0;
+
+                            $(".chair input[type=checkbox]").on("click", function(e) {
+                                var span = $(this).parent();
+                                var step = -1;
+                                if($(this).prop("checked") === true) {
+                                    step = 1;
+                                }
+
+                                if(span.data("lower-price") === true) {
+                                    lowerPriceChairs += step;
+                                } else {
+                                    chairs += step;                                        
+                                }
+                                span.toggleClass("selected");
+                                change();
+                            });
+
+                            var change = function() {
+                                var computedPrice = price * chairs + lowerPrice * lowerPriceChairs;
+                                if(!isNaN(computedPrice)) {
+                                    $(".price-field").val(computedPrice + " Kč");
+                                } else {
+                                    $(".price-field").val("- Kč");
+                                }
+                            };
+
+                           //počítaní lístkův předprodeji
+                          /* function predprodej(){
+                            let count = 0;
+                            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                            for (const checkbox of checkboxes) {
+                                    if (checkbox.checked) {
+                                        count++;
+                                    }
+                                }
+                            if (count > {$free-175}) {
+                                // Získejme odesílací tlačítko formuláře
+                                const submitButton = document.querySelector('input[type="submit"]');
+                                document.getElementById("frmreservationForm-send").style.display = "none";
+                                document.getElementById("pred").innerText = "Nemůžete vybrat víc lístků než kolik jich je volných";
+                                return false;
+                                }
+                            else{
+                                    document.getElementById("pred").innerText = "";
+                                    document.getElementById("frmreservationForm-send").style.display = "inline";
+                                }
+                            }*/
+                        </script>
+
+                        <p><em>Po dokončení rezervace obdržíte emailem zprávu s pokyny ohledně platby a po zaplacení Vám na email přijdou i samotné lístky k vytištění.</em></p>
+                </div>
+            </div>
+            {/if}
+
+
+
+            <div class="row">
+                <div class="span12">
+                    <p class="text-center">
+                        <a href="https://bit.ly/Junák-střediskoRudyKnotka">
+
+                        </a>
+                    </p>    
+                </div>
+            </div>
+        </div>
+    </div> <!-- end of #content -->

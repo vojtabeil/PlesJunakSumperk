@@ -1,0 +1,220 @@
+{extends ../@adminLayout.latte}
+
+{block #content}
+
+<h2>{block #title}Rezervace lístků{/block}</h2>
+
+<table class="table">
+    <tr><th>Zatím zaplaceno:</th><td style="text-align: right !important">{=number_format($bought->sum("price"), 0, ",", " ")} Kč</td></tr>
+    {var $onlinePayments = clone $bought}
+    {? $onlinePayments->where("payment_method", "online")}
+    <tr><th style="text-align: right !important">z toho na účet:</th><td style="text-align: right !important">{=number_format($onlinePayments->sum("price"), 0, ",", " ")} Kč</td></tr>
+    <tr>
+        <th>Objednáno, ještě nezaplaceno:</th><td style="text-align: right !important">{=number_format($pending->sum("price"), 0, ",", " ")} Kč</td>
+    </tr>
+    <tr>
+        <th>Celkem očekáváme:</th><td style="text-align: right !important">{=number_format($bought->sum("price") + $pending->sum("price"), 0, ",", " ")} Kč</td>
+    </tr>
+    <tr>        
+        <th style="text-align: right !important">v hotovosti:</th><td style="text-align: right !important">{= number_format($inCash, 0, ",", " ")} Kč</td>
+    </tr>
+    <tr>        
+        <th style="text-align: right !important">na účtu:</th><td style="text-align: right !important">{= number_format($account, 0, ",", " ")} Kč</td>
+    </tr>
+</table>
+
+<div class="row">
+    <div class="span12">
+        <h2>Nezaplacené</h2>
+        <ul class="nav nav-tabs">
+            <li n:class="$type == 'all' ? active"><a n:href="this, type => 'all'">Vše</a></li>
+            <li n:class="$type == 'online' ? active"><a n:href="this, type => 'online'">Převodem</a></li>
+            <li n:class="$type == 'cash' ? active"><a n:href="this, type => 'cash'">V hotovosti</a></li>
+            <li><a n:href="z">Z-Lístky</a></li>
+        </ul>
+
+        <table class="table">
+            <tbody>
+                {foreach $pending as $ticket}
+                {var $reserved => $ticket->reserved->getTimestamp()}
+                <tr n:class="(time() > strtotime('+ 7 days', $reserved)) ? warning">
+                    <td>{$ticket->variable_symbol}</td>
+                    <td>{$ticket->name}</td>
+                    <td>{$ticket->email}</td>
+                    <td>{$ticket->count}</td>
+                    <td>{$ticket->price} Kč</td>
+                    <td>{= $ticket->payment_method == "cash" ? "hotovost" : "převodem"}</td>
+                    <td>
+                        {$ticket->reserved|date:"j. n. Y"}
+                    </td>
+                    <td>
+                        {= date('j. n. Y', strtotime("+ 7 days", $reserved))}
+                    </td>
+                    <td>
+                        {var $chairs => array_keys($ticket->related("chair")->fetchPairs("id"))}
+                        {=join(", ", $chairs)}
+                    </td>
+                    <td>
+                        <a n:href="ok!, $ticket->id" class="btn btn-default" title="Potvrdit platbu"><i class="icon-ok"></i></a>
+                        <a n:href="reject!, $ticket->id" class="btn btn-danger" title="Smazat rezervaci"><i class="icon-white icon-trash"></i></a>
+                    </td>
+                </tr>
+                {/foreach}
+            </tbody>
+
+            <thead>
+                <tr>
+                    <th>variabilní symbol</th><th>jméno</th><th>email</th><th>#</td><th>cena</th><th>typ platby</th><th>objednáno</th><th>splatnost</th><th>místa</th><th>akce</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+<div class="row">
+    <div class="span12">
+        {snippet tickets}
+        <h2>Zaplacené <a n:href="export" class="btn btn-default">Export pro tisk</a></h2>
+        <table class="table">
+            <tbody>
+                <tr n:foreach="$bought as $ticket">
+                    <td>{$ticket->variable_symbol}</td>
+                    <td>{$ticket->name}</td>
+                    <td>{$ticket->email}</td>
+                    <td>{$ticket->count}</td>
+                    <td>
+                        {control chairs-$ticket->id}
+                    </td>
+                    <td>{$ticket->price} Kč</td>
+                    <td>{= $ticket->payment_method == "cash" ? "hotovost" : "na účet"}</td>
+                    <td>
+                        {*<a n:href="revertOk!, $ticket->id" class="btn btn-danger" title="Odebrat platbu"><i class="icon-white icon-remove"></i></a>*}
+                        <a n:href="print!, $ticket->id, $ticket->email" class="btn btn-default" title="Vytisknout lístky"><i class="icon-print"></i></a>
+                    </td>
+                </tr>
+            </tbody>
+
+            <thead>
+                <tr>
+                    <th>variabilní symbol</th><th>jméno</th><th>email</th><th>#</th><th>místa</th><th>cena</th><th>platební metoda</th><th>akce</th>
+                </tr>
+            </thead>
+        </table>
+        {/snippet}
+    </div>
+</div>
+<div class="row">
+    <div class="span-12">
+        <h2>Z-Lístky</h2>
+        <p>
+            <a class="btn btn-default" n:href="z"><i class="icon-print"></i> Tisknout všechny Z-lístky</a>
+            <a class="btn btn-default" n:href="z, noWarnings => TRUE"><i class="icon-print"></i> Tisknout všechny Z-lístky bez informací k úklidu</a>
+        </p>
+        {snippet zTickets}
+        {? $zTickets->order("id DESC")}
+        <table class="table">
+            <tbody>
+                {foreach $zTickets as $ticket}
+                <tr>
+                    <td contenteditable class="z-ticket-name" data-id="{$ticket->id}">{$ticket->name}</td>
+                    <td>
+                        <a n:class="toggle-chair, btn, $ticket->taken == 1 ? btn-success : btn-default, btn-mini" data-href="{link toggleZTaken!, $ticket->id}">
+                            {400 + abs($ticket->id)}
+                        </a>
+                    </td>
+                    <td>
+                        <a n:href="z, id => $ticket->id" class="btn btn-default"><i class="icon-print"></i></a>
+                    </td>
+                </tr>
+                {/foreach}
+            </tbody>
+
+            <thead>
+                <tr>
+                    <th>jméno</th><th>#</th><th>akce</th>
+                </tr>
+            </thead>
+        </table>
+        {/snippet}
+    </div>
+</div>
+
+<script>
+    $(function() {
+        $("body").on("click", ".toggle-chair", function(e) {
+            e.preventDefault();
+            var _this = $(this);            
+            var on = _this.hasClass("btn-success");
+            _this.removeClass("btn-success").removeClass("btn-default").addClass("btn-info");
+        
+            $.nette.ajax({
+                url: $(this).data("href"),
+                type: "GET",
+                success: function() {
+                    if(on) {
+                        _this.removeClass("btn-info").addClass("btn-default");
+                    } else {
+                        _this.removeClass("btn-info").addClass("btn-success");                        
+                    }
+                }
+            });
+
+            return false;
+        });
+
+        var throttling = null;
+        $("body").on("keyup", ".z-ticket-name", function() {
+            clearTimeout(throttling);
+            var name = $(this).text();
+            var id = $(this).data("id");
+            throttling = setTimeout(function() {
+                $.nette.ajax({
+                    url: {link changeZName!},
+                    data: {
+                        id: id,
+                        name: name
+                    },
+                    success: function() {
+                        console.log("saved", name, id);
+                    },
+                    error: function() {
+                        alert("nepodařilo se uložit jméno '" + name + "' pro lístek " + id);
+                    }
+                });
+            }, 1000);
+        });
+    });
+</script>
+
+<div class="row">
+    <div class="span12">
+        <h2>Zamítnuté</h2>
+        <p><button class="btn btn-default" id="toggle-rejected">Zobrazit/Skrýt</button></p>
+        <script>
+        $(function() {
+            var shown = false;
+            $("#toggle-rejected").on("click", function() {
+                if(shown) {
+                    $("#rejected").fadeOut();
+                } else {
+                    $("#rejected").fadeIn();
+                }
+                shown = !shown;
+            });
+        });
+        </script>
+
+        <table id="rejected" class="table" style="display: none">
+            <tbody>
+                <tr n:foreach="$rejected as $ticket">
+                    <td>{$ticket->email}</td><td>{$ticket->variable_symbol}</td><td title="{$ticket->email}">{$ticket->name}</td><td>{$ticket->count}</td>
+                </tr>
+            </tbody>
+
+            <thead>
+                <tr>
+                    <th>email</th><th>variabilní symbol</th><th>jméno</th><th>#</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>

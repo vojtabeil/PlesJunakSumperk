@@ -1,0 +1,28 @@
+<h1>Platba lístk{= $ticket->count == 1 ? "u" : "ů"} na skautský ples byla potvrzena</h1>
+<p>Dobrý den,<br>v pořádku jsme přijali platbu za líst{= $ticket->count == 1 ? "ek" : "ky"} na ples.</p>
+<ul>
+	<li>Rezervováno na jméno: {$ticket->name}</li>
+	<li>Počet lístků: {=count($ticket->related("chair"))}</li>
+	<li>Celková cena: {$ticket->price} Kč</li>
+	<li>Datum plesu: 4. 2. 2023</li>
+</ul>
+
+
+<p>
+	Lístky si prosím uložte do mobilu a nebo vytiskněte
+	{var $link => $presenter->link("//:Front:Ticket:default", $ticket->id)}
+	<a href="{$link}" target="_blank">
+		{$link}
+	</a>
+	a vezměte si je na ples s sebou. Lístky po vstupu využijete ještě při slosování tomboly.
+</p>
+
+<p>Pokud jste již na plese byli v minulých letech, zajímalo by nás, jestli zde bylo něco, co byste zlepšili nebo udělali jinak. Rádi vaše připomínky vezmeme v potaz a zkusíme na nich zapracovat.</p>
+<p>Kdybyste také měli možnost zajistit nebo domluvit nějaké dary do tomboly, mohli byste mít pak větší výběr a větší motivaci si koupit tombolu!</p>
+<p>Případné podrobnosti ohledně tomboly nebo připomínky k plesu směřujte na „ředitele“ plesu na e-mailovou adresu ples@junak-sumperk.cz</p>
+<p>Těšíme se na Vás!<br>Tomáš Slavický</p> 
+
+<p>Junák - český skaut<br>
+Středisko Rudy Knotka Šumperk, z. s.<br>
+Nám. Jana Zajíce 11<br>
+787 01 Šumperk</p>

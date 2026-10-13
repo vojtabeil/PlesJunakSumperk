@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Ples - rezervace lístků :: administrace</title>
+        
+        <link rel="stylesheet" href="{$basePath}/admin_styles/css/style.css">
+        <link rel="stylesheet" href="{$basePath}/admin_styles/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+        <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+        <script src="{$basePath}/js/jquery.livequery.js"></script>
+        <script src="{$basePath}/js/netteForms.js"></script>
+        <script src="{$basePath}/js/nette.ajax.js"></script>
+        <script>
+            document.ready = () => {
+                $.nette.init();
+            };
+        </script>
+    </head>
+
+    <body>
+        <div class="container">
+        
+            <!-- HEADER -->
+            <div class="navbar navbar-fixed-top">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <a class="brand" href="{$baseUrl}">
+                            Ples - rezervace lístků :: administrace
+                        </a>
+                        
+                        {if $user->isLoggedIn()}
+                        <ul class="nav">                            
+                            
+                            <li {ifCurrent Tickets:*}class="active"{/ifCurrent}>
+                                <a n:href="Tickets:">
+                                    <i class="icon-leaf"></i>
+                                    &nbsp;Rezervace lístků
+                                </a>
+                            </li>
+                            
+                            <li {ifCurrent Users:*}class="active"{/ifCurrent}>
+                                <a n:href="Users:">
+                                    <i class="icon-user"></i>
+                                    &nbsp;Uživatelé
+                                </a>
+                            </li>
+
+                            <li {ifCurrent Settings:*}class="active"{/ifCurrent}>
+                                <a n:href="Settings:">
+                                    <i class="icon-cog"></i>
+                                    &nbsp;Nastavení
+                                </a>
+                            </li>
+
+                            <li><a n:href="Sign:out"><i class="icon-off"></i>&nbsp;Odhlásit se</a></li>
+                        </ul>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+            
+            
+            <!-- CONTENT -->
+            <div class="row">                            
+                <main class="span12">
+                    <div n:foreach="$flashes as $flash" class="alert alert-{$flash->type}">{$flash->message}</div>
+
+                    {include #content}
+                </main> <!-- end of .span9 -->
+            </div> <!-- end of .row -->        
+            
+        </div> <!-- end of .container -->
+    </body>
+</html>

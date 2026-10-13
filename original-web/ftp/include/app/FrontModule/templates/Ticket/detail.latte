@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="urf-8">
+		<title>Lístek rezervovaný pro {$ticket->name}</title>
+		<link rel="stylesheet" media="screen, print" href="{$baseUrl}/css/ticket.css">
+	</head>
+
+	<body>
+		{var $myChairs = $ticket->related("chair")}
+		<p class="info">
+			Zde {if count($myChairs) == 0}je Váš lístek{else}jsou Vaše lístky{/if}. Lístky si prosím uložte do mobilu nebo vytiskněte a vystřiněte na papír. Lístkem se prokážete u vstupu a s každým lístkem také můžete vyhrát nějakou cenu z tomboly ;-)</p>
+		</p>
+
+		{var $standingOnly = TRUE}
+		{foreach $myChairs as $chair}
+			{if !$chair->is_lower_price}
+				{? $standingOnly = FALSE}
+			{/if}
+			<div class="ticket">
+				<div class="number">
+					<p><img src="/img/log.png"></p>
+					{var $link => $baseUrl . "/check/" . $chair->id . "/" . str_replace("@", "%40", $ticket->email)}
+					<p><img src="https://api.qrserver.com/v1/create-qr-code/?size=88x88&ecc=L&format=svg&data={$link}"></p>
+					<p><strong>#{$chair->id}</strong></p>
+				</div>
+				
+				<div class="details{rand(1,4)}">
+					<div class="nz">12. šumperský skautský ples 2023</div><br>
+					<table class="fr">
+						<tr><td>{$ticket->name} </td></tr>	
+						<tr><td>({$ticket->email})</td></tr>
+						</table>
+						
+						<table>
+						<tr><td>4. 2. 2023 v 19:00</td></tr>
+						<tr><td>Kulturní dům Rapotín</td></tr>
+						
+						{if $chair->table_id !== NULL}
+						<tr><td>Stůl <strong>{$chair->table_id}</strong>, židle <strong>{$chair->id}</strong>.</td></tr>
+						{else}
+						<tr><td>Lístek na stání <strong>bez místa u stolu.</strong></td></tr>
+						{/if}
+					</table>
+				</div>
+			</div>
+		{/foreach}
+
+		{if !$standingOnly}
+		<div id="map">
+			<span n:foreach="$chairs as $chair" n:class="chair, $chair->ticket_id === $ticket->id ? my" style="top: {!$chair->y}%; left: {!$chair->x}%" data-id="{$chair->id}"></span>			
+			<img src="{$baseUrl}/img/hall.png">
+		</div>
+		{/if}
+	</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <style>
+            html, body {
+                margin: 0;
+                padding: 0;
+                font-family: sans-serif;
+                text-align: center;
+                width: 100%;
+                height: 100%;
+            }
+            
+            .ok {
+                background-color: rgb(112, 163, 16);
+                color: white;
+            }
+            
+            .taken {
+                background-color: rgb(68, 68, 68);
+                color: white;
+            }
+
+            a.btn {
+                display: block;
+                padding: 1rem 2rem;
+                margin-top: 2rem;
+                border: 1px solid white;
+                border-radius: 4px;
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                text-decoration: none;
+            }
+            
+            #content {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                height: 100%;
+                margin: 0 auto;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    </head>
+    
+    <body class="{=$letIn ? 'ok' : 'taken'}">
+        <div id="content">
+            <h1>#{$chairId}</h1>
+            <h3>{$email}</h3>
+            
+            <div class="mt-4">
+                <a n:if="$letIn" n:href="confirm!" class="btn">Potvrdit</a>
+                <p n:if="!$letIn">Lístek označen v {$confirmedAt|date:"%H:%M (%d. %m.)"}</p>
+            </div>
+        </div>
+    </body>
+</html>
