@@ -79,7 +79,7 @@ Remove-Item (Join-Path $web 'composer.json'), (Join-Path $web 'composer.lock')
 Write-Utf8NoBom (Join-Path $web 'vendor\.htaccess') $deny
 Write-Utf8NoBom (Join-Path $web 'VERSION') "$version`n"
 
-foreach ($file in @('schema.sql', 'defaults.sql', 'hall.sql')) {
+foreach ($file in @('schema.sql', 'defaults.sql')) {
     Copy-Item (Join-Path $DbFilesDir $file) (Join-Path $install $file)
 }
 Copy-Item (Join-Path $Root 'doc\deploy.md') (Join-Path $install 'deploy.md')

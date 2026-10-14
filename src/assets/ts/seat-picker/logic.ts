@@ -1,6 +1,6 @@
 // Pure helpers of the seat picker (no DOM, no network) - covered by tests/ts.
 
-import type { ApiState, Direction, HallSeat, Prices, ReservationState, SeatStatus } from './types';
+import type { ApiState, Direction, HallSeat, HallTable, Prices, ReservationState, SeatStatus } from './types';
 
 const priceFormat = new Intl.NumberFormat('cs-CZ', {
   style: 'currency',
@@ -79,17 +79,19 @@ export function freeSeats(totalSeats: number, state: ApiState): number {
   return Math.max(0, totalSeats - state.taken.length - state.mine.length);
 }
 
-/** Position of a map point as a CSS percentage. */
-export function percent(value: number, total: number): string {
-  return `${((value / total) * 100).toFixed(3)}%`;
+/** A seat's position on the screen (centre of its shape in the plan), for the arrow keys. */
+export interface MapPoint {
+  id: number;
+  x: number;
+  y: number;
 }
 
 /**
  * The nearest seat in the given direction (arrow keys on the map), or null.
  * Seats more to the side than forward are ignored, so "right" stays in the row.
  */
-export function nearestSeat(from: HallSeat, seats: HallSeat[], direction: Direction): HallSeat | null {
-  let best: HallSeat | null = null;
+export function nearestSeat(from: MapPoint, seats: MapPoint[], direction: Direction): MapPoint | null {
+  let best: MapPoint | null = null;
   let bestScore = Infinity;
   for (const seat of seats) {
     const dx = seat.x - from.x;
@@ -108,31 +110,11 @@ export function nearestSeat(from: HallSeat, seats: HallSeat[], direction: Direct
   return best;
 }
 
-/** Bounding box of each table with its seats (map units), drawn behind them to group them visually. */
-export function tableZones(
-  seats: HallSeat[],
-  padding: number,
-): { tableId: number; x: number; y: number; width: number; height: number }[] {
-  const boxes = new Map<number, { minX: number; minY: number; maxX: number; maxY: number }>();
-  for (const seat of seats) {
-    if (seat.table_id === null) {
-      continue;
-    }
-    const box = boxes.get(seat.table_id);
-    if (box) {
-      box.minX = Math.min(box.minX, seat.x);
-      box.minY = Math.min(box.minY, seat.y);
-      box.maxX = Math.max(box.maxX, seat.x);
-      box.maxY = Math.max(box.maxY, seat.y);
-    } else {
-      boxes.set(seat.table_id, { minX: seat.x, minY: seat.y, maxX: seat.x, maxY: seat.y });
-    }
-  }
-  return [...boxes].map(([tableId, b]) => ({
-    tableId,
-    x: b.minX - padding,
-    y: b.minY - padding,
-    width: b.maxX - b.minX + 2 * padding,
-    height: b.maxY - b.minY + 2 * padding,
-  }));
+const StatusText: Record<SeatStatus, string> = { free: 'volné', mine: 'vybrané', taken: 'obsazené' };
+
+/** What a screen reader says about a seat: "Stůl 3 (Jaroslav Foglar), místo 25, volné, 350 Kč". */
+export function seatDescription(seat: HallSeat, table: HallTable | undefined, status: SeatStatus, price: number): string {
+  const { table: number, seat: place } = splitSeatLabel(seat.label);
+  const tableText = `Stůl ${number}${table?.name ? ` (${table.name})` : ''}`;
+  return `${tableText}, místo ${place}, ${StatusText[status]}${status === 'taken' ? '' : `, ${formatPrice(price)}`}`;
 }

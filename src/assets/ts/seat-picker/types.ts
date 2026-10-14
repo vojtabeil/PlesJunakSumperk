@@ -1,41 +1,25 @@
 // Shapes of the data exchanged with the server (app/Presentation/Front/Api, Home).
 
-export interface HallArea {
-  kind: 'stage' | 'floor';
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  label: string;
-}
-
 export interface HallTable {
   id: number;
   label: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  /** Name of the table (scout personality), null when the plan has none. */
+  name: string | null;
 }
-
 export interface HallSeat {
   id: number;
-  /** "<table>/<seat>", e.g. "3/5" */
+  /** "<table>/<seat>", e.g. "3/25" */
   label: string;
   table_id: number | null;
-  x: number;
-  y: number;
+  /** Id of the seat's shape in the SVG plan. */
+  svg_id: string;
 }
-
 export interface HallLayout {
-  width: number;
-  height: number;
-  areas: HallArea[];
+  /** URL of the SVG plan; null while no plan is uploaded (only standing tickets are sold). */
+  svg: string | null;
   tables: HallTable[];
   seats: HallSeat[];
-}
-
-export interface Prices {
+}export interface Prices {
   seat: number;
   standing: number;
 }

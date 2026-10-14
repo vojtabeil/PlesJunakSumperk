@@ -15,7 +15,7 @@ use DOMNode;
  * the site and inlined into the seat picker.
  *
  * Conventions of the drawing (doc/plan.md, section 6.2):
- *   id="seat-87"        a seat (chair shape or group); the number is the identity and the label
+ *   id="seat-87"        a seat (chair shape or group); the number is its identity (label "<table>/87")
  *   id="table-12"       a group of a table; the seats inside it belong to the table
  *   id="table-12-name"  optional text with the name of the table
  * Everything else is decoration.

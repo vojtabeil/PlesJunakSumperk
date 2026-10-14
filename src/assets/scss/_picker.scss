@@ -92,82 +92,79 @@
 }
 
 .map {
-  position: relative;
   width: 100%;
   min-width: 100%;
 }
 
-.map-plan {
+// Preview of the plan before the seat picker loads (and without JavaScript).
+.map-static {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  opacity: 0.7;
 }
 
-.plan-stage { fill: var(--green); }
-.plan-floor { fill: var(--plan-floor); stroke: var(--border); stroke-dasharray: 8 6; }
-.plan-table { fill: var(--plan-table); }
-// Background of a table with its seats: shows which seats belong to which table.
-.plan-zone { fill: rgba(185, 138, 90, 0.12); stroke: rgba(185, 138, 90, 0.35); }
+// --- The SVG plan: seats are shapes of the drawing ---------------------------
 
-.plan-label,
-.plan-table-label {
-  text-anchor: middle;
-  dominant-baseline: central;
-  font-family: var(--heading-font);
+.hall-plan {
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  // Numbers and labels drawn over the seats must not catch clicks.
+  text {
+    pointer-events: none;
+  }
 }
 
-.plan-label { font-size: 26px; fill: var(--muted); }
-.plan-label--stage { fill: #fff; }
-.plan-table-label { font-size: 15px; fill: #fff; }
-
-// Seats grow with the map: at the default phone zoom (720px) they are at least 24px (WCAG 2.5.8).
-.seat {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  width: 3.4%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  padding: 0;
-  font: 700 clamp(10px, 1.1vw, 13px) / 1 var(--body-font);
-  color: #fff;
-  background: var(--green);
-  border: 2px solid #fff;
-  border-radius: 50%;
+.hall-plan .seat {
+  fill: var(--green);
+  stroke: #fff;
+  stroke-width: 2px;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  transition: fill 0.1s ease;
 
-  &:hover:not(:disabled) {
-    transform: translate(-50%, -50%) scale(1.15);
+  // A seat drawn as a group of shapes.
+  * {
+    fill: inherit;
+    stroke: inherit;
   }
 
-  &--mine {
-    color: var(--text);
-    background: var(--orange);
-    box-shadow: 0 0 0 2px var(--text);
+  &:hover {
+    fill: var(--green-dark);
   }
 
-  // Not only colour: taken seats are smaller, faded and crossed out.
-  &--taken {
-    color: var(--taken-text);
-    background: var(--taken);
+  &--mine,
+  &--mine:hover {
+    fill: var(--orange);
+    stroke: var(--text);
+    stroke-width: 3px;
+  }
+
+  // Not only colour: taken seats are faded.
+  &--taken,
+  &--taken:hover {
+    fill: var(--taken);
+    opacity: 0.8;
     cursor: not-allowed;
-    transform: translate(-50%, -50%) scale(0.8);
-    text-decoration: line-through;
   }
 
-  &:disabled:not(.seat--taken) {
+  &[aria-disabled='true']:not(.seat--taken) {
     opacity: 0.55;
     cursor: default;
   }
 
-  // Server-rendered preview before the seat picker loads.
-  &--static {
-    opacity: 0.55;
-    cursor: default;
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    stroke: var(--text);
+    stroke-width: 4px;
   }
 }
-
 .hint {
   margin: 0.5rem 0 0;
   font-size: 0.85rem;

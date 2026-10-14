@@ -117,8 +117,16 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   The API answers 503; `ReservationService` also refuses changes when the stage does not sell.
   Reservations store their `channel` (test/vip/public); test ones are left out of the guest list
   and can be deleted. "Moje rezervace" (payment details) works in every stage.
-- Database data files: `src/database/schema.sql` + `defaults.sql` + `hall.sql` are also the production
-  installation; `seed.sql` is local test data only.
+- Database data files: `src/database/schema.sql` + `defaults.sql` are also the production installation
+  (it starts without a hall plan); `demo-hall.svg` is the local demo plan imported by `init-db`
+  (`bin/import-hall.php`), `seed.sql` local test data only.
+- Hall plan: one SVG in `hall_plan` (only one version), uploaded in Nebezpečná zóna (`Admin:Danger`).
+  Seats are shapes `id="seat-<number>"` inside groups `id="table-<number>"`; the database keeps no
+  coordinates, only `svg_id`, and seat ids are the numbers from the drawing (label `<table>/<seat>`).
+  `HallPlanParser` sanitizes the upload (allowlist of SVG elements, no scripts or external references);
+  `HallSync::apply` cancels reservations of removed seats only when they match what the admin confirmed in
+  the preview; removed seats and tables become `active = 0`. The seat picker loads `/plan-salu.svg` and
+  styles the shapes (`.seat--free/mine/taken`).
 - Do not depend on `bcmath` (may be missing on the hosting).
 - Every finished reservation has `access_token`: the page "Moje rezervace" (status, payment, QR)
   is reachable only with it and every e-mail links to it (`ReservationMailer::reservationLink`,

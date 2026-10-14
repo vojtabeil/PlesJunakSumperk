@@ -25,13 +25,6 @@ final class ReservationService
 	/** MySQL / MariaDB error code of a seat held by somebody else. */
 	private const DuplicateKey = 1062;
 
-	/** Static decorations of the hall map, in map units like hall_tables. */
-	private const HallAreas = [
-		['kind' => 'stage', 'x' => 350, 'y' => 18, 'width' => 300, 'height' => 56, 'label' => 'Pódium'],
-		['kind' => 'floor', 'x' => 250, 'y' => 110, 'width' => 500, 'height' => 380, 'label' => 'Parket'],
-	];
-
-
 	public function __construct(
 		private readonly PDO $db,
 		private readonly Settings $settings,
@@ -45,29 +38,26 @@ final class ReservationService
 	// --- Read models ---------------------------------------------------------
 
 	/**
-	 * Tables, seats and decorations for rendering the hall map.
-	 * @return array{width: int, height: int, areas: list<array<string, int|string>>, tables: list<array<string, int|string>>, seats: list<array<string, int|string>>}
+	 * Tables and seats of the hall plan. Shapes and positions are only in the SVG (HallSync::plan());
+	 * the seat picker finds a seat's shape by its svg_id.
+	 * @return array{tables: list<array{id: int, label: string, name: ?string}>, seats: list<array{id: int, label: string, table_id: ?int, svg_id: string}>}
 	 */
 	public function hallLayout(): array
 	{
 		// query() uses the text protocol, so numeric columns arrive as strings.
-		$cast = static function (array $row, array $intColumns): array {
-			foreach ($intColumns as $column) {
-				$row[$column] = (int) $row[$column];
-			}
-			return $row;
-		};
 		return [
-			'width' => $this->settings->int('map_width', 1000),
-			'height' => $this->settings->int('map_height', 640),
-			'areas' => self::HallAreas,
 			'tables' => array_map(
-				static fn(array $row): array => $cast($row, ['id', 'x', 'y', 'width', 'height']),
-				$this->db->query('SELECT id, label, x, y, width, height FROM hall_tables WHERE active = 1 ORDER BY id')->fetchAll(),
+				static fn(array $row): array => ['id' => (int) $row['id'], 'label' => (string) $row['label'], 'name' => $row['name']],
+				$this->db->query('SELECT id, label, name FROM hall_tables WHERE active = 1 ORDER BY id')->fetchAll(),
 			),
 			'seats' => array_map(
-				static fn(array $row): array => $cast($row, ['id', 'table_id', 'x', 'y']),
-				$this->db->query('SELECT id, label, table_id, x, y FROM seats WHERE active = 1 ORDER BY id')->fetchAll(),
+				static fn(array $row): array => [
+					'id' => (int) $row['id'],
+					'label' => (string) $row['label'],
+					'table_id' => $row['table_id'] !== null ? (int) $row['table_id'] : null,
+					'svg_id' => (string) $row['svg_id'],
+				],
+				$this->db->query('SELECT id, label, table_id, svg_id FROM seats WHERE active = 1 ORDER BY id')->fetchAll(),
 			),
 		];
 	}

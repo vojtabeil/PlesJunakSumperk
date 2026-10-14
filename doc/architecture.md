@@ -20,7 +20,7 @@
 | Path | Purpose |
 |---|---|
 | `app/Bootstrap.php` | Nette configurator (debug mode only on localhost, Tracy logs in `var/log`). |
-| `app/Core/RouterFactory.php` | Routes: `/` reservation, `/rezervace/<id>/<token>` "Moje rezervace" (secret link from the e-mails), `/api/<op>` JSON, `/cron/payments`, `/vstupenka/<code>/<token>` printable ticket, `/admin/kontrola[/<code>]` entrance check (+ `/admin/kontrola/api/<op>`), `/tester/<token>` and `/vip/<token>` secret links, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`, `/dev/bank`. |
+| `app/Core/RouterFactory.php` | Routes: `/` reservation, `/rezervace/<id>/<token>` "Moje rezervace" (secret link from the e-mails), `/api/<op>` JSON, `/cron/payments`, `/vstupenka/<code>/<token>` printable ticket, `/plan-salu.svg` hall plan, `/admin/nebezpecne[/plan]` dangerous zone, `/admin/kontrola[/<code>]` entrance check (+ `/admin/kontrola/api/<op>`), `/tester/<token>` and `/vip/<token>` secret links, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`, `/dev/bank`. |
 | `app/Core/SetupGuard.php` | No administrator = site not configured: every presenter except the setup wizard is disabled (pages redirect, API 503). |
 | `app/Core/Clock/` | `Clock` interface (`SystemClock`; `tests/php/Support/FrozenClock` in tests). |
 | `app/Core/Http/` | `HttpClient` interface + `CurlHttpClient` (tests use `tests/php/Support/FakeHttpClient`; no test calls a real service). |
@@ -34,18 +34,19 @@
 | `app/Model/Log/` | Event log of everything that happens (`EventLog::record`, actor from `Actor`: customer/admin/cron/system), `EventTypes` (Czech labels, categories), `EventLogRepository` (filters by date, seat, type, actor, reservation), `EventFormatter`. |
 | `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout + per-request DB check (`Authenticator` as `IdentityHandler`), `SetupConfig`. |
 | `app/Model/Export/` | `GuestListCsv`. |
+| `app/Model/Hall/` | Hall plan (SVG): `HallPlanParser` (tables / seats by id, sanitization), `HallSync` (the only version in `hall_plan`, preview of changes and affected reservations, apply), `HallUploads` (upload waiting for confirmation in `var/temp`). |
 | `app/Model/Ticket/` | `Tickets` (one ticket per seat and standing ticket, issued on confirmation; random 6-hex `code`, secret `print_token`), `TicketCheck` (entrance: lookup by code or reservation number, use, use the whole reservation, undo, statistics), `TicketLinks` (check / print URLs, QR PNG and SVG). |
 | `app/Presentation/` | Presenters + Latte templates, typed template classes (`*Template.php`), `@layout.latte`, `Accessory/` (`FormFactory`, `TemplateExtension`: filters `price`, `seatLabel`, function `asset`). |
-| `app/Presentation/Front/` | Pages for visitors: Home (reservation), Reservation ("Moje rezervace", tickets once paid), Ticket (printable ticket), Api (JSON for the seat picker), Access (tester and VIP links), `VisitorGate`. |
-| `app/Presentation/Admin/` | Administration: Setup (first-run wizard), Sign, Dashboard (seat pie chart, to-do list, table of all seats), Reservation, Customer (reservations grouped by e-mail), Payment (filters, resolving in the row), Site (stage of the site, secret links, pages for visitors who cannot buy), Log, Search (header search box), Settings (event, prices, payments), User (administrators), Export (CSV), Account (own password), Check (entrance check app for phones, own full-screen page + JSON). Shared parts in `Accessory/`. |
+| `app/Presentation/Front/` | Pages for visitors: Home (reservation), Reservation ("Moje rezervace", tickets once paid), Ticket (printable ticket), Hall (`/plan-salu.svg`), Api (JSON for the seat picker), Access (tester and VIP links), `VisitorGate`. |
+| `app/Presentation/Admin/` | Administration: Setup (first-run wizard), Sign, Dashboard (seat pie chart, to-do list, table of all seats), Reservation, Customer (reservations grouped by e-mail), Payment (filters, resolving in the row), Site (stage of the site, secret links, pages for visitors who cannot buy), Log, Search (header search box), Settings (event, prices, payments), User (administrators), Export (CSV), Account (own password), Check (entrance check app for phones, own full-screen page + JSON), Danger (Nebezpečná zóna: hall plan upload, deleting test reservations). Shared parts in `Accessory/`. |
 | `app/Presentation/Cron/` | `GET /cron/payments?key=` for a scheduler; 404 while `cron.key` is empty. |
 | `app/Presentation/Dev/` | `/dev/status`, `/dev/bank` (debug mode only, left out of the release). |
 | `app/Presentation/Error/` | Error pages. |
-| `assets/ts/` | TypeScript: `front.tsx` entry, `seat-picker/` (types, pure logic, API client, signals store, components); `check.tsx` entry, `check/` (entrance check: QR scanner via `qr-scanner`, API client, result card). |
+| `assets/ts/` | TypeScript: `front.tsx` entry, `seat-picker/` (types, pure logic, API client, signals store, components; the map inlines the SVG plan); `check.tsx` entry, `check/` (entrance check: QR scanner via `qr-scanner`, API client, result card). |
 | `assets/scss/` | SCSS partials; `front.scss`, `admin.scss` and `check.scss` are the entries. |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
 | `config/` | `common.neon`, `services.neon` (interfaces -> implementations), `local.neon` (git-ignored, from `local.neon.example`), `test.neon` (PHPUnit database). |
-| `database/` | `schema.sql` (hall layout in `hall_tables` / `seats`, the sale in `seat_bookings`, tickets in `tickets`) + `defaults.sql` + `hall.sql` (also the production installation), `seed.sql` (local test data only). |
+| `database/` | `schema.sql` (hall plan in `hall_plan`, layout in `hall_tables` / `seats`, the sale in `seat_bookings`, tickets in `tickets`) + `defaults.sql` (also the production installation), `demo-hall.svg` (local demo plan), `seed.sql` (local test data only). |
 | `tests/php/` | PHPUnit against `ples_test`; mirrors `app/`; helpers in `Support/`, recorded responses in `fixtures/`. |
 | `tests/ts/` | `bun test` of the seat picker. |
 | `www/` | Document root: `index.php`, `.htaccess`, `img/`, `kontrola.webmanifest` (installable check app), `build/` (generated, git-ignored). |

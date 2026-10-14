@@ -343,19 +343,30 @@ FLUSH PRIVILEGES;
     Invoke-DbSql $bootstrap | Out-Null
 }
 
-# Recreates the application database: schema + defaults + demo hall (+ test data), or a raw SQL dump.
-# schema.sql, defaults.sql and hall.sql are also what a new production installation imports.
+# Recreates the application database: schema + defaults + demo hall plan (+ test data), or a raw SQL dump.
+# schema.sql and defaults.sql are also what a new production installation imports (it starts without a plan).
 function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
     Reset-Database $DbName
     if ($Import) {
         Import-DbFile $Import $DbName
     } else {
-        foreach ($file in @('schema.sql', 'defaults.sql', 'hall.sql')) {
+        foreach ($file in @('schema.sql', 'defaults.sql')) {
             Import-DbFile (Join-Path $DbFilesDir $file) $DbName
         }
+        Import-HallPlan (Join-Path $DbFilesDir 'demo-hall.svg')
         if (-not $NoSeed) { Import-DbFile (Join-Path $DbFilesDir 'seed.sql') $DbName }
     }
     Write-Ok 'Database ready'
+}
+
+# Replaces the hall plan of the local database (bin/import-hall.php, same code as the administration).
+function Import-HallPlan([string]$Path) {
+    Write-Info "Importing hall plan $Path"
+    Push-Location $SrcDir
+    try {
+        $r = Invoke-Native $PhpExe @('-c', $PhpIni, 'bin/import-hall.php', $Path, '--cancel')
+        if ($r.Code -ne 0) { throw "Hall plan import failed:`n$($r.Output)" }
+    } finally { Pop-Location }
 }
 
 # Recreates the empty test database used by PHPUnit (src/config/test.neon).
@@ -467,7 +478,7 @@ function Test-ReleasePackage([string]$Web, [string]$Install) {
     if (-not (Test-DbRunning)) { throw 'MariaDB must be running for the verification (start.cmd).' }
 
     Reset-Database $ReleaseDbName
-    foreach ($file in @('schema.sql', 'defaults.sql', 'hall.sql')) {
+    foreach ($file in @('schema.sql', 'defaults.sql')) {
         Import-DbFile (Join-Path $Install $file) $ReleaseDbName
     }
 
@@ -531,11 +542,14 @@ require $www . '/index.php';
             @{ Path = '/admin/kontrola/A3F09C'; Status = 302; Expect = '/admin/sign/in' },
             @{ Path = '/admin/kontrola/api/lookup?code=A3F09C'; Status = 401 },
             @{ Path = '/build/check.js'; Status = 200 },
-            @{ Path = '/kontrola.webmanifest'; Status = 200 }
+            @{ Path = '/kontrola.webmanifest'; Status = 200 },
+            @{ Path = '/admin/nebezpecne/plan'; Status = 302; Expect = '/admin/sign/in' },
+            @{ Path = '/admin/nebezpecne/plan.svg'; Status = 302; Expect = '/admin/sign/in' },
+            @{ Path = '/plan-salu.svg'; Status = 404 }
         )
 
         Invoke-DbSql "UPDATE settings SET value = 'public' WHERE name = 'site_mode'" $ReleaseDbName | Out-Null
-        Write-Info 'Public sale: the seat picker and the API work'
+        Write-Info 'Public sale: the seat picker and the API work (no hall plan yet: standing tickets only)'
         $failed += Invoke-HttpChecks $base @(
             @{ Path = '/'; Status = 200; Expect = 'seat-picker-data'; Forbid = 'tracy-debug' },
             @{ Path = '/api/state'; Status = 200; Expect = '"ok":true' }

@@ -203,7 +203,7 @@ final class HallSync
 			ON DUPLICATE KEY UPDATE label = VALUES(label), table_id = VALUES(table_id), svg_id = VALUES(svg_id), active = 1',
 		);
 		foreach ($plan->seats as $number => $s) {
-			$seat->execute([$number, (string) $number, $s['table'], $s['svg_id']]);
+			$seat->execute([$number, $s['table'] . '/' . $number, $s['table'], $s['svg_id']]);
 		}
 	}
 

@@ -30,6 +30,4 @@ INSERT INTO settings (name, value) VALUES
     ('hold_seconds', '300'),
     ('price_seat', '350'),
     ('price_standing', '250'),
-    ('standing_capacity', '50'),
-    ('map_width', '1000'),
-    ('map_height', '640');
+    ('standing_capacity', '50');

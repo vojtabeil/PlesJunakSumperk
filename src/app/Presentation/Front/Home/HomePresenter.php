@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Front\Home;
 
+use App\Model\Hall\HallSync;
 use App\Model\Reservation\ReservationService;
 use App\Model\Reservation\ReservationSession;
 use App\Model\Site\SiteMode;
@@ -23,6 +24,7 @@ final class HomePresenter extends BasePresenter
 		private readonly ReservationService $reservations,
 		private readonly ReservationSession $reservationSession,
 		private readonly VisitorGate $gate,
+		private readonly HallSync $hall,
 	) {
 		parent::__construct();
 	}
@@ -47,8 +49,11 @@ final class HomePresenter extends BasePresenter
 		}
 
 		$this->reservations->releaseExpiredHolds();
-		$layout = $this->reservations->hallLayout();
-		$t->layout = $layout;
+		$plan = $this->hall->plan();
+		// Without a plan only standing tickets can be bought.
+		$layout = ['svg' => $plan !== null ? $this->link('Hall:svg', ['v' => $plan['hash']]) : null]
+			+ ($plan !== null ? $this->reservations->hallLayout() : ['tables' => [], 'seats' => []]);
+		$t->planUrl = $layout['svg'];
 		$t->pickerData = Json::encode([
 			'api' => $this->link('Api:default', ['op' => '__op__']),
 			'csrf' => $this->reservationSession->csrfToken(),

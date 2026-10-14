@@ -17,8 +17,8 @@ final class HomeTemplate extends BaseTemplate
 
 	public ?SiteMode $preview;
 
-	/** @var array{width: int, height: int, areas: list<array<string, int|string>>, tables: list<array<string, int|string>>, seats: list<array<string, int|string>>} */
-	public array $layout;
+	/** URL of the hall plan (SVG), null while there is none. */
+	public ?string $planUrl;
 
 	public string $pickerData;
 }

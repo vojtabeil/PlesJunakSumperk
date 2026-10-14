@@ -133,7 +133,8 @@ the CorelDRAW MCP server (`c:\Git\coreldraw-mcp`).
 | Text with the table name (optional) | `table-12-name` | Name of the table (scout personality). |
 | Anything else | any | Decoration only. |
 
-Seats are numbered across the hall (1-270 in the 2025 drawing); the label "table/seat" goes away.
+Seats are numbered across the hall (1-270 in the 2025 drawing). The seat id is that number; the label stays
+"<table>/<seat>" (e.g. "12/87", shown as "Stůl 12 · místo 87"), so e-mails, tickets and search need no change.
 
 ### 6.3 Database
 
@@ -185,12 +186,12 @@ seat_bookings (seat_id PK -> seats, reservation_id NOT NULL -> reservations ON D
 ### 6.6 Steps
 
 1. Split `seats` into `seats` (layout) and `seat_bookings` (sale) without changing behaviour. **Done.**
-2. Parser + sanitization + tests (small fixture SVG).
-3. Schema, `HallSync` (preview, affected reservations, apply) + tests, `bin/import-hall.php`, demo plan in `init-db`.
-4. Dangerous zone: "Plánek sálu" (download, upload, preview, confirmation) + moved deletion of test reservations.
-5. URLs with the SVG file + headers + tests.
-6. Seat labels: the seat number instead of "table/seat".
-7. Seat picker on the SVG from the URL; remove `HallAreas`, `map_*`, coordinates, `hall.sql`.
+2. Parser + sanitization + tests (small fixture SVG). **Done.**
+3. Schema, `HallSync` (preview, affected reservations, apply) + tests, `bin/import-hall.php`, demo plan in `init-db`. **Done.**
+4. Dangerous zone: "Plánek sálu" (download, upload, preview, confirmation) + moved deletion of test reservations. **Done.**
+5. URLs with the SVG file + headers + tests. **Done.**
+6. Seat labels: kept as "<table>/<seat number>" (decided during the implementation). **Done.**
+7. Seat picker on the SVG from the URL; remove `HallAreas`, `map_*`, coordinates, `hall.sql`. **Done.**
 8. Real drawing: object ids and table groups set through the CorelDRAW MCP, SVG export, first upload
    (needs the MCP server connected).
 9. Release checks, `doc/architecture.md`, `AGENTS.md`.

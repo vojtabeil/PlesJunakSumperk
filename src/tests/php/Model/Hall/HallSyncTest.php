@@ -40,7 +40,7 @@ final class HallSyncTest extends DatabaseTestCase
 			array_map('intval', $this->db->query('SELECT id FROM seats WHERE active = 1 ORDER BY id')->fetchAll(\PDO::FETCH_COLUMN)),
 		);
 		self::assertSame('0', (string) $this->db->query('SELECT active FROM seats WHERE id = 204')->fetchColumn(), 'Kept, inactive');
-		self::assertSame(['104', '2', 'seat-104'], array_values(array_map('strval', (array) $this->db->query('SELECT label, table_id, svg_id FROM seats WHERE id = 104')->fetch())));
+		self::assertSame(['2/104', '2', 'seat-104'], array_values(array_map('strval', (array) $this->db->query('SELECT label, table_id, svg_id FROM seats WHERE id = 104')->fetch())));
 		self::assertSame('Foglar', $this->db->query('SELECT name FROM hall_tables WHERE id = 1')->fetchColumn());
 
 		$stored = $this->sync()->plan();

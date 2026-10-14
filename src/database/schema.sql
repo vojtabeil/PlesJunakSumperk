@@ -42,30 +42,24 @@ CREATE TABLE reservations (
 ) ENGINE=InnoDB;
 
 -- Tables in the hall: id = number of the table in the plan, svg_id = id of its group in the SVG.
--- Removed from the plan = active 0 (kept for the history). x/y/width/height: old map, removed with it.
+-- Removed from the plan = active 0 (kept for the history). Shapes and positions are only in the SVG.
 CREATE TABLE hall_tables (
     id     SMALLINT UNSIGNED NOT NULL PRIMARY KEY,
     label  VARCHAR(16) NOT NULL,
     name   VARCHAR(255) NULL,
     svg_id VARCHAR(64) NULL,
-    active TINYINT(1) NOT NULL DEFAULT 1,
-    x      SMALLINT UNSIGNED NULL,
-    y      SMALLINT UNSIGNED NULL,
-    width  SMALLINT UNSIGNED NULL,
-    height SMALLINT UNSIGNED NULL
+    active TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB;
 
 -- Seats of the hall: the layout only, what is sold is in seat_bookings. id = number of the seat in the plan,
--- svg_id = id of its shape in the SVG. Removed from the plan = active 0 (the event log still refers to it).
--- x/y: seat centre on the old map, removed with it.
+-- svg_id = id of its shape in the SVG; label = "<table>/<seat>" (e.g. "12/87"). Removed from the plan = active 0
+-- (the event log still refers to it).
 CREATE TABLE seats (
     id       INT UNSIGNED NOT NULL PRIMARY KEY,
     label    VARCHAR(16)  NOT NULL,
     table_id SMALLINT UNSIGNED NULL,
     svg_id   VARCHAR(64)  NULL,
     active   TINYINT(1) NOT NULL DEFAULT 1,
-    x        SMALLINT UNSIGNED NULL,
-    y        SMALLINT UNSIGNED NULL,
     -- Seat labels ("3/5") are unique; the admin search and the log filter look seats up by label.
     UNIQUE KEY uq_seats_label (label),
     CONSTRAINT fk_seats_table FOREIGN KEY (table_id) REFERENCES hall_tables (id)

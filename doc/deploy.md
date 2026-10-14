@@ -32,8 +32,10 @@ example, `/dev/*` pages or the Tracy debugger would be reachable.
 
 1. In the hosting administration create a database and a user (or use the existing one).
 2. In phpMyAdmin select the database and import, in this order:
-   `install/schema.sql`, `install/defaults.sql`, `install/hall.sql`.
-   (`hall.sql` is a demo layout of 12 tables; replace it once the real layout of the venue is known.)
+   `install/schema.sql`, `install/defaults.sql`.
+   The hall plan is not part of the installation: after the first login upload it in
+   Nebezpečná zóna -> Plánek sálu (SVG). Until then only standing tickets can be sold.
+   The upload limit is the PHP `upload_max_filesize` of the hosting (at most 5 MB).
 3. **Never import `src/database/seed.sql`** - it contains test data and a test administrator.
 
 ## 3. Upload

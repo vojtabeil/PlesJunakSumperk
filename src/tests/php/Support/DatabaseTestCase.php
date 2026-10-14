@@ -60,11 +60,11 @@ abstract class DatabaseTestCase extends TestCase
 			'payment_days' => '2',
 			'contact_email' => 'dotazy@example.com',
 		]);
-		$this->db->exec("INSERT INTO hall_tables (id, label, x, y, width, height) VALUES (1, '1', 0, 0, 160, 40), (2, '2', 0, 100, 160, 40)");
+		$this->db->exec("INSERT INTO hall_tables (id, label, svg_id) VALUES (1, '1', 'table-1'), (2, '2', 'table-2')");
 		$this->db->exec(
-			"INSERT INTO seats (id, label, table_id, x, y) VALUES
-			(101, '1/1', 1, 10, 0), (102, '1/2', 1, 50, 0), (103, '1/3', 1, 90, 0), (104, '1/4', 1, 130, 0),
-			(201, '2/1', 2, 10, 100), (202, '2/2', 2, 50, 100), (203, '2/3', 2, 90, 100), (204, '2/4', 2, 130, 100)",
+			"INSERT INTO seats (id, label, table_id, svg_id) VALUES
+			(101, '1/1', 1, 'seat-101'), (102, '1/2', 1, 'seat-102'), (103, '1/3', 1, 'seat-103'), (104, '1/4', 1, 'seat-104'),
+			(201, '2/1', 2, 'seat-201'), (202, '2/2', 2, 'seat-202'), (203, '2/3', 2, 'seat-203'), (204, '2/4', 2, 'seat-204')",
 		);
 	}
 

@@ -5,13 +5,13 @@ import {
   formatSeat,
   freeSeats,
   nearestSeat,
-  percent,
   plural,
   seatStatus,
   splitSeatLabel,
-  tableZones,
+  seatDescription,
   totals,
 } from '../../assets/ts/seat-picker/logic';
+import type { MapPoint } from '../../assets/ts/seat-picker/logic';
 import type { ApiState, HallSeat } from '../../assets/ts/seat-picker/types';
 import { emailSuggestion, validate } from '../../assets/ts/seat-picker/components/CheckoutForm';
 
@@ -48,9 +48,6 @@ describe('labels and formatting', () => {
     expect(formatCountdown(-3)).toBe('0:00');
   });
 
-  test('computes map percentages', () => {
-    expect(percent(250, 1000)).toBe('25.000%');
-  });
 });
 
 describe('seat status', () => {
@@ -83,8 +80,8 @@ describe('totals and limits', () => {
 });
 
 describe('map', () => {
-  const seat = (id: number, x: number, y: number, table: number | null = 1): HallSeat => ({ id, label: `${table}/${id}`, table_id: table, x, y });
-  const row = [seat(1, 0, 0), seat(2, 40, 0), seat(3, 80, 0), seat(4, 0, 40), seat(5, 40, 40)];
+  const point = (id: number, x: number, y: number): MapPoint => ({ id, x, y });
+  const row = [point(1, 0, 0), point(2, 40, 0), point(3, 80, 0), point(4, 0, 40), point(5, 40, 40)];
 
   test('arrow keys move to the nearest seat in that direction', () => {
     expect(nearestSeat(row[0]!, row, 'right')?.id).toBe(2);
@@ -94,12 +91,12 @@ describe('map', () => {
     expect(nearestSeat(row[2]!, row, 'right')).toBeNull();
   });
 
-  test('draws one zone around each table with its seats', () => {
-    const zones = tableZones([...row, seat(9, 200, 200, 2), seat(10, 0, 0, null)], 10);
-    expect(zones).toEqual([
-      { tableId: 1, x: -10, y: -10, width: 100, height: 60 },
-      { tableId: 2, x: 190, y: 190, width: 20, height: 20 },
-    ]);
+  test('describes a seat for screen readers', () => {
+    const seat: HallSeat = { id: 25, label: '3/25', table_id: 3, svg_id: 'seat-25' };
+    expect(seatDescription(seat, { id: 3, label: '3', name: 'Jaroslav Foglar' }, 'free', 350)).toBe(
+      'Stůl 3 (Jaroslav Foglar), místo 25, volné, 350 Kč',
+    );
+    expect(seatDescription(seat, undefined, 'taken', 350)).toBe('Stůl 3, místo 25, obsazené');
   });
 });
 
