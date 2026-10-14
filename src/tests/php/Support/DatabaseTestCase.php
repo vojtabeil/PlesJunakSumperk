@@ -14,6 +14,7 @@ use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
 use App\Model\Settings\Settings;
+use App\Model\Ticket\Tickets;
 use Nette\Application\LinkGenerator;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use Nette\DI\Container;
@@ -39,7 +40,7 @@ abstract class DatabaseTestCase extends TestCase
 	{
 		$this->db = $this->service(PDO::class);
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 0');
-		foreach (['seat_bookings', 'seats', 'hall_tables', 'bank_transactions', 'mock_bank_transactions', 'reservations', 'settings', 'event_log_seats', 'event_log', 'admin_users'] as $table) {
+		foreach (['tickets', 'seat_bookings', 'seats', 'hall_tables', 'bank_transactions', 'mock_bank_transactions', 'reservations', 'settings', 'event_log_seats', 'event_log', 'admin_users'] as $table) {
 			$this->db->exec("TRUNCATE TABLE $table");
 		}
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 1');
@@ -79,7 +80,13 @@ abstract class DatabaseTestCase extends TestCase
 	/** Fresh services per test, so cached settings never leak between tests. */
 	protected function reservations(): ReservationService
 	{
-		return new ReservationService($this->db, $this->settings(), new VariableSymbol($this->settings()), $this->eventLog());
+		return new ReservationService($this->db, $this->settings(), new VariableSymbol($this->settings()), $this->eventLog(), $this->tickets());
+	}
+
+
+	protected function tickets(): Tickets
+	{
+		return new Tickets($this->db);
 	}
 
 

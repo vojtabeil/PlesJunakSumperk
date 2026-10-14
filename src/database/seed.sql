@@ -14,6 +14,17 @@ INSERT INTO seat_bookings (seat_id, reservation_id, state) VALUES
     (101, 1, 'reserved'), (102, 1, 'reserved'),
     (501, 2, 'reserved'), (502, 2, 'reserved'), (503, 2, 'reserved'), (504, 2, 'reserved');
 
+-- Tickets with fixed codes for trying the entrance check (/admin/kontrola): reservation 1 is unpaid
+-- (2 seats + 1 standing), reservation 2 is paid. Print links: /vstupenka/<code>/<code repeated, lower case>.
+INSERT INTO tickets (reservation_id, seat_id, code, print_token) VALUES
+    (1, 101, 'A10101', 'a10101a10101a10101a10101a10101a1'),
+    (1, 102, 'A10102', 'a10102a10102a10102a10102a10102a1'),
+    (1, NULL, 'A100F1', 'a100f1a100f1a100f1a100f1a100f1a1'),
+    (2, 501, 'B20501', 'b20501b20501b20501b20501b20501b2'),
+    (2, 502, 'B20502', 'b20502b20502b20502b20502b20502b2'),
+    (2, 503, 'B20503', 'b20503b20503b20503b20503b20503b2'),
+    (2, 504, 'B20504', 'b20504b20504b20504b20504b20504b2');
+
 -- Local administrator: login "admin", password "admin".
 INSERT INTO admin_users (login, name, password_hash) VALUES
     ('admin', 'Testovací Organizátor', '$2y$12$0dzo6iQBXaEx2QIunet7P.rVyXI5H5K52wlJ/bG6umC0LijyaoSea');

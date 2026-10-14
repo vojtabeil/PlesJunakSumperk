@@ -1,0 +1,128 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Model\Ticket;
+
+use PDO;
+
+
+/**
+ * Tickets of reservations: one per seat and one per standing ticket. The code (6 random hex
+ * characters) is checked at the entrance; the public print link also needs the secret print token.
+ */
+final class Tickets
+{
+	public const CodeLength = 6;
+
+	/** MySQL / MariaDB error code of a duplicate key. */
+	private const DuplicateKey = 1062;
+
+	private const Columns = 't.id, t.reservation_id, t.seat_id, t.code, t.print_token, t.created_at, t.used_at, t.used_by,
+		s.label AS seat_label, a.name AS used_by_name';
+
+	private const Joins = 'LEFT JOIN seats s ON s.id = t.seat_id LEFT JOIN admin_users a ON a.id = t.used_by';
+
+
+	public function __construct(
+		private readonly PDO $db,
+	) {
+	}
+
+
+	/**
+	 * Creates the tickets of a confirmed reservation: one per reserved seat and one per standing
+	 * ticket. Called inside the confirmation transaction.
+	 */
+	public function issue(int $reservationId): void
+	{
+		$stmt = $this->db->prepare(
+			"SELECT seat_id FROM seat_bookings WHERE reservation_id = ? AND state = 'reserved' ORDER BY seat_id",
+		);
+		$stmt->execute([$reservationId]);
+		$seats = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+		$stmt = $this->db->prepare('SELECT standing_tickets FROM reservations WHERE id = ?');
+		$stmt->execute([$reservationId]);
+		$standing = (int) $stmt->fetchColumn();
+
+		foreach ([...$seats, ...array_fill(0, $standing, null)] as $seatId) {
+			$this->insert($reservationId, $seatId);
+		}
+	}
+
+
+	/**
+	 * Tickets of a reservation, seats first (by seat), then standing tickets.
+	 * @return list<array<string, mixed>>
+	 */
+	public function forReservation(int $reservationId): array
+	{
+		$stmt = $this->db->prepare(
+			'SELECT ' . self::Columns . ' FROM tickets t ' . self::Joins . '
+			WHERE t.reservation_id = ? ORDER BY t.seat_id IS NULL, t.seat_id, t.id',
+		);
+		$stmt->execute([$reservationId]);
+		return $stmt->fetchAll();
+	}
+
+
+	/** @return array<string, mixed>|null */
+	public function findByCode(string $code): ?array
+	{
+		$code = self::normalizeCode($code);
+		if ($code === null) {
+			return null;
+		}
+		$stmt = $this->db->prepare('SELECT ' . self::Columns . ' FROM tickets t ' . self::Joins . ' WHERE t.code = ?');
+		$stmt->execute([$code]);
+		return $stmt->fetch() ?: null;
+	}
+
+
+	/**
+	 * The ticket behind a public print link, or null when the code or the token is wrong.
+	 * @return array<string, mixed>|null
+	 */
+	public function findForPrint(string $code, string $printToken): ?array
+	{
+		$ticket = $this->findByCode($code);
+		return $ticket !== null && hash_equals((string) $ticket['print_token'], $printToken) ? $ticket : null;
+	}
+
+
+	/**
+	 * The code as stored (upper case), or null when the input cannot be a code.
+	 * Accepts any case, spaces and dashes, and the letter O for zero.
+	 */
+	public static function normalizeCode(string $input): ?string
+	{
+		$code = strtr(strtoupper((string) preg_replace('~[\s-]+~', '', $input)), ['O' => '0']);
+		return preg_match('~^[0-9A-F]{' . self::CodeLength . '}$~', $code) ? $code : null;
+	}
+
+
+	private function insert(int $reservationId, ?int $seatId): void
+	{
+		$stmt = $this->db->prepare(
+			'INSERT INTO tickets (reservation_id, seat_id, code, print_token) VALUES (?, ?, ?, ?)',
+		);
+		// 16.7 million codes for a few hundred tickets: a collision is rare, a few retries are plenty.
+		for ($attempt = 1; ; $attempt++) {
+			try {
+				$stmt->execute([$reservationId, $seatId, self::randomCode(), bin2hex(random_bytes(16))]);
+				return;
+			} catch (\PDOException $e) {
+				if (($e->errorInfo[1] ?? null) !== self::DuplicateKey || $attempt >= 10) {
+					throw $e;
+				}
+			}
+		}
+	}
+
+
+	private static function randomCode(): string
+	{
+		return strtoupper(bin2hex(random_bytes(self::CodeLength / 2)));
+	}
+}

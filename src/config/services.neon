@@ -18,6 +18,8 @@ services:
 	- App\Model\Reservation\SeatOverview
 	- App\Model\Site\SiteAccess
 
+	- App\Model\Ticket\Tickets
+
 	- App\Model\Admin\AdminUsers
 	- App\Model\Admin\Authenticator
 	- App\Model\Admin\SetupConfig(%setup%)

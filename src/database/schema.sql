@@ -97,6 +97,28 @@ CREATE TABLE admin_users (
     UNIQUE KEY uq_admin_users_login (login)
 ) ENGINE=InnoDB;
 
+-- Tickets: one per seat and one per standing ticket of a reservation, created when it is confirmed.
+-- code = 6 random hex characters, in the QR code and typed by hand at the entrance; it never opens
+-- anything public. print_token = secret part of the public print link /vstupenka/<code>/<print_token>.
+-- A cancelled reservation keeps its tickets, they are invalid by the reservation status.
+CREATE TABLE tickets (
+    id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    reservation_id INT UNSIGNED NOT NULL,
+    seat_id        INT UNSIGNED NULL,
+    code           CHAR(6)  NOT NULL,
+    print_token    CHAR(32) NOT NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    used_at        DATETIME NULL,
+    used_by        INT UNSIGNED NULL,
+    UNIQUE KEY uq_tickets_code (code),
+    KEY ix_tickets_reservation (reservation_id),
+    -- Entrance statistics (used tickets).
+    KEY ix_tickets_used (used_at),
+    CONSTRAINT fk_tickets_reservation FOREIGN KEY (reservation_id) REFERENCES reservations (id) ON DELETE CASCADE,
+    CONSTRAINT fk_tickets_seat FOREIGN KEY (seat_id) REFERENCES seats (id),
+    CONSTRAINT fk_tickets_used_by FOREIGN KEY (used_by) REFERENCES admin_users (id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 -- Log of everything that happens with reservations, payments, e-mails and the administration.
 -- actor_type: who caused it (customer = visitor of the site, admin, cron, system = automatic consequence).
 CREATE TABLE event_log (

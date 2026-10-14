@@ -7,6 +7,7 @@ namespace App\Model\Reservation;
 use App\Model\Log\EventLog;
 use App\Model\Payment\VariableSymbol;
 use App\Model\Settings\Settings;
+use App\Model\Ticket\Tickets;
 use PDO;
 use Throwable;
 
@@ -37,6 +38,7 @@ final class ReservationService
 		private readonly Settings $settings,
 		private readonly VariableSymbol $variableSymbol,
 		private readonly EventLog $eventLog,
+		private readonly Tickets $tickets,
 	) {
 	}
 
@@ -338,6 +340,7 @@ final class ReservationService
 					access_token = ?, confirmed_at = NOW(), session_id = NULL
 				WHERE id = ?",
 			)->execute([$email, $name, $phone === '' ? null : $phone, $total, $channel, bin2hex(random_bytes(16)), $draftId]);
+			$this->tickets->issue($draftId);
 
 			$this->eventLog->record('reservation.confirmed', $draftId, [
 				'name' => $name,
