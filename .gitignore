@@ -9,8 +9,12 @@
 /www/build/
 /dist/
 
+# Automatic backups made by CorelDRAW
+Backup_*.cdr
+
 # Legacy site copy (original-web): credentials, personal data and logs stay local
 /original-web/mysql/
+/original-web/ftp/include/.env
 /original-web/ftp/__log/
 /original-web/ftp/include/log/
 /original-web/ftp/include/tmp/
