@@ -123,6 +123,12 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
 - Every finished reservation has `access_token`: the page "Moje rezervace" (status, payment, QR)
   is reachable only with it and every e-mail links to it (`ReservationMailer::reservationLink`,
   absolute URL from the current request; tests set `HTTP_HOST`).
+- Tickets (`tickets`): one per seat and standing ticket, created when a reservation is confirmed. The 6-hex
+  `code` is in the QR code (link `/admin/kontrola/<code>`) and typed at the entrance; it never opens anything
+  public. The public print page needs the secret `print_token` (`/vstupenka/<code>/<token>`). Visitors get the
+  tickets once the reservation is paid (payment e-mail, or `sendTickets` after marking paid by hand).
+  The entrance check (`TicketCheck`) lets unpaid reservations in with a warning; test tickets are valid only in
+  the testing stage; any administrator may undo an entry. Its API (`Admin:Check`) answers 401 JSON without login.
 - Payment is due `payment_days` (setting, default 2) after the reservation day: shown to the
   customer, put into the QR code (DT), "overdue" in the admin; reminders are sent by hand from the
   dashboard or the reservation detail (no cron), at most once per payment period.

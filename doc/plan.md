@@ -94,7 +94,7 @@ The current structure is described in `doc/architecture.md`.
 Features of the old site (`resource/original-web/`, see `doc/legacy/original-web.md`) that the new site does not have yet. Data import from the
 legacy database is out of scope. Each item names the legacy code it replaces.
 
-1. **Entrance check.** Planned in section 7.
+1. ~~**Entrance check.**~~ Done (section 7).
    Legacy: `resource/original-web/ftp/www/check/tets.php` (jsQR camera scanner), `place.usedTime`.
 2. **Alcohol wristbands.** Count issued and remaining wristbands per reservation.
    Legacy: `ticket.alcohol_strip_count`.
@@ -237,3 +237,5 @@ tickets (id, reservation_id -> reservations ON DELETE CASCADE, seat_id NULL -> s
 3. Tickets for visitors: print page, e-mail after full payment, "Moje rezervace", resend.
 4. Check application (presenter, layout, JSON, Preact, scanner, manual input, PWA).
 5. Dashboard, reservation detail, CSV, documentation.
+
+All steps done (2026-10-14). Not tried yet on a real phone over HTTPS (camera access needs HTTPS outside localhost).
