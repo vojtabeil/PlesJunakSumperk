@@ -16,7 +16,7 @@ interface Props {
 
 /**
  * One screen with everything needed to choose: availability, the whole map (live seat states) with
- * the order button in its corner, and tickets without a seat. The summary with the form follows below.
+ * the order button in its top right corner, and tickets without a seat. The summary with the form follows below.
  */
 export function App({ store, data }: Props) {
   const state = store.state.value;

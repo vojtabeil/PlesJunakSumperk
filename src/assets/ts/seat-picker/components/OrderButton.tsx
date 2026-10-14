@@ -9,7 +9,7 @@ interface Props {
 }
 
 /**
- * Green button in the corner of the map once something is chosen: scrolls (without changing the URL)
+ * Green button in the top right corner of the map once something is chosen: scrolls (without changing the URL)
  * to the form and puts the cursor into its first empty field.
  */
 export function OrderButton({ state, onOrder }: Props) {
