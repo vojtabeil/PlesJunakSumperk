@@ -54,6 +54,20 @@ final class ReservationAdmin
 	}
 
 
+	/** @return array{unpaid: int, partial: int, paid: int} sold standing tickets by the payment of their reservation */
+	public function standingByPayment(): array
+	{
+		$row = $this->db->query(
+			"SELECT
+				COALESCE(SUM(IF(status = 'confirmed', standing_tickets, 0)), 0) AS unpaid,
+				COALESCE(SUM(IF(status = 'partially_paid', standing_tickets, 0)), 0) AS partial,
+				COALESCE(SUM(IF(status = 'paid', standing_tickets, 0)), 0) AS paid
+			FROM reservations",
+		)->fetch();
+		return array_map('intval', $row);
+	}
+
+
 	/** @return array{test: int, vip: int, public: int} tickets of finished reservations by channel */
 	public function ticketsByChannel(): array
 	{

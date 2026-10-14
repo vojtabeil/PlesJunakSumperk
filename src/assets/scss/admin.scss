@@ -434,25 +434,29 @@ fieldset {
   }
 }
 
-// --- Seat status colours (pie chart, legend, badges) ---------------------------
+// --- Ticket state colours (dashboard bars, legend, seat badges) -----------------
+// One green ramp, light -> dark = further along: chosen -> reserved -> partly paid -> paid
+// (validated as an ordinal ramp: monotone lightness, light end >= 2:1 on white). Free = neutral track.
+// Z-lístky reuse it: waiting for pick-up = the light end, picked up = paid.
 
-$seat-colors: (
-  free: #d9e7d6,
-  held: #9ec5e8,
-  unpaid: #f29a1d,
-  partial: #f6d38f,
-  paid: #287234,
+$state-colors: (
+  held: #8dbd88,
+  unpaid: #5e985f,
+  partial: #3a7746,
+  paid: #1f5530,
+  waiting: #8dbd88,
+  picked_up: #1f5530,
+  free: #ebe5d6,
 );
 
-@each $status, $color in $seat-colors {
-  .slice--#{$status} {
-    fill: $color;
+@each $state, $color in $state-colors {
+  .ticket-bar-part--#{$state} {
     background: $color;
   }
 
-  .badge--seat-#{$status} {
+  .badge--seat-#{$state} {
     background: $color;
-    @if $status == paid {
+    @if index((unpaid, partial, paid, picked_up), $state) {
       color: #fff;
     }
   }
@@ -527,35 +531,72 @@ $seat-colors: (
   gap: 0 1.5rem;
 }
 
-.chart {
+// Stacked bars of the three kinds of tickets.
+.tickets-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 1.5rem;
-}
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
 
-.pie {
-  width: 11rem;
-  height: 11rem;
-  flex: none;
-
-  .slice {
-    stroke: var(--surface);
-    stroke-width: 0.01;
+  h2 {
+    margin-bottom: 0.5rem;
   }
 }
 
-.legend-list {
-  display: grid;
-  gap: 0.25rem;
-  margin: 0;
+.tickets-total {
+  margin: 0 0 0.5rem;
+}
+
+.ticket-bar-row {
+  margin-bottom: 1.1rem;
+}
+
+.ticket-bar-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 1rem;
+  margin-bottom: 0.3rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.ticket-bar {
+  display: flex;
+  height: 1.4rem;
+  overflow: hidden;
+  background: #ebe5d6;
+  border-radius: 4px;
+}
+
+// A 2px surface gap between the parts.
+.ticket-bar-part {
+  min-width: 3px;
+  box-shadow: inset -2px 0 0 var(--surface);
+}
+
+.ticket-bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
+  margin: 0.4rem 0 0;
   padding: 0;
   list-style: none;
+  font-size: 0.9rem;
+
+  li,
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
 
   a {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
     color: inherit;
     text-decoration: none;
 
@@ -1116,14 +1157,6 @@ h3 {
   strong {
     font-family: ui-monospace, Consolas, monospace;
     letter-spacing: 0.12em;
-  }
-}
-
-// Ticket kinds on the dashboard.
-.ticket-kinds {
-  td,
-  th {
-    font-variant-numeric: tabular-nums;
   }
 }
 

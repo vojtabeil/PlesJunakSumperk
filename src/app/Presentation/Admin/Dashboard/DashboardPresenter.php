@@ -16,7 +16,7 @@ use App\Model\Settings\Settings;
 use App\Model\Ticket\TicketCheck;
 use App\Model\Ticket\Tickets;
 use App\Presentation\Admin\Accessory\ImportPaymentsForm;
-use App\Presentation\Admin\Accessory\PieChart;
+use App\Presentation\Admin\Accessory\StackedBar;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Form;
@@ -67,13 +67,20 @@ final class DashboardPresenter extends BasePresenter
 		$t->stats = $stats;
 		$t->entrance = $this->ticketCheck->entranceStats();
 		$crew = $this->crew->stats();
-		// The three kinds of tickets: sold seats, sold standing tickets, Z-lístky of the crew (free, no capacity).
-		$t->ticketKinds = [
-			'seat' => ['label' => 'Místa u stolů', 'count' => $stats['reserved'], 'capacity' => $stats['total'],
-				'note' => $stats['held'] ? "právě vybírá: {$stats['held']}" : null],
-			'standing' => ['label' => 'Na stání', 'count' => $stats['standing'], 'capacity' => $stats['standing_capacity'], 'note' => null],
-			'crew' => ['label' => 'Z-lístky (tým)', 'count' => $crew['total'], 'capacity' => null,
-				'note' => $crew['total'] ? "vyzvednuto: {$crew['picked_up']}" : null],
+		$standing = $this->reservationAdmin->standingByPayment();
+		// The three kinds of tickets as bars, darker = further along (chosen -> reserved -> paid / picked up).
+		$t->bars = [
+			'seat' => ['label' => 'Místa u stolů', 'sold' => $stats['reserved']] + StackedBar::build(
+				['paid' => $counts['paid'], 'partial' => $counts['partial'], 'unpaid' => $counts['unpaid'], 'held' => $counts['held']],
+				array_sum($counts),
+			),
+			'standing' => ['label' => 'Na stání', 'sold' => $stats['standing']] + StackedBar::build(
+				['paid' => $standing['paid'], 'partial' => $standing['partial'], 'unpaid' => $standing['unpaid']],
+				$stats['standing_capacity'],
+			),
+			'crew' => ['label' => 'Z-lístky (tým)', 'sold' => $crew['total']] + StackedBar::build(
+				['picked_up' => $crew['picked_up'], 'waiting' => $crew['total'] - $crew['picked_up']],
+			),
 		];
 		$t->hasPlan = $this->hallSync->plan() !== null;
 		$t->siteMode = $this->settings->mode();
@@ -82,8 +89,6 @@ final class DashboardPresenter extends BasePresenter
 			'standing' => $this->tickets->listing('standing'),
 			'crew' => $this->tickets->listing('crew'),
 		];
-		$t->seatCounts = $counts;
-		$t->slices = PieChart::slices($counts);
 		$t->seatTotal = array_sum($counts);
 		$t->seatRows = $this->seatOverview->seats($filter, $this->seatSearch);
 		$t->seatFilter = $filter;

@@ -15,11 +15,6 @@ final class DashboardTemplate extends BaseTemplate
 
 	public SiteMode $siteMode;
 
-	/** @var array<string, int> */
-	public array $seatCounts;
-
-	/** @var list<array{key: string, value: int, percent: float, path: ?string}> */
-	public array $slices;
 
 	public int $seatTotal;
 
@@ -43,8 +38,11 @@ final class DashboardTemplate extends BaseTemplate
 	/** @var array{used: int, total: int, kinds: array<string, array{used: int, total: int}>} tickets used at the entrance */
 	public array $entrance;
 
-	/** @var array<string, array{label: string, count: int, capacity: ?int, note: ?string}> seat, standing, crew */
-	public array $ticketKinds;
+	/**
+	 * The three kinds of tickets (seat, standing, crew) as stacked bars (StackedBar::build + label, sold).
+	 * @var array<string, array{label: string, sold: int, total: int, parts: list<array{key: string, value: int, percent: float}>, free: int}>
+	 */
+	public array $bars;
 
 	/** @var array<string, list<array<string, mixed>>> full lists of the tickets by kind (Tickets::listing) */
 	public array $ticketLists;

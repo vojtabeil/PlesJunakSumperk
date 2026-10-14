@@ -14,66 +14,54 @@
 </div>
 
 <div class="overview">
-	{* 1. Chart of all seats by status *}
-	<section class="card chart-card" aria-labelledby="chart-title">
-		<h2 id="chart-title">Místa v sále</h2>
-		<div class="chart">
-			<svg class="pie" viewBox="-1 -1 2 2" role="img"
-				aria-label="Graf stavu míst: {foreach $slices as $s}{$s['key']|seatStatus} {$s['value']}{sep}, {/sep}{/foreach}">
-				{foreach $slices as $s}
-					<circle n:if="$s['path'] === null" r="1" class="slice slice--{$s['key']}"/>
-					<path n:if="$s['path'] !== null" d="{$s['path']}" class="slice slice--{$s['key']}"/>
+	{* 1. The three kinds of tickets as stacked bars, darker = further along *}
+	{var $partLabels = [
+		'paid' => 'Zaplaceno', 'partial' => 'Částečně zaplaceno', 'unpaid' => 'Rezervováno, nezaplaceno', 'held' => 'Právě se vybírá',
+		'picked_up' => 'Vyzvednuto', 'waiting' => 'K vyzvednutí', 'free' => 'Volné',
+	]}
+	<section class="card tickets-card" aria-labelledby="tickets-title">
+		<div class="tickets-head">
+			<h2 id="tickets-title">Lístky</h2>
+			<p class="tickets-total">
+				<strong>{array_sum(array_column($bars, 'sold'))}</strong> lístků celkem ·
+				na plese <strong>{$entrance['used']}</strong> z {$entrance['total']}
+			</p>
+		</div>
+
+		<div n:foreach="$bars as $kind => $bar" class="ticket-bar-row">
+			<div class="ticket-bar-head">
+				<h3>{if $kind === 'crew'}<a n:href="Crew:default">{$bar['label']}</a>{else}{$bar['label']}{/if}</h3>
+				<span>
+					<strong>{$bar['sold']}</strong>{if $kind === 'crew'} vydáno{else} z {$bar['total']}{/if}
+					<span class="muted">· na plese {$entrance['kinds'][$kind]['used']}</span>
+				</span>
+			</div>
+			<div class="ticket-bar" role="img"
+				aria-label="{$bar['label']}: {foreach $bar['parts'] as $p}{$partLabels[$p['key']]} {$p['value']}, {/foreach}{if $kind !== 'crew'}volné {$bar['free']}{/if}">
+				{foreach $bar['parts'] as $p}
+					<span n:if="$p['value']" class="ticket-bar-part ticket-bar-part--{$p['key']}" style="width: {$p['percent']|noescape}%"
+						title="{$partLabels[$p['key']]}: {$p['value']}"></span>
 				{/foreach}
-			</svg>
-			<ul class="legend-list">
-				<li n:foreach="$seatCounts as $status => $count">
-					<a n:href="this, seats: $status" n:class="$seatFilter === $status ? 'is-current'">
-						<span class="swatch slice--{$status}"></span>
-						{$status|seatStatus}
-						<strong>{$count}</strong>
-						<span class="muted">({$seatTotal ? round($count / $seatTotal * 100) : 0} %)</span>
+			</div>
+			<ul class="ticket-bar-legend">
+				{foreach $bar['parts'] as $p}
+					<li n:if="$p['value']">
+						<a n:tag-if="$kind === 'seat'" n:href="this, seats: $p['key']" n:class="$kind === 'seat' && $seatFilter === $p['key'] ? 'is-current'">
+							<span class="swatch ticket-bar-part--{$p['key']}"></span>{$partLabels[$p['key']]} <strong>{$p['value']}</strong>
+						</a>
+					</li>
+				{/foreach}
+				<li n:if="$kind !== 'crew'">
+					<a n:tag-if="$kind === 'seat'" n:href="this, seats: free" n:class="$kind === 'seat' && $seatFilter === 'free' ? 'is-current'">
+						<span class="swatch ticket-bar-part--free"></span>{$partLabels['free']} <strong>{$bar['free']}</strong>
 					</a>
 				</li>
 			</ul>
 		</div>
-		<p class="muted">
-			Zaplaceno {$stats['paid_amount']|price} · čeká na platbu {$stats['unpaid_amount']|price}
-		</p>
-	</section>
 
-	{* Three kinds of tickets: seats, standing, Z-lístky *}
-	<section class="card" aria-labelledby="kinds-title">
-		<h2 id="kinds-title">Lístky</h2>
-		<div class="table-scroll">
-			<table class="data-table ticket-kinds">
-				<thead>
-					<tr><th scope="col">Druh</th><th scope="col">Prodáno / vydáno</th><th scope="col">Zbývá</th><th scope="col">Na plese</th></tr>
-				</thead>
-				<tbody>
-					<tr n:foreach="$ticketKinds as $kind => $k">
-						<th scope="row">
-							{if $kind === 'crew'}<a n:href="Crew:default">{$k['label']}</a>{else}{$k['label']}{/if}
-						</th>
-						<td>
-							<strong>{$k['count']}</strong>{if $k['capacity'] !== null} z {$k['capacity']}{/if}
-							<span n:if="$k['note']" class="muted">· {$k['note']}</span>
-						</td>
-						<td>{if $k['capacity'] !== null}{max(0, $k['capacity'] - $k['count'])}{else}–{/if}</td>
-						<td>{$entrance['kinds'][$kind]['used']} z {$entrance['kinds'][$kind]['total']}</td>
-					</tr>
-				</tbody>
-				<tfoot>
-					<tr>
-						<th scope="row">Celkem</th>
-						<td><strong>{array_sum(array_column($ticketKinds, 'count'))}</strong></td>
-						<td></td>
-						<td><strong>{$entrance['used']}</strong> z {$entrance['total']}</td>
-					</tr>
-				</tfoot>
-			</table>
-		</div>
-		<p class="entrance-line">
-			<a n:href="Check:default">Kontrola vstupenek</a> · <a n:href="Crew:default">Z-lístky</a>
+		<p class="muted">
+			Zaplaceno {$stats['paid_amount']|price} · čeká na platbu {$stats['unpaid_amount']|price} ·
+			<a n:href="Check:default">Kontrola vstupenek</a>
 		</p>
 	</section>
 
