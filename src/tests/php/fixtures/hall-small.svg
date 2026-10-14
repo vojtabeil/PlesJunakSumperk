@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="https://evil.example/x.css" type="text/css"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Small hall for tests: 2 tables, 6 seats, decoration and things that must be removed. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:corel="http://www.corel.com/coreldraw/odm/2003"
+	viewBox="0 0 400 200" width="400" height="200" onload="alert(1)">
+	<style><![CDATA[@import url(https://evil.example/a.css); .fil0 {fill:#B98A5A} .bg {fill:url(#grad)} .ext {fill:url(https://evil.example/p.svg)}]]></style>
+	<script>alert('svg')</script>
+	<metadata><corel:info>CorelDRAW</corel:info></metadata>
+	<defs><linearGradient id="grad"><stop offset="0" stop-color="#fff"/></linearGradient></defs>
+	<rect class="bg" x="0" y="0" width="400" height="200"/>
+	<rect id="stage" x="150" y="5" width="100" height="20"><title>Pódium</title></rect>
+	<foreignObject width="10" height="10"><div xmlns="http://www.w3.org/1999/xhtml">x</div></foreignObject>
+	<image href="https://evil.example/track.png" width="1" height="1"/>
+	<image xlink:href="data:image/png;base64,iVBORw0KGgo=" width="1" height="1"/>
+	<a href="javascript:alert(1)"><text x="0" y="0">odkaz</text></a>
+	<g id="table-1" corel:layer="stoly">
+		<rect class="fil0" x="40" y="60" width="120" height="40"/>
+		<text id="table-1-name" x="100" y="85">Jaroslav  Foglar
+			Jestřáb</text>
+		<circle id="seat-1" class="fil1" fill="#000" style="fill:red" cx="60" cy="50" r="8" onclick="steal()"/>
+		<circle id="seat-2" cx="100" cy="50" r="8"/>
+		<g id="seat-3"><rect class="fil1" x="132" y="42" width="16" height="16"/><path fill="#333" d="M132 42h16"/></g>
+	</g>
+	<g id="table-2">
+		<rect class="fil0" x="240" y="60" width="120" height="40"/>
+		<circle id="seat-4" cx="260" cy="50" r="8"/>
+		<circle id="seat-5" cx="300" cy="50" r="8"/>
+		<circle id="seat-10" cx="340" cy="50" r="8"/>
+	</g>
+</svg>
