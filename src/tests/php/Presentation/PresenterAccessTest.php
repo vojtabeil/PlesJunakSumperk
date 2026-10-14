@@ -36,6 +36,7 @@ final class PresenterAccessTest extends DatabaseTestCase
 		'App\Presentation\Cron\CronPresenter',    // protected by the cron key instead of a login
 		'App\Presentation\Front\Access\AccessPresenter', // tester and VIP links, protected by their secret tokens
 		'App\Presentation\Front\Ticket\TicketPresenter', // printable ticket, protected by the secret print token
+		'App\Presentation\Front\Hall\HallPresenter',    // the hall plan (SVG) for the seat picker
 		'App\Presentation\Error\Error4xx\Error4xxPresenter',
 		'App\Presentation\Error\Error5xx\Error5xxPresenter',
 		'App\Presentation\Admin\Sign\SignPresenter',

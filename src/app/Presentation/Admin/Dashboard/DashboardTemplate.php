@@ -42,4 +42,7 @@ final class DashboardTemplate extends BaseTemplate
 
 	/** @var array{used: int, total: int} tickets used at the entrance */
 	public array $entrance;
+
+	/** A hall plan is uploaded (without it seats cannot be sold). */
+	public bool $hasPlan;
 }

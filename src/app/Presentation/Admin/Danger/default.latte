@@ -1,0 +1,33 @@
+{templateType App\Presentation\Admin\Danger\DangerTemplate}
+
+{block title}Nebezpečná zóna{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Nebezpečná zóna</h1>
+</div>
+<p class="flash flash--error">Akce na této stránce nejdou vrátit zpět. Než některou spustíte, přečtěte si, co změní.</p>
+
+<div class="columns">
+	<section class="card danger-card" aria-labelledby="plan-title">
+		<h2 id="plan-title">Plánek sálu</h2>
+		<p>Výkres sálu (SVG z CorelDRAW), podle kterého se prodávají místa. Je jen jedna verze:
+			nový plánek ten současný nenávratně nahradí a zruší rezervace míst, která v něm chybí.
+			Před potvrzením uvidíte jejich seznam.</p>
+		<p n:if="$plan">Současný plánek: <strong>{$plan['file_name']}</strong>, použitý {$plan['applied_at']|date:'j. n. Y H:i'}{if $plan['applied_by']} ({$plan['applied_by']}){/if}.</p>
+		<p n:if="!$plan" class="error-text">Plánek sálu zatím není nahraný, místa u stolů nejde prodávat.</p>
+		<p><a class="button" n:href="plan">Plánek sálu</a></p>
+	</section>
+
+	<section class="card danger-card" aria-labelledby="tests-title">
+		<h2 id="tests-title">Testovací rezervace</h2>
+		{if $testCount}
+			<p>Testovacích rezervací: <strong>{$testCount}</strong>. Před spuštěním prodeje je smažte;
+				místa se uvolní a jejich platby z banky se odloží jako ignorované.</p>
+			{control deleteTestsForm}
+		{else}
+			<p class="muted">Žádné testovací rezervace.</p>
+		{/if}
+	</section>
+</div>
+{/block}

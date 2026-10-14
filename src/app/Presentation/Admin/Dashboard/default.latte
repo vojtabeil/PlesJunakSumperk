@@ -3,7 +3,7 @@
 {block title}Přehled{/block}
 
 {block content}
-{var $problems = $paymentProblems + array_sum($reservationProblems) + ($importOverdue ? 1 : 0)}
+{var $problems = $paymentProblems + array_sum($reservationProblems) + ($importOverdue ? 1 : 0) + ($hasPlan ? 0 : 1)}
 
 <div class="page-head">
 	<h1>Přehled</h1>
@@ -50,6 +50,10 @@
 	<section class="card todo-card" aria-labelledby="todo-title">
 		<h2 id="todo-title">Co je potřeba udělat</h2>
 		<ul class="todo">
+			<li n:if="!$hasPlan">
+				<a n:href="Danger:plan">Nahrajte plánek sálu</a>
+				<span class="muted">bez něj nejde prodávat místa u stolů</span>
+			</li>
 			<li n:if="$paymentProblems">
 				<a n:href="Payment:default, filter: problems">Platby k vyřešení: <strong>{$paymentProblems}</strong></a>
 				<span class="muted">bez VS, neznámý VS, nedoplatek nebo přeplatek</span>

@@ -9,7 +9,7 @@
 </div>
 
 <p n:if="$testCount && $mode !== \App\Model\Site\SiteMode::Testing" class="flash flash--error">
-	Testování skončilo, ale testovací rezervace ({$testCount}) ještě drží místa. Smažte je níže.
+	Testování skončilo, ale testovací rezervace ({$testCount}) ještě drží místa. Smažte je v <a n:href="Danger:default">Nebezpečné zóně</a>.
 </p>
 
 <ol class="mode-list">
@@ -41,7 +41,7 @@
 		{if $testCount}
 			<p>Testovacích rezervací: <strong>{$testCount}</strong>. Před spuštěním prodeje je smažte;
 				místa se uvolní a jejich platby z banky se odloží jako ignorované.</p>
-			<div class="danger-zone">{control deleteTestsForm}</div>
+			<p><a n:href="Danger:default">Smazat je v Nebezpečné zóně</a></p>
 		{else}
 			<p class="muted">Žádné testovací rezervace.</p>
 		{/if}

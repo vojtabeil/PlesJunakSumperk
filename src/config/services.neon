@@ -19,6 +19,7 @@ services:
 	- App\Model\Site\SiteAccess
 
 	- App\Model\Hall\HallSync
+	- App\Model\Hall\HallUploads(%tempDir%/hall-uploads)
 
 	- App\Model\Ticket\Tickets
 	- App\Model\Ticket\TicketCheck

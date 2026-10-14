@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Dashboard;
 
+use App\Model\Hall\HallSync;
 use App\Model\Mail\ReservationMailer;
 use App\Model\Payment\PaymentImporter;
 use App\Model\Payment\PaymentRepository;
@@ -45,6 +46,7 @@ final class DashboardPresenter extends BasePresenter
 		private readonly PaymentImporter $importer,
 		private readonly ReservationMailer $mailer,
 		private readonly TicketCheck $ticketCheck,
+		private readonly HallSync $hallSync,
 	) {
 		parent::__construct();
 	}
@@ -60,6 +62,7 @@ final class DashboardPresenter extends BasePresenter
 		$t = $this->template;
 		$t->stats = $stats;
 		$t->entrance = $this->ticketCheck->entranceStats();
+		$t->hasPlan = $this->hallSync->plan() !== null;
 		$t->siteMode = $this->settings->mode();
 		$t->seatCounts = $counts;
 		$t->slices = PieChart::slices($counts);

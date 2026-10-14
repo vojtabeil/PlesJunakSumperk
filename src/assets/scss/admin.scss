@@ -979,3 +979,30 @@ h3 {
 .entrance-line {
   margin: 0.25rem 0 0;
 }
+
+// Dangerous zone (replacing the hall plan, deleting test reservations).
+.menu-danger {
+  color: var(--error) !important;
+  font-weight: 700;
+}
+
+.danger-card {
+  border-color: var(--error);
+  border-left-width: 6px;
+}
+
+.hall-preview {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  margin-top: 1rem;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: #fff;
+}
+
+.error-list {
+  color: var(--error);
+  font-weight: 600;
+}

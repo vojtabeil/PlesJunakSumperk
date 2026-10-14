@@ -15,11 +15,15 @@ final class RouterFactory
 		// Entrance check: the QR code of a ticket holds /admin/kontrola/<code>.
 		$router->addRoute('admin/kontrola/api/<op>', 'Admin:Check:api');
 		$router->addRoute('admin/kontrola[/<code [0-9A-Fa-f]{6}>]', 'Admin:Check:default');
+		// Dangerous zone (replacing the hall plan, deleting test reservations).
+		$router->addRoute('admin/nebezpecne/plan.svg', 'Admin:Danger:svg');
+		$router->addRoute('admin/nebezpecne[/<action plan>]', 'Admin:Danger:default');
 		$router->withModule('Admin')
 			->addRoute('admin/<presenter=Dashboard>/<action=default>[/<id \d+>]');
 		$router->addRoute('api/<op>', 'Front:Api:default');
 		$router->addRoute('cron/payments', 'Cron:payments');
 		$router->addRoute('rezervace/<id \d+>/<token [0-9a-f]{32}>', 'Front:Reservation:default');
+		$router->addRoute('plan-salu.svg', 'Front:Hall:svg');
 		$router->addRoute('vstupenka/<code [0-9A-F]{6}>/<token [0-9a-f]{32}>', 'Front:Ticket:default');
 		$router->addRoute('tester/<token [0-9a-f]{32}>', 'Front:Access:tester');
 		$router->addRoute('vip/<token [0-9a-f]{32}>', 'Front:Access:vip');

@@ -100,21 +100,6 @@ final class SitePresenter extends BasePresenter
 	}
 
 
-	protected function createComponentDeleteTestsForm(): Form
-	{
-		$form = $this->formFactory->create();
-		$form->addCheckbox('confirm', 'Opravdu smazat všechny testovací rezervace (místa se uvolní)')
-			->setRequired('Akci potvrďte zaškrtnutím.');
-		$form->addSubmit('delete', 'Smazat testovací rezervace');
-		$form->onSuccess[] = function (): void {
-			$count = $this->reservationAdmin->deleteTestReservations();
-			$this->flashMessage("Smazáno testovacích rezervací: $count.", 'success');
-			$this->redirect('this');
-		};
-		return $form;
-	}
-
-
 	/** Pages are HTML written by the organizers (trusted, shown as is). */
 	protected function createComponentPagesForm(): Form
 	{

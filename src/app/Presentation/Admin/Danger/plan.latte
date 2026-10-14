@@ -1,0 +1,96 @@
+{templateType App\Presentation\Admin\Danger\DangerTemplate}
+
+{block title}Plánek sálu – Nebezpečná zóna{/block}
+
+{block content}
+<p><a n:href="default">← Nebezpečná zóna</a></p>
+<div class="page-head">
+	<h1>Plánek sálu</h1>
+</div>
+
+{if !$uploaded}
+	<div class="columns">
+		<section class="card" aria-labelledby="current-title">
+			<h2 id="current-title">Současný plánek</h2>
+			{if $plan}
+				<p><strong>{$plan['file_name']}</strong>, použitý {$plan['applied_at']|date:'j. n. Y H:i'}{if $plan['applied_by']} ({$plan['applied_by']}){/if}.</p>
+				<p><a class="button" n:href="svg, stahnout: 1">Stáhnout současný plánek (SVG)</a></p>
+				<p class="muted">Je to jediná kopie: před nahráním nového si ho stáhněte.</p>
+				<img class="hall-preview" n:attr="src: $presenter->link('svg')" alt="Současný plánek sálu">
+			{else}
+				<p class="error-text">Plánek zatím není nahraný, místa u stolů nejde prodávat.</p>
+			{/if}
+		</section>
+
+		<section class="card danger-card" aria-labelledby="upload-title">
+			<h2 id="upload-title">Nahrát nový plánek</h2>
+			<p>Výkres musí mít židle pojmenované <code>seat-&lt;číslo&gt;</code> uvnitř skupin stolů <code>table-&lt;číslo&gt;</code>
+				(jméno stolu volitelně v textu <code>table-&lt;číslo&gt;-name</code>). Po nahrání se nic nemění:
+				uvidíte, co se změní a které rezervace by se zrušily, a teprve pak plánek potvrdíte.</p>
+			{control uploadForm}
+		</section>
+	</div>
+{else}
+	<section class="card" aria-labelledby="check-title">
+		<h2 id="check-title">Kontrola nahraného plánku <span class="muted">{$uploadName}</span></h2>
+
+		{if !$uploaded->isValid()}
+			<p class="flash flash--error">Plánek obsahuje chyby a nejde použít. Opravte je ve výkresu a nahrajte ho znovu.</p>
+			<ul class="error-list">
+				<li n:foreach="$uploaded->errors as $error">{$error}</li>
+			</ul>
+		{else}
+			<p>Stolů: <strong>{count($uploaded->tables)}</strong> · míst: <strong>{count($uploaded->seats)}</strong></p>
+			{var $c = $changes}
+			<dl n:if="$c" class="details">
+				<dt>Nová místa</dt><dd>{if $c->newSeats}{implode(', ', $c->newSeats)}{else}–{/if}</dd>
+				<dt>Odebraná místa</dt><dd>{if $c->removedSeats}{implode(', ', $c->removedSeats)}{else}–{/if}</dd>
+				<dt>Místa u jiného stolu</dt>
+				<dd>{foreach $c->movedSeats as $seat => $move}{$seat} (stůl {$move['from'] ?? '?'} → {$move['to']}){sep}, {/sep}{else}–{/foreach}</dd>
+				<dt>Nové stoly</dt><dd>{if $c->newTables}{implode(', ', $c->newTables)}{else}–{/if}</dd>
+				<dt>Odebrané stoly</dt><dd>{if $c->removedTables}{implode(', ', $c->removedTables)}{else}–{/if}</dd>
+				<dt>Přejmenované stoly</dt>
+				<dd>{foreach $c->renamedTables as $table => $names}{$table}: {$names['from'] ?? '–'} → {$names['to'] ?? '–'}{sep}; {/sep}{else}–{/foreach}</dd>
+			</dl>
+		{/if}
+		<img class="hall-preview" n:attr="src: $presenter->link('svg', ['nahled' => $uploadToken])" alt="Nahraný plánek sálu">
+	</section>
+
+	<section n:if="$changes && $changes->affected" class="card danger-card" aria-labelledby="affected-title">
+		<h2 id="affected-title">Rezervace, které se zruší ({count($changes->affected)})</h2>
+		<p>Tyto rezervace mají místa, která v novém plánku nejsou. Po potvrzení se zruší celé (jako zrušení v detailu rezervace)
+			a zákazníkům nepřijde žádný e-mail. Nejdřív je prosím obvolejte a domluvte se s nimi; zaplacené peníze je potřeba vrátit ručně.</p>
+		<table class="data-table data-table--cards">
+			<thead>
+				<tr><th scope="col">Rezervace</th><th scope="col">Kontakt</th><th scope="col">Ztracená místa</th><th scope="col">Zaplaceno</th></tr>
+			</thead>
+			<tbody>
+				<tr n:foreach="$changes->affected as $r">
+					<td data-label="Rezervace">
+						<a n:href="Reservation:detail $r['id']" target="_blank">č. {$r['id']}</a> {$r['name']}
+						<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
+						{include '../Accessory/channelBadge.latte', channel: $r['channel']}
+					</td>
+					<td data-label="Kontakt">
+						<a href="mailto:{$r['email']}">{$r['email']}</a>
+						{if $r['phone']}<br><a href="tel:{str_replace(' ', '', $r['phone'])}">{$r['phone']}</a>{/if}
+					</td>
+					<td data-label="Ztracená místa">{foreach $r['seats'] as $label}{$label|seatLabel}{sep}; {/sep}{/foreach}</td>
+					<td data-label="Zaplaceno">{$r['paid']|price}</td>
+				</tr>
+			</tbody>
+		</table>
+		<p>Zaplaceno celkem: <strong>{$changes->affectedPaid()|price}</strong></p>
+	</section>
+
+	<section class="card danger-card" aria-labelledby="apply-title">
+		<h2 id="apply-title">Použít nový plánek</h2>
+		<p n:if="$changes && $changes->heldSeats" class="muted">Odebraných míst, která si právě někdo vybírá: {$changes->heldSeats}. Jen se uvolní.</p>
+		{if $uploaded->isValid()}
+			<p>Současný plánek se nenávratně nahradí.{if $plan} <a n:href="svg, stahnout: 1">Stáhnout současný plánek</a> jako zálohu.{/if}</p>
+			<div class="danger-zone">{control applyForm}</div>
+		{/if}
+		{control discardForm}
+	</section>
+{/if}
+{/block}
