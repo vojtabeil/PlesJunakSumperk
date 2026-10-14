@@ -8,13 +8,18 @@ use Nette\Application\UI\Form;
 use Nette\Forms\Rendering\DefaultFormRenderer;
 
 
-/** Forms with CSRF protection and a div-based layout (styled by assets/scss/admin.scss). */
+/**
+ * Forms with CSRF protection and a div-based layout (styled by assets/scss/admin.scss). The browser's own
+ * validation is off: it speaks the browser's language, while the server answers in Czech next to the field
+ * (default messages in config/common.neon, section forms).
+ */
 final class FormFactory
 {
 	public function create(): Form
 	{
 		$form = new Form;
 		$form->addProtection('Platnost formuláře vypršela, odešlete ho prosím znovu.');
+		$form->getElementPrototype()->setAttribute('novalidate', true);
 
 		$renderer = $form->getRenderer();
 		assert($renderer instanceof DefaultFormRenderer);

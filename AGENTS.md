@@ -95,6 +95,8 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
   and each one is written to the event log. Presenter helper methods must not start with
   `action`/`render`/`handle`/`createComponent` (Nette treats them as lifecycle methods).
 - `Form::URL` accepts "foo" (prepends http://); require an explicit scheme with a Pattern rule.
+- Form messages are Czech: Nette's English defaults are replaced in `config/common.neon` (section `forms`, checked by
+  `FormMessagesTest`) and `FormFactory` turns the browser's own validation off (`novalidate`, it would speak the browser's language).
 - Payments: amounts are hellers (`int`) in PHP and `DECIMAL(12,2)` CZK in the DB. Bank movements
   are delivered only once, so `PaymentImporter` stores them (unique per source + external id)
   before matching. Reservation statuses: draft -> confirmed -> partially_paid -> paid, or cancelled;

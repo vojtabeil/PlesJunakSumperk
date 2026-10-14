@@ -28,6 +28,32 @@ latte:
 		- App\Presentation\Accessory\TemplateExtension(%rootDir%/www)
 
 
+# Czech defaults of the form validation messages (used where a rule has no message of its own).
+forms:
+	messages:
+		Equal: 'Zadejte %s.'
+		NotEqual: 'Tato hodnota nesmí být %s.'
+		Filled: 'Vyplňte toto pole.'
+		Blank: 'Toto pole musí zůstat prázdné.'
+		MinLength: 'Zadejte aspoň %d znaků.'
+		MaxLength: 'Zadejte nejvýše %d znaků.'
+		Length: 'Zadejte %d až %d znaků.'
+		Email: 'Zadejte platnou e-mailovou adresu.'
+		URL: 'Zadejte platnou adresu (https://…).'
+		Integer: 'Zadejte celé číslo.'
+		Float: 'Zadejte číslo.'
+		Min: 'Zadejte číslo nejméně %d.'
+		Max: 'Zadejte číslo nejvýše %d.'
+		Range: 'Zadejte číslo od %d do %d.'
+		MaxFileSize: 'Soubor může mít nejvýše %d bajtů.'
+		MaxPostSize: 'Odeslaná data jsou větší než povolených %d bajtů.'
+		MimeType: 'Nahraný soubor nemá očekávaný formát.'
+		Image: 'Nahraný soubor musí být obrázek JPEG, GIF, PNG nebo WebP.'
+		Nette\Forms\Controls\SelectBox::Valid: 'Vyberte prosím platnou možnost.'
+		Nette\Forms\Controls\UploadControl::Valid: 'Soubor se nepodařilo nahrát.'
+		Nette\Forms\Controls\CsrfProtection::Protection: 'Platnost formuláře vypršela, odešlete ho prosím znovu.'
+
+
 security:
 	authentication:
 		# Organizers are logged out after 2 hours of inactivity.
