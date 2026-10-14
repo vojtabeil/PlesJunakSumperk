@@ -433,12 +433,15 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
     };
 
     // Dragging pans (a finger only once awake: asleep, the browser scrolls the page, CSS touch-action);
-    // two fingers wake the map and zoom; the middle button wakes it.
+    // two fingers wake the map and zoom; the mouse drags with the left or the middle button (which also wakes it).
     const onPointerDown = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse' && event.button === 1) {
-        event.preventDefault(); // no autoscroll
-        wake();
-        return;
+      if (event.pointerType === 'mouse') {
+        if (event.button > 1) {
+          return;
+        }
+        if (event.button === 1) {
+          wake();
+        }
       }
       cancelAnimationFrame(glide);
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, type: event.pointerType });
@@ -512,8 +515,15 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
       cancelAnimationFrame(glide);
       moved(fit(svg, zoomAround(view.current, Math.exp(-event.deltaY * rate), point.x, point.y, hall.current), hall.current));
     };
+    // The middle button drags the map: no autoscroll of the browser (it starts on mousedown).
+    const onMouseDown = (event: MouseEvent) => {
+      if (event.button === 1) {
+        event.preventDefault();
+      }
+    };
 
     svg.addEventListener('click', onClick);
+    svg.addEventListener('mousedown', onMouseDown);
     svg.addEventListener('dblclick', onDoubleClick);
     svg.addEventListener('focusin', onFocus);
     svg.addEventListener('keydown', onKeyDown);
@@ -524,6 +534,7 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
     svg.addEventListener('wheel', onWheel, { passive: false });
     return () => {
       svg.removeEventListener('click', onClick);
+      svg.removeEventListener('mousedown', onMouseDown);
       svg.removeEventListener('dblclick', onDoubleClick);
       svg.removeEventListener('focusin', onFocus);
       svg.removeEventListener('keydown', onKeyDown);
