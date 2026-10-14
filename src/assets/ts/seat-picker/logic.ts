@@ -68,6 +68,21 @@ export function totals(reservation: ReservationState | null, prices: Prices): To
   };
 }
 
+/** Short text of the choice for the bar under the map: "stůl 12: 2 místa, stůl 3: 1 místo, 2 bez místenky". */
+export function choiceSummary(reservation: ReservationState | null): string {
+  const { seats, standing } = reservation ?? empty;
+  const perTable = new Map<string, number>();
+  for (const seat of seats) {
+    const { table } = splitSeatLabel(seat.label);
+    perTable.set(table, (perTable.get(table) ?? 0) + 1);
+  }
+  const parts = [...perTable].map(([table, count]) => `stůl ${table}: ${count} ${plural(count, 'místo', 'místa', 'míst')}`);
+  if (standing > 0) {
+    parts.push(`${standing} bez místenky`);
+  }
+  return parts.join(', ');
+}
+
 /** Whether one more standing ticket may be added (the server checks again). */
 export function canAddStanding(state: ApiState): boolean {
   const { tickets, standing } = totals(state.reservation, state.prices);

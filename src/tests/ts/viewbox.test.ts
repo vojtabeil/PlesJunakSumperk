@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { between, keepInside, MaxZoomIn, pad, panBy, union, unitsPerPixel, zoomAround } from '../../assets/ts/seat-picker/viewbox';
+import { between, isZoomed, keepInside, MaxZoomIn, pad, panBy, union, unitsPerPixel, zoomAround } from '../../assets/ts/seat-picker/viewbox';
 
 const hall = { x: 0, y: 0, width: 1000, height: 800 };
 
@@ -32,5 +32,11 @@ describe('viewBox', () => {
   test('animates between views and measures pixels', () => {
     expect(between({ x: 0, y: 0, width: 100, height: 100 }, { x: 100, y: 50, width: 200, height: 300 }, 0.5)).toEqual({ x: 50, y: 25, width: 150, height: 200 });
     expect(unitsPerPixel(hall, 500, 800)).toBe(2);
+  });
+
+  test('tells a zoomed view from the whole hall', () => {
+    expect(isZoomed(hall, hall)).toBe(false);
+    expect(isZoomed(panBy(hall, 30, 0, hall), hall)).toBe(false);
+    expect(isZoomed(zoomAround(hall, 2, 500, 400, hall), hall)).toBe(true);
   });
 });

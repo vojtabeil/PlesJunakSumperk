@@ -1,49 +1,59 @@
 {templateType App\Presentation\Front\BaseTemplate}
+{var $eventName = $settings['event_name'] ?? 'Skautský ples'}
+{var $lastSpace = mb_strrpos($eventName, ' ')}
 <!DOCTYPE html>
 <html lang="cs">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>{ifset title}{include title|stripHtml} – {/ifset}{$settings['event_name'] ?? 'Skautský ples'}</title>
+	<meta name="theme-color" content="#2e5e3a">
+	<title>{ifset title}{include title|stripHtml} – {/ifset}{$eventName}</title>
 	<link rel="icon" type="image/svg+xml" href="{$basePath}/img/icons/organizer.svg">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="{$basePath}/{asset('build/front.css')}">
 </head>
 <body>
-<header class="hero">
-	<img class="hero-figure hero-figure--left" src="{$basePath}/img/boy.svg" alt="">
-	<div class="hero-text">
-		<h1><a href="{plink :Front:Home:default}"><span class="hero-town">Šumperský</span> Skautský ples</a></h1>
-		<p n:if="!empty($settings['event_intro'])" class="intro">{$settings['event_intro']}</p>
-		<ul n:if="$siteMode !== \App\Model\Site\SiteMode::After" class="event-facts">
-			<li>
-				<img src="{$basePath}/img/icons/where.svg" alt="">
-				<span class="visually-hidden">Kde:</span>
-				<a n:tag-if="!empty($settings['venue_url'])" href="{$settings['venue_url'] ?? ''}" target="_blank" rel="noopener">{$settings['venue'] ?? ''}</a>
+<header class="site-header">
+	<div class="site-bar">
+		<a class="brand" href="{plink :Front:Home:default}"><span class="brand-mark" aria-hidden="true"></span><span>{$eventName}</span></a>
+		{* Filled by the reservation page while tickets can be bought. *}
+		{block headerAction}{/block}
+	</div>
+
+	<div class="hero">
+		<div class="hero-text">
+			<h1 class="hero-title">
+				{if $lastSpace === false}{$eventName}{else}{mb_substr($eventName, 0, $lastSpace)} <span class="hero-accent">{mb_substr($eventName, $lastSpace + 1)}</span>{/if}
+			</h1>
+			<p n:if="!empty($settings['event_intro'])" class="hero-intro">{$settings['event_intro']}</p>
+			{block heroAction}{/block}
+		</div>
+
+		{* Facts of the event as round badges sewn on a uniform. *}
+		<ul n:if="$siteMode !== \App\Model\Site\SiteMode::After" class="badges">
+			<li n:if="!empty($settings['venue'])" class="badge badge--cream">
+				<span class="badge-label">Kde</span>
+				<a n:tag-if="!empty($settings['venue_url'])" class="badge-value" href="{$settings['venue_url'] ?? ''}" target="_blank" rel="noopener">{$settings['venue']}</a>
 			</li>
-			<li>
-				<img src="{$basePath}/img/icons/when.svg" alt="">
-				<span class="visually-hidden">Kdy:</span> {$settings['event_date'] ?? ''}
+			<li n:if="!empty($settings['event_date'])" class="badge badge--yellow">
+				<span class="badge-label">Kdy</span>
+				<span class="badge-value">{$settings['event_date']}</span>
 			</li>
-			<li>
-				<img src="{$basePath}/img/icons/band.svg" alt="">
-				<span class="visually-hidden">Kapela:</span>
-				<a n:tag-if="!empty($settings['band_url'])" href="{$settings['band_url'] ?? ''}" target="_blank" rel="noopener">{$settings['band'] ?? ''}</a>
+			<li n:if="!empty($settings['band'])" class="badge badge--red">
+				<span class="badge-label">Hraje</span>
+				<a n:tag-if="!empty($settings['band_url'])" class="badge-value" href="{$settings['band_url'] ?? ''}" target="_blank" rel="noopener">{$settings['band']}</a>
 			</li>
-			<li>
-				<img src="{$basePath}/img/icons/organizer.svg" alt="">
-				<span class="visually-hidden">Organizátor:</span> {$settings['organizer'] ?? ''}
+			<li n:if="!empty($settings['organizer'])" class="badge badge--cream">
+				<span class="badge-label">Pořádá</span>
+				<span class="badge-value">{$settings['organizer']}</span>
 			</li>
 		</ul>
-		{* Filled by the reservation page while tickets can be bought. *}
-		{block heroAction}{/block}
 	</div>
-	<img class="hero-figure hero-figure--right" src="{$basePath}/img/girl.svg" alt="">
 </header>
 
-<main>
+<main class="page">
 	{include content}
 </main>
 

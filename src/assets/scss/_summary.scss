@@ -2,9 +2,9 @@
 
 .summary {
   padding: 1.25rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-alt);
+  border: 2px solid var(--green);
+  border-radius: var(--radius-card);
+  background: var(--surface);
   // Below the map; on wide screens not wider than a comfortable form.
   width: 100%;
   max-width: 34rem;
@@ -31,8 +31,8 @@
     padding: 0.2rem 0.25rem 0.2rem 0.7rem;
     font-size: 0.9rem;
     font-weight: 600;
-    background: rgba(242, 154, 29, 0.18);
-    border: 1px solid var(--orange);
+    background: rgba(240, 185, 58, 0.25);
+    border: 1px solid var(--yellow);
     border-radius: 999px;
   }
 }
@@ -53,46 +53,9 @@
   }
 }
 
-.standing {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin: 1rem 0;
+.chosen-standing {
+  margin: 0 0 1rem;
   font-weight: 600;
-
-  .muted {
-    font-weight: 400;
-  }
-}
-
-.stepper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  output {
-    min-width: 2ch;
-    text-align: center;
-    font-size: 1.2rem;
-  }
-}
-
-.stepper-button {
-  width: 2.75rem;
-  height: 2.75rem;
-  font-size: 1.3rem;
-  line-height: 1;
-  color: #fff;
-  background: var(--green);
-  border: none;
-  border-radius: var(--radius-small);
-  cursor: pointer;
-
-  &:disabled {
-    background: var(--taken);
-    cursor: not-allowed;
-  }
 }
 
 .total {

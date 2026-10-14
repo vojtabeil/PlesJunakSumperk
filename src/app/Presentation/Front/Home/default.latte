@@ -1,7 +1,12 @@
 {templateType App\Presentation\Front\Home\HomeTemplate}
 
+{* "Koupit lístky" shows the whole map with the tickets without a seat on one screen. *}
+{block headerAction}
+	<a n:if="$canBuy" class="pill pill--cream" href="#seat-picker" data-scroll-to="seat-picker">Koupit lístky</a>
+{/block}
+
 {block heroAction}
-	<a n:if="$canBuy" class="button hero-action" href="#reservation" data-scroll-to="reservation">Koupit lístky</a>
+	<a n:if="$canBuy" class="pill pill--yellow hero-action" href="#seat-picker" data-scroll-to="seat-picker">Koupit lístky</a>
 {/block}
 
 {block content}
@@ -10,13 +15,13 @@
 {* Written in HTML by the organizers in the administration (Nastavení → Stav webu). *}
 <section n:if="!$canBuy" class="panel site-page">{$pageHtml|noescape}</section>
 
-<section n:if="$canBuy" class="panel" id="reservation" aria-labelledby="reservation-title">
+<section n:if="$canBuy" class="reservation" aria-labelledby="reservation-title">
 	<h2 id="reservation-title">Rezervace lístků</h2>
 
 	<ol class="steps">
-		<li>Vyberte místa v plánku sálu nebo lístky bez místenky.</li>
-		<li>Vyplňte e-mail a jméno a rezervaci potvrďte.</li>
-		<li>Zaplaťte převodem nebo QR kódem – platební údaje pošleme e-mailem.</li>
+		<li>Vyberte místa v plánku nebo lístky bez místenky.</li>
+		<li>Vyplňte e-mail a jméno.</li>
+		<li>Zaplaťte převodem nebo QR kódem, údaje přijdou e-mailem.</li>
 	</ol>
 
 	{* Replaced by the Preact seat picker; without JavaScript the static plan stays visible. *}

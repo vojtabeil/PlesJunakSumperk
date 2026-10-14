@@ -1,4 +1,4 @@
-import { canAddStanding, formatPrice, formatSeat, plural, totals } from '../logic';
+import { formatPrice, formatSeat, plural, totals } from '../logic';
 import type { Store } from '../store';
 import type { ApiState } from '../types';
 import { CheckoutForm } from './CheckoutForm';
@@ -9,7 +9,7 @@ interface Props {
   state: ApiState;
 }
 
-/** The visitor's choice (seats, standing tickets, price, hold countdown) and the confirmation form. */
+/** Below the map once something is chosen: the choice (seats can be removed), hold countdown and the form. */
 export function Summary({ store, state }: Props) {
   const reservation = state.reservation;
   const sum = totals(reservation, state.prices);
@@ -17,9 +17,9 @@ export function Summary({ store, state }: Props) {
 
   return (
     <aside class="summary" id="summary" aria-labelledby="summary-title">
-      <h3 id="summary-title">Váš výběr</h3>
+      <h3 id="summary-title">Vaše rezervace</h3>
 
-      {reservation && reservation.seats.length > 0 ? (
+      {reservation && reservation.seats.length > 0 && (
         <ul class="chosen" aria-label="Vybraná místa">
           {reservation.seats.map((seat) => (
             <li key={seat.id}>
@@ -36,36 +36,12 @@ export function Summary({ store, state }: Props) {
             </li>
           ))}
         </ul>
-      ) : (
-        <p class="muted">Klepněte na volné místo v plánku sálu.</p>
       )}
-
-      <div class="standing">
-        <span id="standing-label">
-          Lístky bez místenky <span class="muted">({formatPrice(state.prices.standing)})</span>
-        </span>
-        <div class="stepper" role="group" aria-labelledby="standing-label">
-          <button
-            type="button"
-            class="stepper-button"
-            aria-label="Ubrat lístek bez místenky"
-            disabled={busy || sum.standing === 0}
-            onClick={() => void store.setStanding(sum.standing - 1)}
-          >
-            −
-          </button>
-          <output aria-live="polite">{sum.standing}</output>
-          <button
-            type="button"
-            class="stepper-button"
-            aria-label="Přidat lístek bez místenky"
-            disabled={busy || !canAddStanding(state)}
-            onClick={() => void store.setStanding(sum.standing + 1)}
-          >
-            +
-          </button>
-        </div>
-      </div>
+      {sum.standing > 0 && (
+        <p class="chosen-standing">
+          {sum.standing} {plural(sum.standing, 'lístek', 'lístky', 'lístků')} bez místenky
+        </p>
+      )}
 
       <p class="total">
         <span>
@@ -79,14 +55,10 @@ export function Summary({ store, state }: Props) {
         <Countdown seconds={reservation.expires_in} onExpire={store.holdExpired} onExtend={() => void store.extend()} />
       )}
 
-      {sum.tickets > 0 && (
-        <>
-          <CheckoutForm store={store} email={reservation?.email ?? ''} disabled={busy} />
-          <button type="button" class="link-button cancel-choice" disabled={busy} onClick={() => void store.cancel()}>
-            Zrušit výběr
-          </button>
-        </>
-      )}
+      <CheckoutForm store={store} email={reservation?.email ?? ''} disabled={busy} />
+      <button type="button" class="link-button cancel-choice" disabled={busy} onClick={() => void store.cancel()}>
+        Zrušit výběr
+      </button>
     </aside>
   );
 }

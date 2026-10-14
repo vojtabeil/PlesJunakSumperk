@@ -74,3 +74,8 @@ export function unitsPerPixel(view: Box, elementWidth: number, elementHeight: nu
 export function toViewBox(view: Box): string {
   return `${view.x} ${view.y} ${view.width} ${view.height}`;
 }
+
+/** Whether the view shows noticeably less than the whole hall (zoomed in). */
+export function isZoomed(view: Box, hall: Box): boolean {
+  return view.width < hall.width * 0.95 && view.height < hall.height * 0.95;
+}

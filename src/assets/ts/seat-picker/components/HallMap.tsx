@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { nearestSeat, seatDescription, seatStatus, type MapPoint } from '../logic';
 import type { ApiState, Direction, HallLayout, HallTable, Prices } from '../types';
-import { between, panBy, pad, toViewBox, union, unitsPerPixel, zoomAround, type Box } from '../viewbox';
+import { between, isZoomed, panBy, pad, toViewBox, union, unitsPerPixel, zoomAround, type Box } from '../viewbox';
 
 interface Props {
   layout: HallLayout;
@@ -11,29 +11,28 @@ interface Props {
   onToggle: (seatId: number) => void;
 }
 
-/** hall = the whole hall fitted to the screen, table = zoomed to one table, map = free zoom and pan. */
-type Mode = 'hall' | 'table' | 'map';
-
 const Keys: Record<string, Direction> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
-/** A seat at least this big on the screen (px) is chosen directly; a smaller one zooms to its table first. */
+/** A seat at least this big on the screen (px) is chosen by a tap; a smaller one zooms to its table first. */
 const DirectSeatPx = 22;
-/** In the free map a seat this small is too fiddly: the tap zooms in instead. */
-const MapSeatPx = 14;
 const DragPx = 6;
 const AnimationMs = 250;
+const ZoomStep = 1.6;
 
 /**
  * Hall plan: the SVG drawing (HallLayout.svg) inlined into the page. Seats are its shapes (found by
- * svg_id), tables the groups table-N around them. Three ways to look at it:
- *   - the whole hall, fitted to the screen (a tap on a table zooms to it unless seats are big enough),
- *   - one table with a breadcrumb back to the hall,
- *   - a free map: zoom and pan with buttons, dragging, two fingers or the mouse wheel.
- * Seats are buttons for clicks, keyboard (one tab stop, arrow keys) and screen readers.
+ * svg_id), tables the groups table-N around them. One simple model:
+ *   - it starts with the whole hall fitted to the screen,
+ *   - a tap on a table (or on a seat too small to hit) zooms to that table, a tap on a seat big
+ *     enough chooses it,
+ *   - "+", "−" and "Celý sál" are always on the map; dragging, two fingers and Ctrl + wheel move
+ *     and zoom it as well,
+ *   - while the whole hall is shown, a swipe scrolls the page; once zoomed in, it moves the map.
+ * Seats are buttons for clicks, keyboard (one tab stop, arrow keys, Escape = whole hall) and screen readers.
  */
 export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
   const [svg, setSvg] = useState<SVGSVGElement | null>(null);
   const [failed, setFailed] = useState(false);
-  const [mode, setMode] = useState<Mode>('hall');
+  const [zoomed, setZoomed] = useState(false);
   const [table, setTable] = useState<HallTable | null>(null);
   const holder = useRef<HTMLDivElement>(null);
   const hall = useRef<Box | null>(null);
@@ -41,8 +40,8 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
   const animation = useRef(0);
   const focusId = useRef<number | null>(null);
   // Event handlers are attached once per plan; they read the current values from here.
-  const current = useRef({ state, disabled, onToggle, mode, table });
-  current.current = { state, disabled, onToggle, mode, table };
+  const current = useRef({ state, disabled, onToggle, table });
+  current.current = { state, disabled, onToggle, table };
 
   const tables = useMemo(() => new Map(layout.tables.map((t) => [t.id, t])), [layout.tables]);
 
@@ -116,6 +115,14 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
     }
   }, [shapes, state, disabled, prices, layout, tables]);
 
+  const show = (element: SVGSVGElement, box: Box) => {
+    view.current = box;
+    element.setAttribute('viewBox', toViewBox(box));
+    if (hall.current) {
+      setZoomed(isZoomed(box, hall.current));
+    }
+  };
+
   /** Shows a part of the plan, animated unless the visitor prefers reduced motion. */
   const animateTo = (target: Box) => {
     const element = svg;
@@ -138,13 +145,7 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
     animation.current = requestAnimationFrame(step);
   };
 
-  const show = (element: SVGSVGElement, box: Box) => {
-    view.current = box;
-    element.setAttribute('viewBox', toViewBox(box));
-  };
-
   const showHall = () => {
-    setMode('hall');
     setTable(null);
     if (hall.current) {
       animateTo(hall.current);
@@ -156,7 +157,6 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
     if (!box) {
       return;
     }
-    setMode('table');
     setTable(tables.get(number) ?? { id: number, label: String(number), name: null });
     animateTo(box);
   };
@@ -164,14 +164,8 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
   const zoomBy = (factor: number) => {
     if (svg && view.current && hall.current) {
       const v = view.current;
+      setTable(null);
       animateTo(zoomAround(v, factor, v.x + v.width / 2, v.y + v.height / 2, hall.current));
-    }
-  };
-
-  const move = (dx: number, dy: number) => {
-    if (svg && view.current && hall.current) {
-      const v = view.current;
-      animateTo(panBy(v, dx * v.width * 0.25, dy * v.height * 0.25, hall.current));
     }
   };
 
@@ -190,6 +184,11 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
       }
     };
     const seatPx = (shape: Element) => shape.getBoundingClientRect().width;
+    /** The visitor moved the map by hand: it no longer shows "the table". */
+    const moved = (box: Box) => {
+      setTable(null);
+      show(svg, box);
+    };
 
     const onClick = (event: MouseEvent) => {
       if (travelled > DragPx) {
@@ -199,13 +198,9 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
       const target = event.target instanceof Element ? event.target : null;
       const shape = target?.closest<SVGElement>('[data-seat]');
       const tableNumber = target ? tableOf(target) : null;
-      const { mode } = current.current;
-      if (shape && (mode === 'table' || seatPx(shape) >= (mode === 'map' ? MapSeatPx : DirectSeatPx))) {
+      if (shape && seatPx(shape) >= DirectSeatPx) {
         toggle(Number(shape.dataset['seat']));
-      } else if (mode === 'map' && view.current && hall.current) {
-        const point = clientToPlan(svg, event.clientX, event.clientY);
-        animateTo(zoomAround(view.current, 2.5, point.x, point.y, hall.current));
-      } else if (tableNumber !== null && (mode === 'hall' || tableNumber !== current.current.table?.id)) {
+      } else if (tableNumber !== null && tableNumber !== current.current.table?.id) {
         showTable(tableNumber);
       }
     };
@@ -218,12 +213,16 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
       focusId.current = Number(shape.dataset['seat']);
       // Moving through small seats with the keyboard: show the table of the focused seat.
       const tableNumber = tableOf(shape);
-      if (current.current.mode === 'hall' && seatPx(shape) < DirectSeatPx && tableNumber !== null) {
+      if (seatPx(shape) < DirectSeatPx && tableNumber !== null) {
         showTable(tableNumber);
       }
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        showHall();
+        return;
+      }
       const shape = event.target instanceof Element ? event.target.closest<SVGElement>('[data-seat]') : null;
       if (!shape) {
         return;
@@ -256,11 +255,8 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
       }
     };
 
-    // Free map: drag to pan, two fingers to zoom, mouse wheel to zoom.
+    // Drag to pan, two fingers to zoom. Touch swipes over the whole hall scroll the page (CSS touch-action).
     const onPointerDown = (event: PointerEvent) => {
-      if (current.current.mode !== 'map') {
-        return;
-      }
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       travelled = 0;
     };
@@ -276,8 +272,8 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
         travelled += Math.abs(dx) + Math.abs(dy);
         if (travelled > DragPx) {
           svg.setPointerCapture(event.pointerId);
+          moved(panBy(view.current, -dx * scale, -dy * scale, hall.current));
         }
-        show(svg, panBy(view.current, -dx * scale, -dy * scale, hall.current));
       } else if (pointers.size === 2) {
         const [a, b] = [...pointers.entries()].map(([pid, p]) => (pid === event.pointerId ? { x: event.clientX, y: event.clientY } : p));
         const [oldA, oldB] = [...pointers.values()];
@@ -285,7 +281,7 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
           const factor = Math.hypot(a.x - b.x, a.y - b.y) / Math.max(1, Math.hypot(oldA.x - oldB.x, oldA.y - oldB.y));
           const middle = clientToPlan(svg, (a.x + b.x) / 2, (a.y + b.y) / 2);
           travelled += DragPx + 1;
-          show(svg, zoomAround(view.current, factor, middle.x, middle.y, hall.current));
+          moved(zoomAround(view.current, factor, middle.x, middle.y, hall.current));
         }
       }
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -293,13 +289,14 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
     const onPointerUp = (event: PointerEvent) => {
       pointers.delete(event.pointerId);
     };
+    // The wheel scrolls the page; Ctrl + wheel (and a touchpad pinch, which browsers send the same way) zooms.
     const onWheel = (event: WheelEvent) => {
-      if (current.current.mode !== 'map' || !view.current || !hall.current) {
+      if (!event.ctrlKey || !view.current || !hall.current) {
         return;
       }
       event.preventDefault();
       const point = clientToPlan(svg, event.clientX, event.clientY);
-      show(svg, zoomAround(view.current, Math.exp(-event.deltaY * 0.0015), point.x, point.y, hall.current));
+      moved(zoomAround(view.current, Math.exp(-event.deltaY * 0.01), point.x, point.y, hall.current));
     };
 
     svg.addEventListener('click', onClick);
@@ -322,53 +319,36 @@ export function HallMap({ layout, state, prices, disabled, onToggle }: Props) {
     };
   }, [svg, shapes]);
 
-  if (!layout.svg) {
-    return <p class="message">Plánek sálu připravujeme. Zatím lze koupit jen lístky bez místenky.</p>;
-  }
-
   return (
-    <div class={`hall hall--${mode}`}>
-      <div class="map-bar">
-        <nav class="map-crumbs" aria-label="Kde v plánku jste">
-          <button type="button" class="crumb" aria-current={mode === 'hall' ? 'location' : undefined} onClick={showHall}>
-            Celý sál
-          </button>
-          {table && (
-            <>
-              <span aria-hidden="true">›</span>
-              <span class="crumb crumb--current" aria-current="location">
+    <div class={`hall${zoomed ? ' hall--zoomed' : ''}`}>
+      {failed && <p class="message message--error">Plánek sálu se nepodařilo načíst. Zkuste prosím obnovit stránku.</p>}
+      <div class="map-view hall-plan" ref={holder} />
+
+      <div class="map-top">
+        {zoomed ? (
+          <nav class="map-crumbs" aria-label="Kde v plánku jste">
+            <button type="button" class="map-chip map-chip--back" onClick={showHall}>
+              ‹ Celý sál
+            </button>
+            {table && (
+              <span class="map-chip map-chip--current" aria-current="location">
                 Stůl {table.label}
                 {table.name ? ` – ${table.name}` : ''}
               </span>
-            </>
-          )}
-        </nav>
-        <button
-          type="button"
-          class="map-mode"
-          aria-pressed={mode === 'map'}
-          onClick={() => (mode === 'map' ? (table ? showTable(table.id) : showHall()) : setMode('map'))}
-        >
-          {mode === 'map' ? 'Hotovo' : 'Posouvat a přibližovat'}
+            )}
+          </nav>
+        ) : (
+          <p class="map-chip map-chip--hint">Klepněte na stůl nebo místo</p>
+        )}
+      </div>
+
+      <div class="map-controls" role="group" aria-label="Ovládání plánku">
+        <button type="button" class="map-control" onClick={() => zoomBy(ZoomStep)} aria-label="Přiblížit" title="Přiblížit">+</button>
+        <button type="button" class="map-control" onClick={() => zoomBy(1 / ZoomStep)} disabled={!zoomed} aria-label="Oddálit" title="Oddálit">−</button>
+        <button type="button" class="map-control map-control--fit" onClick={showHall} disabled={!zoomed} aria-label="Celý sál" title="Celý sál">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg>
         </button>
       </div>
-      {failed && <p class="message message--error">Plánek sálu se nepodařilo načíst. Zkuste prosím obnovit stránku.</p>}
-      <div class="map-view hall-plan" ref={holder} />
-      {mode === 'map' && (
-        <div class="map-controls" role="group" aria-label="Ovládání mapy">
-          <button type="button" class="map-control map-control--in" onClick={() => zoomBy(1.6)} aria-label="Přiblížit">+</button>
-          <button type="button" class="map-control map-control--out" onClick={() => zoomBy(1 / 1.6)} aria-label="Oddálit">−</button>
-          <button type="button" class="map-control map-control--up" onClick={() => move(0, -1)} aria-label="Posunout nahoru">↑</button>
-          <button type="button" class="map-control map-control--left" onClick={() => move(-1, 0)} aria-label="Posunout doleva">←</button>
-          <button type="button" class="map-control map-control--right" onClick={() => move(1, 0)} aria-label="Posunout doprava">→</button>
-          <button type="button" class="map-control map-control--down" onClick={() => move(0, 1)} aria-label="Posunout dolů">↓</button>
-        </div>
-      )}
-      <p class="hint">
-        {mode === 'hall' && 'Klepnutím na stůl ho přiblížíte a vyberete místa.'}
-        {mode === 'table' && 'Klepnutím na místo ho vyberete nebo zrušíte. Jiný stůl vyberete klepnutím na něj.'}
-        {mode === 'map' && 'Plánek posouvejte tažením, přibližujte dvěma prsty, kolečkem myši nebo tlačítky.'}
-      </p>
     </div>
   );
 }
@@ -390,10 +370,10 @@ function find(svg: SVGSVGElement | null, id: string): SVGElement | null {
   return svg?.querySelector<SVGElement>(`[id="${CSS.escape(id)}"]`) ?? null;
 }
 
-/** Number of the table an element belongs to: inside a group table-N, or the text table-N-name. */
+/** Number of the table an element belongs to: inside a group table-N, or its texts table-N-name / label-table-N. */
 function tableOf(element: Element): number | null {
   for (let node: Element | null = element; node && !(node instanceof SVGSVGElement); node = node.parentElement) {
-    const match = /^table-(\d+)(?:-name)?$/.exec(node.id);
+    const match = /^(?:label-)?table-(\d+)(?:-name)?$/.exec(node.id);
     if (match?.[1]) {
       return Number(match[1]);
     }

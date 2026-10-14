@@ -1,10 +1,10 @@
 import { useEffect } from 'preact/hooks';
-import { formatPrice, freeSeats } from '../logic';
+import { formatPrice, freeSeats, totals } from '../logic';
 import type { Store } from '../store';
 import type { PickerData } from '../types';
-import { scrollToElement } from '../../scroll';
 import { HallMap } from './HallMap';
-import { OrderButton } from './OrderButton';
+import { OrderBar } from './OrderBar';
+import { StandingTickets } from './StandingTickets';
 import { Summary } from './Summary';
 
 const PollMs = 3000;
@@ -15,8 +15,8 @@ interface Props {
 }
 
 /**
- * The map fills the screen (with live availability); the first chosen ticket starts the reservation.
- * The green button over the map leads to the summary and the form below it, all on one page.
+ * One screen with everything needed to choose: availability, the whole map (live seat states),
+ * tickets without a seat and the bar with the choice and "Pokračovat k údajům". The form follows below.
  */
 export function App({ store, data }: Props) {
   const state = store.state.value;
@@ -50,33 +50,35 @@ export function App({ store, data }: Props) {
     return <p class="message">Načítám plánek sálu…</p>;
   }
 
+  const hasPlan = data.layout.svg !== null;
   return (
     <div class={`picker${busy ? ' is-busy' : ''}`}>
-      <div class={`picker-stage${data.layout.svg ? '' : ' picker-stage--empty'}`}>
-        <div class="picker-info">
-          <p class="availability">
-            Volných míst u stolů: <strong>{freeSeats(data.layout.seats.length, state)}</strong> · bez místenky:{' '}
-            <strong>{state.limits.standing_left}</strong> · místenka {formatPrice(state.prices.seat)}, bez místenky{' '}
-            {formatPrice(state.prices.standing)}
-          </p>
-          <ul class="legend" aria-label="Legenda">
-            <li><span class="swatch swatch--free" /> volné</li>
-            <li><span class="swatch swatch--mine">✓</span> vybrané</li>
-            <li><span class="swatch swatch--taken" /> obsazené</li>
-            <li>
-              <button type="button" class="link-button" onClick={() => scrollToElement('summary')}>
-                lístky bez místenky
-              </button>
-            </li>
-          </ul>
-        </div>
+      <div class={`picker-stage${hasPlan ? '' : ' picker-stage--empty'}`}>
+        {hasPlan && (
+          <div class="stage-head">
+            <p class="availability">
+              Volná místa u stolů: <strong>{freeSeats(data.layout.seats.length, state)}</strong>
+              <span class="availability-price"> · místenka {formatPrice(state.prices.seat)}</span>
+            </p>
+            <ul class="legend" aria-label="Legenda">
+              <li><span class="swatch swatch--free" /> volné</li>
+              <li><span class="swatch swatch--mine" /> vybrané</li>
+              <li><span class="swatch swatch--taken" /> obsazené</li>
+            </ul>
+          </div>
+        )}
         <p class={`message picker-message${message?.error ? ' message--error' : ''}`} role="status" aria-live="polite">
           {message?.text}
         </p>
-        <HallMap layout={data.layout} state={state} prices={state.prices} disabled={busy} onToggle={(id) => void store.toggleSeat(id)} />
-        <OrderButton state={state} />
+        {hasPlan ? (
+          <HallMap layout={data.layout} state={state} prices={state.prices} disabled={busy} onToggle={(id) => void store.toggleSeat(id)} />
+        ) : (
+          <p class="stage-note">Plánek sálu připravujeme. Zatím lze koupit jen lístky bez místenky.</p>
+        )}
+        <StandingTickets store={store} state={state} />
+        <OrderBar state={state} />
       </div>
-      <Summary store={store} state={state} />
+      {totals(state.reservation, state.prices).tickets > 0 && <Summary store={store} state={state} />}
     </div>
   );
 }

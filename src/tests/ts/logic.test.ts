@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   canAddStanding,
+  choiceSummary,
   formatCountdown,
   formatSeat,
   freeSeats,
@@ -76,6 +77,12 @@ describe('totals and limits', () => {
   test('counts free seats and works without a draft', () => {
     expect(freeSeats(10, state())).toBe(8);
     expect(totals(null, state().prices)).toEqual({ seats: 0, standing: 0, tickets: 0, price: 0 });
+  });
+
+  test('summarises the choice per table', () => {
+    const seats = [{ id: 1, label: '12/1' }, { id: 2, label: '12/2' }, { id: 9, label: '3/9' }];
+    expect(choiceSummary({ email: null, standing: 2, seats, expires_in: 60 })).toBe('stůl 12: 2 místa, stůl 3: 1 místo, 2 bez místenky');
+    expect(choiceSummary(null)).toBe('');
   });
 });
 
