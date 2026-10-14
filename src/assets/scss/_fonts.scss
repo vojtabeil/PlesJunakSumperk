@@ -1,0 +1,29 @@
+// Fonts of the scout visual style (Junák – český skaut), served from www/fonts/skaut (copied from
+// cdn.skauting.cz; free to use on scout websites): SKAUT Bold for headings (capitals only), TheMix for text.
+
+@font-face {
+  font-family: 'SKAUT Bold';
+  src:
+    url('../fonts/skaut/skaut-bold-webfont.woff2') format('woff2'),
+    url('../fonts/skaut/skaut-bold-webfont.woff') format('woff');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@each $file, $weight, $style in (
+  ('TheMix_LT_400', 400, normal),
+  ('TheMix_LT_400i', 400, italic),
+  ('TheMix_LT_700', 700, normal),
+  ('TheMix_LT_700i', 700, italic),
+) {
+  @font-face {
+    font-family: 'TheMix';
+    src:
+      url('../fonts/skaut/#{$file}.woff2') format('woff2'),
+      url('../fonts/skaut/#{$file}.woff') format('woff');
+    font-weight: $weight;
+    font-style: $style;
+    font-display: swap;
+  }
+}

@@ -1,4 +1,4 @@
-// Design tokens. Look "scout uniform badge": dark scout green, cream, yellow and red badges.
+// Design tokens: the scout visual style (Junák – český skaut) - logo colours, SKAUT Bold and TheMix (_fonts).
 // The administration uses the same tokens (admin.scss).
 
 $breakpoint-tablet: 900px;
@@ -17,30 +17,32 @@ $breakpoint-phone: 480px;
 }
 
 :root {
-  --green: #2e5e3a;
-  --green-dark: #224a2c;
-  --green-soft: rgba(46, 94, 58, 0.12);
-  --cream: #f5eedc;
-  --cream-dark: #e9dfc6;
-  --yellow: #f0b93a;
-  --red: #cf4a3a;
-  --red-dark: #b23d2f;
-  // Kept for the administration: "chosen" accents.
-  --orange: var(--yellow);
-  --seat-free: #3f8a4f;
-  --seat-free-hover: #2e6b3b;
-  --taken: #d9d1bf;
-  --taken-text: #6d665e;
+  // Colours of the scout logo (skaut.cz): navy dog and wordmark, blue lily, orange and yellow petals.
+  --navy: #2d4b8a;
+  --navy-dark: #213a6d;
+  --navy-soft: rgba(45, 75, 138, 0.12);
+  --blue: #29609f;
+  --blue-light: #3678b1;
+  --orange: #f49d1d;
+  --orange-dark: #d9840a;
+  --yellow: #f8af15;
+  // Light, airy surfaces (tone in tone with the navy, no pure black or white text on them).
+  --paper: #eef3fa;
+  --paper-dark: #d7e2f1;
+  --seat-free: #3678b1;
+  --seat-free-hover: #29609f;
+  --taken: #d6dde8;
+  --taken-text: #5b6577;
   --error: #b3261e;
-  --text: #1f2a21;
-  --muted: #5d625a;
-  --bg: var(--cream);
+  --text: #1c2b48;
+  --muted: #56627a;
+  --bg: var(--paper);
   --surface: #ffffff;
-  --surface-alt: #fbf8f0;
-  --border: #ddd3bc;
+  --surface-alt: #f6f9fd;
+  --border: #d3dcea;
   --radius: 10px;
   --radius-small: 6px;
   --radius-card: 22px;
-  --heading-font: 'Bricolage Grotesque', 'Arial Black', system-ui, sans-serif;
-  --body-font: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --heading-font: 'SKAUT Bold', 'Arial Black', system-ui, sans-serif;
+  --body-font: 'TheMix', 'Trebuchet MS', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 }

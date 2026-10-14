@@ -50,5 +50,5 @@
 | `database/` | `schema.sql` (hall plan in `hall_plan`, layout in `hall_tables` / `seats`, the sale in `seat_bookings`, tickets in `tickets`) + `defaults.sql` (also the production installation), `demo-hall.svg` (local demo plan), `seed.sql` (local test data only). |
 | `tests/php/` | PHPUnit against `ples_test`; mirrors `app/`; helpers in `Support/`, recorded responses in `fixtures/`. |
 | `tests/ts/` | `bun test` of the seat picker. |
-| `www/` | Document root: `index.php`, `.htaccess`, `img/`, `kontrola.webmanifest` (installable check app), `build/` (generated, git-ignored). |
+| `www/` | Document root: `index.php`, `.htaccess`, `img/` (incl. `skaut-logo.svg` from skaut.cz), `fonts/skaut/` (scout fonts SKAUT Bold and TheMix from cdn.skauting.cz, free for scout websites; `assets/scss/_fonts.scss`), `kontrola.webmanifest` (installable check app), `build/` (generated, git-ignored). |
 | `var/` | Nette cache (`var/temp`) and logs (`var/log`) (git-ignored). |

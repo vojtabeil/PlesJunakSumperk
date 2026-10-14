@@ -2,6 +2,7 @@
 // Built to www/build/check.css (see dev/build.ps1).
 
 @use 'tokens' as *;
+@use 'fonts';
 
 :root {
   --ok: #1e8e3e;
@@ -183,7 +184,7 @@ body {
   color: #fff;
   border: none;
   border-radius: var(--radius);
-  background: var(--green);
+  background: var(--navy);
   cursor: pointer;
 
   &:disabled {

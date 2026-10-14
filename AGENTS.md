@@ -18,6 +18,9 @@ bundled by **Bun**. Decisions, open questions and the backlog are in `doc/plan.m
 - **All source code is in English**: identifiers, comments, log and console
   messages, SQL comments, script help text, config keys.
 - Text shown to end users of the site (visitors, organizers) and e-mails are in Czech.
+- Look: the scout visual style (Junák – český skaut). Colours of the logo as tokens in `assets/scss/_tokens.scss`
+  (navy, blue, orange, yellow on light blue paper), SKAUT Bold (capitals only) for headings and TheMix for text, served
+  from `www/fonts/skaut/` (no external font services). The scout logo stays apart from the name of the ball (footer).
 - Keep `.ps1` files ASCII-only. Windows PowerShell 5.1 reads BOM-less files as
   ANSI, so any non-ASCII character would be garbled.
 - `resource/original/` and `resource/original-web/` are two different copies of the legacy site,

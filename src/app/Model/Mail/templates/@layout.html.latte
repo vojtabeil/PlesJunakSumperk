@@ -4,17 +4,17 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{$settings['event_name'] ?? 'Skautský ples'}</title></head>
-<body style="margin:0;padding:16px;background:#f7f3ea;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#1d1d1b">
-<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #ddd5c6;border-radius:10px;padding:20px">
-	<h1 style="margin:0 0 16px;font-size:24px;color:#287234">{$settings['event_name'] ?? 'Skautský ples'}</h1>
+<body style="margin:0;padding:16px;background:#eef3fa;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#1c2b48">
+<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #d3dcea;border-radius:10px;padding:20px">
+	<h1 style="margin:0 0 16px;font-size:24px;color:#2d4b8a">{$settings['event_name'] ?? 'Skautský ples'}</h1>
 	{include content}
 	<p n:if="$link !== null" style="margin:24px 0">
-		<a href="{$link}" style="display:inline-block;padding:12px 20px;background:#287234;color:#fff;border-radius:6px;font-weight:bold;text-decoration:none">Zobrazit rezervaci a platbu</a>
+		<a href="{$link}" style="display:inline-block;padding:12px 20px;background:#2d4b8a;color:#fff;border-radius:6px;font-weight:bold;text-decoration:none">Zobrazit rezervaci a platbu</a>
 	</p>
 	<p>Těšíme se na vás!{if !empty($settings['organizer'])}<br>{$settings['organizer']}, organizátor{/if}</p>
-	<p n:if="!empty($settings['contact_email']) || !empty($settings['contact_phone'])" style="color:#5c5c57;font-size:14px">
+	<p n:if="!empty($settings['contact_email']) || !empty($settings['contact_phone'])" style="color:#56627a;font-size:14px">
 		Dotazy:
-		{if !empty($settings['contact_email'])}<a href="mailto:{$settings['contact_email']}" style="color:#287234">{$settings['contact_email']}</a>{/if}
+		{if !empty($settings['contact_email'])}<a href="mailto:{$settings['contact_email']}" style="color:#2d4b8a">{$settings['contact_email']}</a>{/if}
 		{if !empty($settings['contact_email']) && !empty($settings['contact_phone'])} · {/if}
 		{$settings['contact_phone'] ?? ''}
 	</p>

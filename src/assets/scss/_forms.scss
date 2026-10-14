@@ -30,7 +30,7 @@ textarea {
   }
 }
 
-// Rounded buttons of the badge look: pill--cream on the green header, pill--yellow as the main call.
+// Rounded buttons of the badge look: pill--paper on the navy header, pill--yellow as the main call.
 .pill {
   display: inline-flex;
   align-items: center;
@@ -39,8 +39,8 @@ textarea {
   padding: 0.55rem 1.25rem;
   font: inherit;
   font-weight: 700;
-  color: var(--green);
-  background: var(--cream);
+  color: var(--navy);
+  background: var(--paper);
   border: none;
   border-radius: 999px;
   text-decoration: none;
@@ -66,7 +66,7 @@ textarea {
   font: inherit;
   font-weight: 700;
   color: #fff;
-  background: var(--green);
+  background: var(--navy);
   border: none;
   border-radius: 999px;
   cursor: pointer;
@@ -74,7 +74,7 @@ textarea {
   white-space: nowrap;
 
   &:hover {
-    background: var(--green-dark);
+    background: var(--navy-dark);
   }
 
   &:disabled {
@@ -93,7 +93,7 @@ textarea {
 .link-button {
   padding: 0;
   font: inherit;
-  color: var(--green);
+  color: var(--navy);
   background: none;
   border: none;
   text-decoration: underline;

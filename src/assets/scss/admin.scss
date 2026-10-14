@@ -1,6 +1,7 @@
 // Styles of the administration. Built to www/build/admin.css.
 
 @use 'tokens' as *;
+@use 'fonts';
 @use 'forms';
 
 *,
@@ -18,7 +19,7 @@ body {
 }
 
 a {
-  color: var(--green);
+  color: var(--navy);
 }
 
 :focus-visible {
@@ -31,7 +32,7 @@ h2 {
   margin-top: 0;
   font-family: var(--heading-font);
   font-weight: 400;
-  color: var(--green);
+  color: var(--navy);
 }
 
 h1 {
@@ -59,7 +60,7 @@ h2 {
   gap: 0.5rem 1.5rem;
   padding: 0.75rem 16px;
   color: #fff;
-  background: var(--green);
+  background: var(--navy);
 
   a {
     color: #fff;
@@ -164,7 +165,7 @@ h2 {
   padding: 1rem 1.25rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--green);
+  border-left: 4px solid var(--navy);
   border-radius: var(--radius);
 
   &--warning {
@@ -229,7 +230,7 @@ h2 {
 
   &--paid {
     color: #fff;
-    background: var(--green);
+    background: var(--navy);
   }
 
   &--confirmed {
@@ -334,7 +335,7 @@ fieldset {
   legend {
     padding: 0 0.5rem;
     font-weight: 700;
-    color: var(--green);
+    color: var(--navy);
   }
 }
 
@@ -435,18 +436,18 @@ fieldset {
 }
 
 // --- Ticket state colours (dashboard bars, legend, seat badges) -----------------
-// One green ramp, light -> dark = further along: chosen -> reserved -> partly paid -> paid
+// One blue ramp, light -> dark = further along: chosen -> reserved -> partly paid -> paid
 // (validated as an ordinal ramp: monotone lightness, light end >= 2:1 on white). Free = neutral track.
 // Z-lístky reuse it: waiting for pick-up = the light end, picked up = paid.
 
 $state-colors: (
-  held: #8dbd88,
-  unpaid: #5e985f,
-  partial: #3a7746,
-  paid: #1f5530,
-  waiting: #8dbd88,
-  picked_up: #1f5530,
-  free: #ebe5d6,
+  held: #86afd8,
+  unpaid: #4f86c0,
+  partial: #2d61a0,
+  paid: #1d3d72,
+  waiting: #86afd8,
+  picked_up: #1d3d72,
+  free: #e3e9f2,
 );
 
 @each $state, $color in $state-colors {
@@ -570,7 +571,7 @@ $state-colors: (
   display: flex;
   height: 1.4rem;
   overflow: hidden;
-  background: #ebe5d6;
+  background: #e3e9f2;
   border-radius: 4px;
 }
 
@@ -638,7 +639,7 @@ $state-colors: (
 
 .all-good {
   font-weight: 700;
-  color: var(--green);
+  color: var(--navy);
 }
 
 .import-line {
@@ -675,7 +676,7 @@ $state-colors: (
   border-radius: var(--radius);
 
   strong {
-    color: var(--green);
+    color: var(--navy);
   }
 
   span {
@@ -684,7 +685,7 @@ $state-colors: (
   }
 
   &:hover {
-    border-color: var(--green);
+    border-color: var(--navy);
   }
 }
 
@@ -735,8 +736,8 @@ $state-colors: (
 
     &.is-current {
       color: #fff;
-      background: var(--green);
-      border-color: var(--green);
+      background: var(--navy);
+      border-color: var(--navy);
     }
   }
 }
@@ -863,7 +864,7 @@ h3 {
   }
 
   &--current {
-    border: 2px solid var(--green);
+    border: 2px solid var(--navy);
   }
 }
 
@@ -959,8 +960,8 @@ h3 {
       list-style: none;
 
       &.is-current {
-        color: var(--green);
-        box-shadow: inset 0 3px 0 var(--green);
+        color: var(--navy);
+        box-shadow: inset 0 3px 0 var(--navy);
       }
     }
 
@@ -997,7 +998,7 @@ h3 {
 .seat-details > summary {
   cursor: pointer;
   font-weight: 700;
-  color: var(--green);
+  color: var(--navy);
 }
 
 // Empty states: what it means and what to do next.
@@ -1108,7 +1109,7 @@ h3 {
   h2 {
     margin: 0;
     font-size: 12pt;
-    color: var(--green);
+    color: var(--navy);
   }
 
   p {
@@ -1120,7 +1121,7 @@ h3 {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--red);
+  color: var(--orange);
 }
 
 .crew-card-event {

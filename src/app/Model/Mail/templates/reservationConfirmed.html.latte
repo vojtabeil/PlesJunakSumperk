@@ -21,12 +21,12 @@
 <p>děkujeme za rezervaci lístků. Rezervaci jsme uložili:</p>
 <table style="border-collapse:collapse;margin:16px 0">
 	<tr n:foreach="$rows as $label => $value">
-		<td style="padding:4px 16px 4px 0;color:#5c5c57">{$label}</td>
+		<td style="padding:4px 16px 4px 0;color:#56627a">{$label}</td>
 		<td style="padding:4px 0;font-weight:bold">{$value}</td>
 	</tr>
 </table>
 
-<h2 style="margin:24px 0 8px;font-size:18px;color:#287234">Platba</h2>
+<h2 style="margin:24px 0 8px;font-size:18px;color:#2d4b8a">Platba</h2>
 <p>Zaplaťte prosím převodem{if $reservation['due_on']} <strong>do {$reservation['due_on']|date:'j. n. Y'}</strong>{/if},
 	nejjednodušeji načtením QR kódu v aplikaci své banky:</p>
 {include '@payment.html.latte'}

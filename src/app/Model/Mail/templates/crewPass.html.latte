@@ -11,14 +11,14 @@
 <p>Kdy: <strong>{$settings['event_date'] ?? ''}</strong><br>Kde: <strong>{$settings['venue'] ?? ''}</strong></p>
 <table style="border-collapse:collapse;width:100%;margin:8px 0 16px">
 	<tr>
-		<td style="padding:8px 12px 8px 0;border-top:1px solid #ddd5c6;vertical-align:middle;width:140px">
+		<td style="padding:8px 12px 8px 0;border-top:1px solid #d3dcea;vertical-align:middle;width:140px">
 			<img src="cid:{$cid}" alt="QR kód Z-lístku {$member['code']}" width="130" height="130" style="display:block">
 		</td>
-		<td style="padding:8px 0;border-top:1px solid #ddd5c6;vertical-align:middle">
+		<td style="padding:8px 0;border-top:1px solid #d3dcea;vertical-align:middle">
 			<strong>Z-lístek – {$member['name']}</strong><br>
 			Funkce: {$member['role']}<br>
 			Kód: <strong style="font-family:Consolas,monospace;letter-spacing:2px">{$member['code']}</strong><br>
-			<a href="{$printLink}" style="color:#287234">Z-lístek k vytištění</a>
+			<a href="{$printLink}" style="color:#2d4b8a">Z-lístek k vytištění</a>
 		</td>
 	</tr>
 </table>

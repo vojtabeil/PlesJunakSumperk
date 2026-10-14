@@ -6,12 +6,11 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="theme-color" content="#2e5e3a">
+	<meta name="theme-color" content="#2d4b8a">
 	<title>{ifset title}{include title|stripHtml} – {/ifset}{$eventName}</title>
 	<link rel="icon" type="image/svg+xml" href="{$basePath}/img/icons/organizer.svg">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+	<link rel="preload" href="{$basePath}/fonts/skaut/skaut-bold-webfont.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="preload" href="{$basePath}/fonts/skaut/TheMix_LT_400.woff2" as="font" type="font/woff2" crossorigin>
 	<link rel="stylesheet" href="{$basePath}/{asset('build/front.css')}">
 </head>
 <body>
@@ -33,7 +32,7 @@
 
 		{* Facts of the event as round badges sewn on a uniform. *}
 		<ul n:if="$siteMode !== \App\Model\Site\SiteMode::After" class="badges">
-			<li n:if="!empty($settings['venue'])" class="badge badge--cream">
+			<li n:if="!empty($settings['venue'])" class="badge badge--paper">
 				<span class="badge-label">Kde</span>
 				<a n:tag-if="!empty($settings['venue_url'])" class="badge-value" href="{$settings['venue_url'] ?? ''}" target="_blank" rel="noopener">{$settings['venue']}</a>
 			</li>
@@ -41,11 +40,11 @@
 				<span class="badge-label">Kdy</span>
 				<span class="badge-value">{$settings['event_date']}</span>
 			</li>
-			<li n:if="!empty($settings['band'])" class="badge badge--red">
+			<li n:if="!empty($settings['band'])" class="badge badge--orange">
 				<span class="badge-label">Hraje</span>
 				<a n:tag-if="!empty($settings['band_url'])" class="badge-value" href="{$settings['band_url'] ?? ''}" target="_blank" rel="noopener">{$settings['band']}</a>
 			</li>
-			<li n:if="!empty($settings['organizer'])" class="badge badge--cream">
+			<li n:if="!empty($settings['organizer'])" class="badge badge--paper">
 				<span class="badge-label">Pořádá</span>
 				<span class="badge-value">{$settings['organizer']}</span>
 			</li>
@@ -64,7 +63,10 @@
 		{if !empty($settings['contact_email']) && !empty($settings['contact_phone'])}·{/if}
 		<a n:if="!empty($settings['contact_phone'])" href="tel:{str_replace(' ', '', $settings['contact_phone'])}">{$settings['contact_phone']}</a>
 	</p>
-	<p>Junák – český skaut, Šumperk</p>
+	<p class="site-footer-org">
+		<a href="https://www.skaut.cz/" target="_blank" rel="noopener"><img src="{$basePath}/img/skaut-logo.svg" alt="SKAUT – Junák – český skaut" width="170" height="48"></a>
+		<span>Junák – český skaut, Šumperk</span>
+	</p>
 </footer>
 {block scripts}{/block}
 </body>
