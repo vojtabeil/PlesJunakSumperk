@@ -57,7 +57,9 @@ final class EventFormatter
 				isset($d['reason']) ? "důvod: {$d['reason']}" : null,
 				isset($d['codes']) ? "kód {$d['codes']}" : null,
 			],
+			'ticket.snapshot' => [isset($d['count']) ? "vstupenek {$d['count']}" : null],
 			'ticket.used', 'ticket.unused' => [
+				!empty($d['offline']) ? 'offline' . (isset($d['at']) ? ' ' . date('j. n. H:i', (int) strtotime((string) $d['at'])) : '') : null,
 				isset($d['crew']) ? "Z-lístek {$d['crew']}" : null,
 				isset($d['count']) && (int) $d['count'] > 1 ? "vstupenek {$d['count']}" : null,
 				isset($d['codes']) ? "kód {$d['codes']}" : null,

@@ -1,14 +1,45 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import type { CheckApi } from '../api';
+import type { CheckApi, OfflineSyncApi } from '../api';
 import { keepScreenOn, signal, toggleFullscreen } from '../device';
-import { extractCode, isLookupInput } from '../logic';
+import { extractCode, formatTime, isLookupInput } from '../logic';
+import {
+  isExpired,
+  lookupOffline,
+  statsOffline,
+  undoOffline,
+  useOffline,
+  useReservationOffline,
+  type OfflineData,
+} from '../offline';
+import type { OfflineStore } from '../offline-store';
 import { createScanner, type Camera, type Scanner } from '../scanner';
-import type { CheckData, CheckResponse, CheckResult, Stats } from '../types';
+import type { CheckData, CheckResponse, CheckResult, Stats, SyncResult } from '../types';
+import { OfflinePanel } from './OfflinePanel';
 import { ResultCard } from './ResultCard';
 
 interface Props {
   data: CheckData;
-  api: CheckApi;
+  api: CheckApi & OfflineSyncApi;
+  store: OfflineStore;
+}
+
+/** The chosen mode survives a reload (switched only by hand). */
+const ModeKey = 'kontrola-mode';
+
+function savedMode(): boolean {
+  try {
+    return window.localStorage.getItem(ModeKey) === 'offline';
+  } catch {
+    return false;
+  }
+}
+
+function saveMode(offline: boolean): void {
+  try {
+    window.localStorage.setItem(ModeKey, offline ? 'offline' : 'online');
+  } catch {
+    // storage blocked: the mode lasts until the page is closed
+  }
 }
 
 interface InstallPrompt extends Event {
@@ -22,7 +53,7 @@ const RepeatMs = 3000;
  * Entrance check: camera scanner behind, stats and round buttons on top, manual input at the
  * bottom, result card over everything. Scanning pauses while a result is shown.
  */
-export function App({ data, api }: Props) {
+export function App({ data, api, store }: Props) {
   const cameraRef = useRef<HTMLDivElement>(null);
   const scanner = useRef<Scanner | null>(null);
   const lastText = useRef({ text: '', at: 0 });
@@ -39,6 +70,35 @@ export function App({ data, api }: Props) {
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [torch, setTorch] = useState<boolean | null>(null);
   const [install, setInstall] = useState<InstallPrompt | null>(null);
+  const [offlineData, setOfflineData] = useState<OfflineData | null>(null);
+  const [offline, setOffline] = useState(false);
+  const [panel, setPanel] = useState(false);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  // The scanner callback is created once: it reads the current mode and data from here.
+  const offlineRef = useRef<{ data: OfflineData | null; on: boolean }>({ data: null, on: false });
+  offlineRef.current = { data: offlineData, on: offline && offlineData !== null };
+
+  /** Offline: the same API answered from the phone; entries are stored before the answer is shown. */
+  const offlineApi: CheckApi = {
+    lookup: async (text) => lookupOffline(offlineRef.current.data as OfflineData, text),
+    use: (code) => commit(useOffline(offlineRef.current.data as OfflineData, code, new Date())),
+    useReservation: (id) => commit(useReservationOffline(offlineRef.current.data as OfflineData, id, new Date())),
+    undo: (code) => commit(undoOffline(offlineRef.current.data as OfflineData, code, new Date())),
+  };
+  const currentApi = (): CheckApi => (offlineRef.current.on ? offlineApi : api);
+
+  async function commit([next, response]: [OfflineData, CheckResponse]): Promise<CheckResponse> {
+    if (next !== offlineRef.current.data) {
+      try {
+        await store.save(next);
+      } catch {
+        return { ok: false, error: 'Vstup se nepodařilo uložit do telefonu.' };
+      }
+      offlineRef.current = { ...offlineRef.current, data: next };
+      setOfflineData(next);
+    }
+    return response;
+  }
 
   const showToast = (message: string) => {
     setToast(message);
@@ -69,7 +129,7 @@ export function App({ data, api }: Props) {
     }
     setWorking(true);
     scanner.current?.pause();
-    const shown = show(await api.lookup(text));
+    const shown = show(await currentApi().lookup(text));
     setWorking(false);
     if (!shown) {
       void scanner.current?.resume();
@@ -119,9 +179,26 @@ export function App({ data, api }: Props) {
       .catch(() =>
         setCameraError('Kameru se nepodařilo spustit. Povolte prohlížeči přístup ke kameře, nebo zadejte kód ručně.'),
       );
-    if (data.code) {
-      void lookup(data.code);
-    }
+    // Offline data from the phone (deleted after 3 days), then the code from the QR link.
+    void store
+      .load()
+      .then(async (saved) => {
+        if (saved && isExpired(saved, Date.now())) {
+          await store.clear();
+          showToast('Offline data byla starší než 3 dny a byla smazána.');
+          return null;
+        }
+        return saved;
+      })
+      .catch(() => null)
+      .then((saved) => {
+        offlineRef.current = { data: saved, on: savedMode() && saved !== null };
+        setOfflineData(saved);
+        setOffline(savedMode() && saved !== null);
+        if (data.code) {
+          void lookup(data.code);
+        }
+      });
     const release = keepScreenOn();
     const onInstall = (event: Event) => {
       event.preventDefault();
@@ -149,6 +226,61 @@ export function App({ data, api }: Props) {
     }
   };
 
+  const download = async () => {
+    setWorking(true);
+    const response = await api.snapshot();
+    setWorking(false);
+    if (!response.ok) {
+      showToast(response.error);
+      return;
+    }
+    // Entries not uploaded yet stay: they apply on top of the fresh data.
+    const next: OfflineData = { snapshot: response.snapshot, entries: offlineData?.entries ?? [], downloadedAt: Date.now() };
+    try {
+      await store.save(next);
+    } catch {
+      showToast('Data se nepodařilo uložit do telefonu.');
+      return;
+    }
+    setOfflineData(next);
+    showToast(`Staženo ${next.snapshot.tickets.length} vstupenek. Offline režim zapnete tlačítkem „Pracovat offline“.`);
+  };
+
+  const toggleOffline = () => {
+    const next = !offline;
+    setOffline(next);
+    saveMode(next);
+    showToast(next ? 'Pracujete offline – z dat v telefonu.' : 'Pracujete online.');
+    setPanel(false);
+  };
+
+  const sync = async () => {
+    if (!offlineData) {
+      return;
+    }
+    setWorking(true);
+    const response = await api.sync(offlineData.entries);
+    setWorking(false);
+    if (!response.ok) {
+      showToast(response.error);
+      return;
+    }
+    setSyncResult(response.sync);
+    setStats(response.stats);
+    const next = { ...offlineData, entries: [] };
+    await store.save(next).catch(() => undefined);
+    setOfflineData(next);
+  };
+
+  const deleteData = async () => {
+    await store.clear().catch(() => undefined);
+    setOfflineData(null);
+    setOffline(false);
+    saveMode(false);
+    setSyncResult(null);
+    showToast('Offline data jsou z telefonu smazaná.');
+  };
+
   const onSubmit = (event: Event) => {
     event.preventDefault();
     if (!isLookupInput(input)) {
@@ -159,13 +291,15 @@ export function App({ data, api }: Props) {
     setInput('');
   };
 
+  const shownStats = offline && offlineData ? statsOffline(offlineData) : stats;
+
   return (
     <>
       <div ref={cameraRef} class="check-camera-view" aria-hidden="true" />
 
       <header class="check-top">
         <p class="check-stats" aria-live="polite">
-          Na plese <strong>{stats.used}</strong> / {stats.total}
+          Na plese <strong>{shownStats.used}</strong> / {shownStats.total}
         </p>
         <nav class="check-buttons" aria-label="Ovládání">
           {cameras.length > 1 && (
@@ -185,6 +319,18 @@ export function App({ data, api }: Props) {
               <span aria-hidden="true">{torch ? '◉' : '○'}</span>
             </button>
           )}
+          <button
+            type="button"
+            class={`round${offline ? ' round--offline' : ''}`}
+            onClick={() => {
+              setSyncResult(null);
+              setPanel(true);
+            }}
+            aria-label="Offline režim"
+            title="Offline režim"
+          >
+            <span aria-hidden="true">⇅</span>
+          </button>
           <button type="button" class="round" onClick={toggleFullscreen} aria-label="Celá obrazovka" title="Celá obrazovka">
             <span aria-hidden="true">⛶</span>
           </button>
@@ -205,6 +351,12 @@ export function App({ data, api }: Props) {
         </nav>
       </header>
 
+      {offline && offlineData && (
+        <p class="check-offline" role="status">
+          Offline · data z {formatTime(offlineData.snapshot.created_at)}
+          {offlineData.entries.length > 0 && ` · k nahrání ${offlineData.entries.length}`}
+        </p>
+      )}
       {cameraError && <p class="check-note">{cameraError}</p>}
       {toast && (
         <p class="check-toast" role="alert" onClick={() => setToast(null)}>
@@ -237,10 +389,24 @@ export function App({ data, api }: Props) {
           result={result}
           justUsed={justUsed}
           busy={busy}
-          onUse={(code) => void act(() => api.use(code), true)}
-          onUseReservation={(id) => void act(() => api.useReservation(id), true)}
-          onUndo={(code) => void act(() => api.undo(code), false)}
+          onUse={(code) => void act(() => currentApi().use(code), true)}
+          onUseReservation={(id) => void act(() => currentApi().useReservation(id), true)}
+          onUndo={(code) => void act(() => currentApi().undo(code), false)}
           onClose={close}
+        />
+      )}
+
+      {panel && !result && (
+        <OfflinePanel
+          data={offlineData}
+          offline={offline}
+          busy={busy}
+          syncResult={syncResult}
+          onDownload={() => void download()}
+          onToggle={toggleOffline}
+          onSync={() => void sync()}
+          onDelete={() => void deleteData()}
+          onClose={() => setPanel(false)}
         />
       )}
     </>

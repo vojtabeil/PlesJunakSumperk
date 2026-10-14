@@ -14,6 +14,7 @@ final class RouterFactory
 		$router = new RouteList;
 		// Entrance check: the QR code of a ticket holds /admin/kontrola/<code>.
 		$router->addRoute('admin/kontrola/api/<op>', 'Admin:Check:api');
+		$router->addRoute('admin/kontrola/sw.js', 'Admin:Check:sw');
 		$router->addRoute('admin/kontrola[/<code [0-9A-Fa-f]{6}>]', 'Admin:Check:default');
 		// Dangerous zone (replacing the hall plan, deleting test reservations).
 		$router->addRoute('admin/nebezpecne/plan.svg', 'Admin:Danger:svg');

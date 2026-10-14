@@ -156,6 +156,11 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
   tickets once the reservation is paid (payment e-mail, or `sendTickets` after marking paid by hand).
   The entrance check (`TicketCheck`) lets unpaid reservations in with a warning; test tickets are valid only in
   the testing stage; any administrator may undo an entry. Its API (`Admin:Check`) answers 401 JSON without login.
+  The check app is an installable PWA (`kontrola.webmanifest`, service worker `check-sw.ts` served as
+  `/admin/kontrola/sw.js` with `Service-Worker-Allowed`; it never caches the API). Offline mode, switched by hand:
+  `api/snapshot` (logged) is kept in IndexedDB for 3 days, `check/offline.ts` answers like `TicketCheck` (keep the two
+  in sync), entries recorded offline are uploaded by `api/sync` (`TicketCheck::sync`: last entry per ticket, time
+  from the phone, conflicts reported).
 - Payment is due `payment_days` (setting, default 2) after the reservation day: shown to the
   customer, put into the QR code (DT), "overdue" in the admin; reminders are sent by hand from the
   dashboard or the reservation detail (no cron), at most once per payment period.

@@ -28,6 +28,7 @@ final class EventTypes
 
 		'ticket.used' => ['entrance', 'Vstupenka použita (vstup)'],
 		'ticket.unused' => ['entrance', 'Vrácen vstup vstupenky'],
+		'ticket.snapshot' => ['entrance', 'Stažena data pro offline kontrolu'],
 		'ticket.revealed' => ['entrance', 'Zobrazeny nezaplacené vstupenky (administrátor)'],
 
 		'crew.created' => ['crew', 'Nový Z-lístek'],

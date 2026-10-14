@@ -167,6 +167,121 @@ final class TicketCheck
 	}
 
 
+	/**
+	 * Everything the check app needs to work without a signal (offline mode): all tickets with their
+	 * reservation or crew member, entries so far and why a ticket is not valid. Logged (names of guests
+	 * leave the server).
+	 * @return array{created_at: string, vs_prefix: string, testing: bool, tickets: list<array<string, mixed>>, reservations: list<array<string, mixed>>}
+	 */
+	public function snapshot(): array
+	{
+		$tickets = $this->db->query(
+			"SELECT t.code, t.seat_id, t.crew_member_id, t.reservation_id, t.used_at, s.label AS seat_label,
+				a.name AS used_by_name, c.name AS crew_name, c.role AS crew_role
+			FROM tickets t
+			LEFT JOIN reservations r ON r.id = t.reservation_id
+			LEFT JOIN seats s ON s.id = t.seat_id
+			LEFT JOIN admin_users a ON a.id = t.used_by
+			LEFT JOIN crew_members c ON c.id = t.crew_member_id
+			WHERE t.crew_member_id IS NOT NULL OR r.status <> 'draft'
+			ORDER BY t.id",
+		)->fetchAll();
+		$reservations = $this->db->query(
+			"SELECT id, name, status, channel, total_price, paid_amount FROM reservations
+			WHERE status <> 'draft' AND id IN (SELECT reservation_id FROM tickets WHERE reservation_id IS NOT NULL)
+			ORDER BY id",
+		)->fetchAll();
+
+		$snapshot = [
+			'created_at' => date('Y-m-d H:i:s'),
+			'vs_prefix' => ltrim($this->settings->get('payment_vs_prefix'), '0'),
+			'testing' => $this->countsTests(),
+			'tickets' => array_map(static fn(array $t): array => self::ticketView($t) + [
+				'reservation' => $t['reservation_id'] !== null ? (int) $t['reservation_id'] : null,
+				'crew' => $t['crew_member_id'] !== null ? ['name' => (string) $t['crew_name'], 'role' => (string) $t['crew_role']] : null,
+			], $tickets),
+			'reservations' => array_map(fn(array $r): array => [
+				'id' => (int) $r['id'],
+				'name' => (string) $r['name'],
+				'status' => (string) $r['status'],
+				'remaining' => max(0, (int) $r['total_price'] - (int) round((float) $r['paid_amount'])),
+				'invalid' => $this->invalidReason($r),
+			], $reservations),
+		];
+		$this->eventLog->record('ticket.snapshot', details: ['count' => count($tickets)]);
+		return $snapshot;
+	}
+
+
+	/**
+	 * Entries recorded offline by a phone (bonus of the offline mode), in the order they happened:
+	 * a use sets the entry time from the phone, an undo takes an entry back. Uploading the same list again
+	 * changes nothing; a ticket used meanwhile by somebody else is reported as a conflict.
+	 * @param list<array{code?: mixed, at?: mixed, action?: mixed}> $entries
+	 * @return array{applied: int, skipped: int, conflicts: list<array{code: string, message: string}>}
+	 */
+	public function sync(array $entries): array
+	{
+		$applied = $skipped = 0;
+		$conflicts = [];
+		$admin = $this->actor->adminId();
+		// Only the last entry of each ticket counts (used and taken back offline = nothing to do).
+		$last = [];
+		foreach ($entries as $entry) {
+			$key = Tickets::normalizeCode((string) ($entry['code'] ?? '')) ?? (string) ($entry['code'] ?? '');
+			unset($last[$key]);
+			$last[$key] = $entry;
+		}
+		foreach ($last as $entry) {
+			$code = Tickets::normalizeCode((string) ($entry['code'] ?? ''));
+			$at = self::entryTime((string) ($entry['at'] ?? ''));
+			$ticket = $code !== null ? $this->tickets->findByCode($code) : null;
+			if ($ticket === null || $at === null || !in_array($entry['action'] ?? null, ['use', 'undo'], true)) {
+				$conflicts[] = ['code' => (string) ($entry['code'] ?? ''), 'message' => 'Neplatný záznam, vynechán.'];
+				continue;
+			}
+			if ($entry['action'] === 'undo') {
+				if ($ticket['used_at'] !== null && (int) $ticket['used_by'] === $admin) {
+					$this->db->prepare('UPDATE tickets SET used_at = NULL, used_by = NULL WHERE id = ?')->execute([$ticket['id']]);
+					$this->logUse('ticket.unused', [$ticket], ['offline' => true]);
+					$applied++;
+				} else {
+					$skipped++;
+				}
+				continue;
+			}
+			if ($ticket['used_at'] === null) {
+				$this->db->prepare('UPDATE tickets SET used_at = ?, used_by = ? WHERE id = ? AND used_at IS NULL')
+					->execute([$at, $admin, $ticket['id']]);
+				$this->logUse('ticket.used', [$ticket], ['offline' => true, 'at' => $at]);
+				$applied++;
+			} elseif ((string) $ticket['used_at'] === $at && (int) $ticket['used_by'] === $admin) {
+				$skipped++; // uploaded before
+			} else {
+				$conflicts[] = [
+					'code' => (string) $ticket['code'],
+					'message' => sprintf('Vstupenka už byla použita %s%s – pustili jste ji podruhé.',
+						date('j. n. H:i', (int) strtotime((string) $ticket['used_at'])),
+						$ticket['used_by_name'] !== null ? ' (' . $ticket['used_by_name'] . ')' : ''),
+				];
+			}
+		}
+		return ['applied' => $applied, 'skipped' => $skipped, 'conflicts' => $conflicts];
+	}
+
+
+	/** Entry time from the phone ("Y-m-d H:i:s", local time); never in the future. */
+	private static function entryTime(string $value): ?string
+	{
+		$time = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value);
+		if ($time === false) {
+			return null;
+		}
+		$now = new \DateTimeImmutable;
+		return ($time > $now ? $now : $time)->format('Y-m-d H:i:s');
+	}
+
+
 	/** @return array<string, mixed> */
 	private function requireTicket(string $code): array
 	{
@@ -303,8 +418,11 @@ final class TicketCheck
 	}
 
 
-	/** @param list<array<string, mixed>> $tickets */
-	private function logUse(string $action, array $tickets): void
+	/**
+	 * @param list<array<string, mixed>> $tickets
+	 * @param array<string, mixed> $extra more details (an entry uploaded from the offline mode)
+	 */
+	private function logUse(string $action, array $tickets, array $extra = []): void
 	{
 		$seats = array_values(array_filter(array_map(
 			static fn(array $t): ?int => $t['seat_id'] !== null ? (int) $t['seat_id'] : null,
@@ -314,6 +432,6 @@ final class TicketCheck
 		$this->eventLog->record($action, $crew ? null : (int) $tickets[0]['reservation_id'], [
 			'codes' => implode(', ', array_column($tickets, 'code')),
 			'count' => count($tickets),
-		] + ($crew ? ['crew' => "{$tickets[0]['crew_name']} ({$tickets[0]['crew_role']})"] : []), $seats);
+		] + ($crew ? ['crew' => "{$tickets[0]['crew_name']} ({$tickets[0]['crew_role']})"] : []) + $extra, $seats);
 	}
 }

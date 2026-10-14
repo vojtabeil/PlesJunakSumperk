@@ -19,12 +19,15 @@ use Nette\Utils\JsonException;
  *   GET  /admin/kontrola[/<code>]          the app (a code from the QR link is looked up at once)
  *   GET  /admin/kontrola/api/lookup?code=  what the code means
  *   POST /admin/kontrola/api/use|useReservation|undo  (JSON body, X-CSRF-Token header)
- * Every API response is {ok: true, result, stats} or {ok: false, error}.
+ *   GET  /admin/kontrola/api/snapshot      all tickets for the offline mode {ok, snapshot}
+ *   POST /admin/kontrola/api/sync          entries recorded offline {ok, sync, stats}
+ *   GET  /admin/kontrola/sw.js             service worker of the installed app (scope /admin/kontrola)
+ * Every other API response is {ok: true, result, stats} or {ok: false, error}.
  * @property-read CheckTemplate $template
  */
 final class CheckPresenter extends BasePresenter
 {
-	private const Commands = ['use', 'useReservation', 'undo'];
+	private const Commands = ['use', 'useReservation', 'undo', 'sync'];
 
 
 	public function __construct(
@@ -55,6 +58,8 @@ final class CheckPresenter extends BasePresenter
 			'code' => $code,
 			'back' => $this->link('Dashboard:default'),
 			'stats' => $this->check->entranceStats(),
+			'sw' => $this->link('sw'),
+			'scope' => $this->link('default'),
 		], htmlSafe: true);
 	}
 
@@ -66,6 +71,9 @@ final class CheckPresenter extends BasePresenter
 		try {
 			if ($request->getMethod() === 'GET' && $op === 'lookup') {
 				$this->respondResult($this->check->lookup((string) $request->getQuery('code')));
+			}
+			if ($request->getMethod() === 'GET' && $op === 'snapshot') {
+				$this->respond(IResponse::S200_OK, ['ok' => true, 'snapshot' => $this->check->snapshot()]);
 			}
 			if ($request->getMethod() !== 'POST' || !in_array($op, self::Commands, true)) {
 				$this->respond(IResponse::S404_NotFound, ['ok' => false, 'error' => 'Neznámá akce.']);
@@ -83,6 +91,10 @@ final class CheckPresenter extends BasePresenter
 				$this->respond(IResponse::S400_BadRequest, ['ok' => false, 'error' => 'Neplatný požadavek.']);
 			}
 
+			if ($op === 'sync') {
+				$entries = is_array($input['entries'] ?? null) ? array_values(array_filter($input['entries'], 'is_array')) : [];
+				$this->respond(IResponse::S200_OK, ['ok' => true, 'sync' => $this->check->sync($entries), 'stats' => $this->check->entranceStats()]);
+			}
 			$this->respondResult(match ($op) {
 				'use' => $this->check->use((string) ($input['code'] ?? '')),
 				'useReservation' => $this->check->useReservation((int) ($input['reservation'] ?? 0)),
@@ -91,6 +103,21 @@ final class CheckPresenter extends BasePresenter
 		} catch (TicketError $e) {
 			$this->respond(422, ['ok' => false, 'error' => $e->getMessage()]);
 		}
+	}
+
+
+	/**
+	 * The service worker of the installed app. Served from /admin/kontrola/sw.js so that it may control
+	 * /admin/kontrola (Service-Worker-Allowed), built from assets/ts/check-sw.ts.
+	 */
+	public function actionSw(): void
+	{
+		$file = dirname(__DIR__, 4) . '/www/build/check-sw.js';
+		$response = $this->getHttpResponse();
+		$response->setContentType('text/javascript', 'utf-8');
+		$response->setHeader('Service-Worker-Allowed', $this->link('default'));
+		$response->setHeader('Cache-Control', 'no-cache');
+		$this->sendResponse(new \Nette\Application\Responses\TextResponse((string) @file_get_contents($file)));
 	}
 
 

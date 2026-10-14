@@ -388,3 +388,44 @@ body {
 .code-outline-highlight {
   stroke: #fff !important;
 }
+
+// --- Offline mode ----------------------------------------------------------------
+
+// The button of the offline panel is yellow while working offline.
+.round--offline {
+  color: var(--text);
+  background: var(--yellow);
+}
+
+// Always visible while working offline: from which data the check answers.
+.check-offline {
+  position: absolute;
+  top: 4.25rem;
+  left: 50%;
+  z-index: 1;
+  margin: 0;
+  padding: 0.35rem 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  background: var(--yellow);
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.check-card--panel {
+  --status: var(--navy);
+}
+
+.check-sync {
+  margin-top: 0.75rem;
+
+  p {
+    margin: 0.25rem 0;
+  }
+
+  ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.1rem;
+  }
+}

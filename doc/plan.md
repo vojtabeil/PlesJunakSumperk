@@ -107,8 +107,8 @@ legacy database is out of scope. Each item names the legacy code it replaces.
    still carry the 2023 date, the old account and the old signatory.
 6. **Closing a year.** Archive the reservations of the past ball and clear `seat_bookings`, so the next
    year starts empty (needed before a new hall plan can remove seats that were sold last year).
-7. **Offline entrance check.** The check app installable as a PWA, working from downloaded data without
-   a signal and uploading the entries afterwards. Plan: `doc/check-offline-plan.md`.
+7. ~~**Offline entrance check.**~~ Done: the check app installable as a PWA, working from downloaded data
+   without a signal and uploading the entries afterwards. Plan and decisions: `doc/check-offline-plan.md`.
 
 ## 6. Hall plan from SVG (decided 2026-10-14)
 

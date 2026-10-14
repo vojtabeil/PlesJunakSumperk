@@ -1,6 +1,8 @@
 # Plán: kontrola vstupenek jako PWA s offline režimem
 
-Stav k 14. 10. 2026. Zatím jen plán, nic z toho není naprogramované.
+Stav k 14. 10. 2026: **naprogramováno** včetně zpětné synchronizace. Rozhodnutí: synchronizace jako bonus (je
+hotová), přepínání ručně, dvojí vstup z více telefonů offline se odhalí až po nahrání, data se z telefonu
+smažou 3 dny po stažení. Zbývá ruční zkouška na telefonu (instalace, režim letadlo).
 
 ## Cíl
 

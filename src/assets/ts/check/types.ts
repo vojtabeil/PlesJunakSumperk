@@ -50,6 +50,18 @@ export type CheckResponse =
   | { ok: true; result: CheckResult; stats: Stats }
   | { ok: false; error: string };
 
+/** GET api/snapshot: all tickets for the offline mode (offline.ts). */
+export type SnapshotResponse = { ok: true; snapshot: import('./offline').Snapshot } | { ok: false; error: string };
+
+export interface SyncResult {
+  applied: number;
+  skipped: number;
+  conflicts: { code: string; message: string }[];
+}
+
+/** POST api/sync: entries recorded offline. */
+export type SyncResponse = { ok: true; sync: SyncResult; stats: Stats } | { ok: false; error: string };
+
 /** Initial data printed into the page (<script id="check-data">). */
 export interface CheckData {
   /** API URL with "__op__" as the operation placeholder. */
@@ -60,4 +72,7 @@ export interface CheckData {
   /** Back to the administration. */
   back: string;
   stats: Stats;
+  /** Service worker of the installed app and the part of the site it controls. */
+  sw: string;
+  scope: string;
 }
