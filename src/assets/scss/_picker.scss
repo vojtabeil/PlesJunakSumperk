@@ -92,17 +92,9 @@
 
 .stage-note {
   @extend %stage-bar;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  margin: 0;
   padding-block: 1rem;
   color: var(--muted);
-
-  p {
-    margin: 0;
-  }
 }
 
 // Errors and notes of the API over the top of the map.
@@ -406,12 +398,12 @@
   }
 }
 
-// Order button: top right corner of the map once something is chosen; slides in.
+// Order button: fixed in the top right corner of the screen while the form is out of sight; slides in and out.
 .order-button {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
-  z-index: 3;
+  position: fixed;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  z-index: 20;
   min-height: 3rem;
   padding: 0.6rem 1.4rem;
   font: inherit;
@@ -423,28 +415,32 @@
   border-radius: 999px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
   cursor: pointer;
-  animation: order-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
-  transition: background 0.15s ease, transform 0.15s ease;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-150%) scale(0.9);
+  transition:
+    opacity 0.25s ease,
+    transform 0.35s cubic-bezier(0.2, 1.4, 0.4, 1),
+    visibility 0s linear 0.35s,
+    background 0.15s ease;
+
+  &.is-shown {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition:
+      opacity 0.25s ease,
+      transform 0.35s cubic-bezier(0.2, 1.4, 0.4, 1),
+      visibility 0s,
+      background 0.15s ease;
+  }
 
   &:hover {
     background: var(--green-dark);
-    transform: translateY(-2px);
   }
 
   &:active {
     transform: scale(0.97);
-  }
-
-  // Without a plan the button is part of the note, not over the map.
-  .stage-note & {
-    position: static;
-  }
-}
-
-@keyframes order-in {
-  from {
-    opacity: 0;
-    transform: translateY(-1.5rem) scale(0.9);
   }
 }
 
@@ -456,7 +452,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .order-button,
+  .order-button {
+    transition: none;
+  }
+
   .hall-plan .seat--mine,
   .summary {
     animation: none;

@@ -126,8 +126,8 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   `HallPlanParser` sanitizes the upload (allowlist of SVG elements, no scripts or external references);
   `HallSync::apply` cancels reservations of removed seats only when they match what the admin confirmed in
   the preview; removed seats and tables become `active = 0`. The seat picker loads `/plan-salu.svg` and
-  styles the shapes (`.seat--free/mine/taken`, numbers `label-seat-N`). The map fills the screen (with the order button
-  in its corner and the standing tickets below) and works on the SVG `viewBox` (`seat-picker/viewbox.ts`). It sleeps
+  styles the shapes (`.seat--free/mine/taken`, numbers `label-seat-N`). The map fills the screen (standing tickets below
+  it; the order button is fixed in the top right corner of the screen while the form is out of sight) and works on the SVG `viewBox` (`seat-picker/viewbox.ts`). It sleeps
   until used (wheel and swipes scroll the page); a click/tap (which also acts), two fingers, double click or the middle
   button wake it, then the wheel zooms and dragging pans; Escape, a click outside, scrolling away or "Objednat" put it to sleep. The reservation page is one view: in-page moves scroll (`scroll.ts`), never `#fragments`.
 - Do not depend on `bcmath` (may be missing on the hosting).

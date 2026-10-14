@@ -1,4 +1,3 @@
-import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { nearestSeat, seatDescription, seatStatus, type MapPoint } from '../logic';
 import type { ApiState, Direction, HallLayout, Prices } from '../types';
@@ -13,8 +12,6 @@ interface Props {
   /** Whether the map takes the wheel and one-finger swipes (see below); owned by the parent. */
   awake: boolean;
   onAwake: (awake: boolean) => void;
-  /** Shown over the map (the order button). */
-  children?: ComponentChildren;
 }
 
 const Keys: Record<string, Direction> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
@@ -39,7 +36,7 @@ const SleepVisibility = 0.3;
  * A tap on a table (or on a seat too small to hit) zooms to that table, a tap on a seat big enough chooses it.
  * Seats are buttons for clicks, keyboard (one tab stop, arrow keys) and screen readers.
  */
-export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAwake, children }: Props) {
+export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAwake }: Props) {
   const [svg, setSvg] = useState<SVGSVGElement | null>(null);
   const [failed, setFailed] = useState(false);
   const [zoomed, setZoomed] = useState(false);
@@ -415,8 +412,6 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg>
         </button>
       </div>
-
-      {children}
     </div>
   );
 }

@@ -15,8 +15,8 @@ interface Props {
 }
 
 /**
- * One screen with everything needed to choose: availability, the whole map (live seat states) with
- * the order button in its top right corner, and tickets without a seat. The summary with the form follows below.
+ * One screen with everything needed to choose: availability, the whole map (live seat states) and tickets
+ * without a seat. The summary with the form follows below; the order button floats over the screen until it is seen.
  */
 export function App({ store, data }: Props) {
   const state = store.state.value;
@@ -80,17 +80,13 @@ export function App({ store, data }: Props) {
             onToggle={(id) => void store.toggleSeat(id)}
             awake={awake}
             onAwake={setAwake}
-          >
-            <OrderButton state={state} onOrder={() => setAwake(false)} />
-          </HallMap>
+          />
         ) : (
-          <div class="stage-note">
-            <p>Plánek sálu připravujeme. Zatím lze koupit jen lístky bez místenky.</p>
-            <OrderButton state={state} onOrder={() => undefined} />
-          </div>
+          <p class="stage-note">Plánek sálu připravujeme. Zatím lze koupit jen lístky bez místenky.</p>
         )}
         <StandingTickets store={store} state={state} />
       </div>
+      <OrderButton state={state} onOrder={() => setAwake(false)} />
       {totals(state.reservation, state.prices).tickets > 0 && <Summary store={store} state={state} />}
     </div>
   );
