@@ -48,7 +48,7 @@ final class SiteAccess
 		}
 		$this->settings->remember('site_mode', $mode->value);
 		if (!$mode->isSelling()) {
-			$this->db->exec("UPDATE seats SET state = 'free', reservation_id = NULL, booked_at = NULL WHERE state = 'book'");
+			$this->db->exec("DELETE FROM seat_bookings WHERE state = 'held'");
 		}
 		$this->eventLog->record('site.mode_changed', details: ['from' => $old->label(), 'to' => $mode->label()]);
 	}

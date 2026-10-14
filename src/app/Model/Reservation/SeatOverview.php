@@ -28,24 +28,28 @@ final class SeatOverview
 
 	/**
 	 * @return list<array{id: int, label: string, table: string, status: string, reservation_id: ?int,
-	 *     name: ?string, channel: ?string, changed_at: string}>
+	 *     name: ?string, channel: ?string, changed_at: ?string}>
 	 */
 	public function seats(?string $status = null, string $query = ''): array
 	{
 		$rows = $this->db->query(
-			"SELECT s.id, s.label, t.label AS table_label, s.state, s.updated_at,
-				r.id AS reservation_id, r.name, r.status, r.channel, r.updated_at AS reservation_updated_at
+			'SELECT s.id, s.label, t.label AS table_label, b.state, b.updated_at,
+				r.id AS reservation_id, r.name, r.status, r.channel, r.updated_at AS reservation_updated_at,
+				-- A free seat has no booking; its last change is the last logged event (e.g. a cancellation).
+				(SELECT MAX(e.created_at) FROM event_log_seats es JOIN event_log e ON e.id = es.event_id
+					WHERE es.seat_id = s.id) AS logged_at
 			FROM seats s
 			LEFT JOIN hall_tables t ON t.id = s.table_id
-			LEFT JOIN reservations r ON r.id = s.reservation_id
-			ORDER BY s.table_id, s.id",
+			LEFT JOIN seat_bookings b ON b.seat_id = s.id
+			LEFT JOIN reservations r ON r.id = b.reservation_id
+			ORDER BY s.table_id, s.id',
 		)->fetchAll();
 
 		$query = mb_strtolower(trim($query));
 		$seatLabel = preg_match('~^\d+\s*/\s*\d+$~', $query) ? preg_replace('~\s+~', '', $query) : null;
 		$result = [];
 		foreach ($rows as $row) {
-			$seatStatus = self::status((string) $row['state'], $row['status']);
+			$seatStatus = self::status($row['state'], $row['status']);
 			$isFinished = $seatStatus !== 'free' && $seatStatus !== 'held';
 			$item = [
 				'id' => (int) $row['id'],
@@ -56,7 +60,7 @@ final class SeatOverview
 				'reservation_id' => $isFinished ? (int) $row['reservation_id'] : null,
 				'name' => $isFinished ? $row['name'] : null,
 				'channel' => $isFinished ? (string) $row['channel'] : null,
-				'changed_at' => max((string) $row['updated_at'], $isFinished ? (string) $row['reservation_updated_at'] : ''),
+				'changed_at' => max((string) $row['updated_at'], $isFinished ? (string) $row['reservation_updated_at'] : '', (string) $row['logged_at']) ?: null,
 			];
 			if ($status !== null && $item['status'] !== $status) {
 				continue;
@@ -83,11 +87,12 @@ final class SeatOverview
 	}
 
 
-	public static function status(string $seatState, ?string $reservationStatus): string
+	/** @param string|null $bookingState null = the seat has no booking */
+	public static function status(?string $bookingState, ?string $reservationStatus): string
 	{
 		return match (true) {
-			$seatState === 'free' => 'free',
-			$seatState === 'book' => 'held',
+			$bookingState === null => 'free',
+			$bookingState === 'held' => 'held',
 			$reservationStatus === 'paid' => 'paid',
 			$reservationStatus === 'partially_paid' => 'partial',
 			default => 'unpaid',

@@ -74,7 +74,7 @@ final class ReservationAdminTest extends DatabaseTestCase
 
 		self::assertSame('cancelled', $this->admin->get($id)['status'] ?? null);
 		self::assertSame([], $this->admin->get($id)['seats'] ?? null);
-		self::assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM seats WHERE state <> 'free'")->fetchColumn());
+		self::assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM seat_bookings")->fetchColumn());
 
 		$this->reservations()->setEmail('owner-new', 'alice@example.com');
 		self::assertSame('alice@example.com', $this->reservations()->state('owner-new')['reservation']['email']);
@@ -182,7 +182,7 @@ final class ReservationAdminTest extends DatabaseTestCase
 		self::assertSame(1, $this->admin->deleteTestReservations());
 		self::assertNull($this->admin->get($test));
 		self::assertNotNull($this->admin->get($real));
-		self::assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM seats WHERE state <> 'free'")->fetchColumn());
+		self::assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM seat_bookings")->fetchColumn());
 		self::assertSame(
 			['reservation_id' => null, 'match_status' => 'ignored'],
 			$this->db->query('SELECT reservation_id, match_status FROM bank_transactions')->fetch(),

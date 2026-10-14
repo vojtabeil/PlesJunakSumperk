@@ -293,7 +293,7 @@ final class PaymentImporterTest extends DatabaseTestCase
 		$service = $this->reservations();
 		$owner = 'owner-' . uniqid();
 		$service->setEmail($owner, $owner . '@example.com');
-		$service->hold($owner, 101 + (int) $this->db->query("SELECT COUNT(*) FROM seats WHERE state <> 'free'")->fetchColumn());
+		$service->hold($owner, 101 + (int) $this->db->query("SELECT COUNT(*) FROM seat_bookings")->fetchColumn());
 		return $service->confirm($owner, 'Platící Host', '', true);
 	}
 

@@ -66,7 +66,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 	{
 		$service = $this->reservations();
 		$service->hold(self::Alice, 101);
-		$this->db->exec("UPDATE seats SET booked_at = NOW() - INTERVAL 100 SECOND WHERE id = 101");
+		$this->db->exec("UPDATE seat_bookings SET held_at = NOW() - INTERVAL 100 SECOND WHERE seat_id = 101");
 		self::assertSame(20, $service->state(self::Alice)['reservation']['expires_in']);
 
 		$service->extend(self::Alice);
@@ -104,6 +104,26 @@ final class ReservationServiceTest extends DatabaseTestCase
 	}
 
 
+	public function testFailedHoldLeavesNothingBehind(): void
+	{
+		$service = $this->reservations();
+		$service->hold(self::Alice, 101);
+		foreach ([101, 999] as $seat) {
+			try {
+				$service->hold(self::Bob, $seat);
+				self::fail("Seat $seat must not be held");
+			} catch (ReservationError $e) {
+				self::assertSame('Toto místo už je obsazené.', $e->getMessage());
+			}
+		}
+		self::assertNull($service->state(self::Bob)['reservation'], 'No draft was created for Bob');
+		self::assertSame([[101, 'held']], array_map(
+			static fn(array $row): array => [(int) $row['seat_id'], $row['state']],
+			$this->db->query('SELECT seat_id, state FROM seat_bookings')->fetchAll(),
+		));
+	}
+
+
 	public function testEnforcesTicketLimitAcrossSeatsAndStanding(): void
 	{
 		$this->setSettings(['max_ticket' => '3']);
@@ -122,7 +142,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 		$service = $this->reservations();
 		$service->setEmail(self::Alice, 'alice@example.com');
 		$service->hold(self::Alice, 101);
-		$this->db->exec('UPDATE seats SET booked_at = NOW() - INTERVAL 121 SECOND');
+		$this->db->exec('UPDATE seat_bookings SET held_at = NOW() - INTERVAL 121 SECOND');
 
 		$service->releaseExpiredHolds();
 

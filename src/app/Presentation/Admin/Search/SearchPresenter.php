@@ -34,7 +34,9 @@ final class SearchPresenter extends BasePresenter
 
 		if (preg_match('~^\d{1,3}\s*/\s*\d{1,3}$~', $q)) {
 			$label = (string) preg_replace('~\s+~', '', $q);
-			$stmt = $this->db->prepare("SELECT reservation_id, state FROM seats WHERE label = ?");
+			$stmt = $this->db->prepare(
+				'SELECT b.reservation_id, b.state FROM seats s LEFT JOIN seat_bookings b ON b.seat_id = s.id WHERE s.label = ?',
+			);
 			$stmt->execute([$label]);
 			$seat = $stmt->fetch();
 			if ($seat && $seat['reservation_id'] !== null && $seat['state'] === 'reserved') {

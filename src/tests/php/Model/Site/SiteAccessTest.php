@@ -61,7 +61,7 @@ final class SiteAccessTest extends DatabaseTestCase
 		$access->setMode(SiteMode::Closed);
 
 		self::assertSame(SiteMode::Closed, $this->access()->mode());
-		self::assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM seats WHERE state <> 'free'")->fetchColumn());
+		self::assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM seat_bookings")->fetchColumn());
 		self::assertSame(['site.mode_changed'], $this->loggedActions());
 		self::assertStringContainsString('Prodej ukončen', (string) $this->db->query('SELECT details FROM event_log')->fetchColumn());
 

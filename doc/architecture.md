@@ -44,7 +44,7 @@
 | `assets/scss/` | SCSS partials; `front.scss` and `admin.scss` are the entries. |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
 | `config/` | `common.neon`, `services.neon` (interfaces -> implementations), `local.neon` (git-ignored, from `local.neon.example`), `test.neon` (PHPUnit database). |
-| `database/` | `schema.sql` + `defaults.sql` + `hall.sql` (also the production installation), `seed.sql` (local test data only). |
+| `database/` | `schema.sql` (hall layout in `hall_tables` / `seats`, the sale in `seat_bookings`) + `defaults.sql` + `hall.sql` (also the production installation), `seed.sql` (local test data only). |
 | `tests/php/` | PHPUnit against `ples_test`; mirrors `app/`; helpers in `Support/`, recorded responses in `fixtures/`. |
 | `tests/ts/` | `bun test` of the seat picker. |
 | `www/` | Document root: `index.php`, `.htaccess`, `img/`, `build/` (generated, git-ignored). |

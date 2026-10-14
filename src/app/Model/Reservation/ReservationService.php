@@ -21,6 +21,10 @@ final class ReservationService
 	/** Reservations that hold their seats and tickets (as an SQL list). */
 	public const FinishedStatuses = "'confirmed', 'partially_paid', 'paid'";
 
+	/** MySQL / MariaDB error codes of a failed seat hold. */
+	private const DuplicateKey = 1062;
+	private const MissingParent = 1452;
+
 	/** Static decorations of the hall map, in map units like hall_tables. */
 	private const HallAreas = [
 		['kind' => 'stage', 'x' => 350, 'y' => 18, 'width' => 300, 'height' => 56, 'label' => 'Pódium'],
@@ -79,11 +83,11 @@ final class ReservationService
 
 		$taken = [];
 		$mine = [];
-		foreach ($this->db->query("SELECT id, reservation_id FROM seats WHERE state <> 'free'")->fetchAll() as $row) {
+		foreach ($this->db->query('SELECT seat_id, reservation_id FROM seat_bookings ORDER BY seat_id')->fetchAll() as $row) {
 			if ($draftId && (int) $row['reservation_id'] === $draftId) {
-				$mine[] = (int) $row['id'];
+				$mine[] = (int) $row['seat_id'];
 			} else {
-				$taken[] = (int) $row['id'];
+				$taken[] = (int) $row['seat_id'];
 			}
 		}
 
@@ -160,9 +164,7 @@ final class ReservationService
 	private function complete(array $reservation): array
 	{
 		$id = (int) $reservation['id'];
-		$seats = $this->db->prepare('SELECT label FROM seats WHERE reservation_id = ? ORDER BY id');
-		$seats->execute([$id]);
-		$reservation['seat_labels'] = $seats->fetchAll(PDO::FETCH_COLUMN);
+		$reservation['seat_labels'] = $this->reservationSeatLabels($id);
 		$reservation['variable_symbol'] = $this->variableSymbol->forReservation($id);
 		$reservation['remaining'] = max(0, (int) $reservation['total_price'] - (int) $reservation['paid_amount']);
 		$reservation['due_on'] = $reservation['confirmed_at'] !== null
@@ -178,8 +180,7 @@ final class ReservationService
 	public function releaseExpiredHolds(): void
 	{
 		$this->db->prepare(
-			"UPDATE seats SET state = 'free', reservation_id = NULL, booked_at = NULL
-			WHERE state = 'book' AND booked_at < NOW() - INTERVAL ? SECOND",
+			"DELETE FROM seat_bookings WHERE state = 'held' AND held_at < NOW() - INTERVAL ? SECOND",
 		)->execute([$this->holdSeconds()]);
 	}
 
@@ -218,13 +219,17 @@ final class ReservationService
 				throw new ReservationError("Na jednu rezervaci lze koupit nejvýše $max lístků.");
 			}
 
-			$stmt = $this->db->prepare(
-				"UPDATE seats SET state = 'book', reservation_id = ?, booked_at = NOW()
-				WHERE id = ? AND state = 'free'",
-			);
-			$stmt->execute([$draftId, $seatId]);
-			if ($stmt->rowCount() === 0) {
-				throw new ReservationError('Toto místo už je obsazené.');
+			// The primary key on seat_id lets only one reservation have the seat; an unknown seat
+			// fails on the foreign key. Neither aborts the transaction.
+			try {
+				$this->db->prepare(
+					"INSERT INTO seat_bookings (seat_id, reservation_id, state, held_at) VALUES (?, ?, 'held', NOW())",
+				)->execute([$seatId, $draftId]);
+			} catch (\PDOException $e) {
+				if (in_array($e->errorInfo[1] ?? null, [self::DuplicateKey, self::MissingParent], true)) {
+					throw new ReservationError('Toto místo už je obsazené.');
+				}
+				throw $e;
 			}
 			$this->refreshHolds($draftId);
 		});
@@ -236,8 +241,7 @@ final class ReservationService
 		$this->transaction(function () use ($owner, $seatId): void {
 			$draftId = (int) $this->requireDraft($owner)['id'];
 			$this->db->prepare(
-				"UPDATE seats SET state = 'free', reservation_id = NULL, booked_at = NULL
-				WHERE id = ? AND reservation_id = ? AND state = 'book'",
+				"DELETE FROM seat_bookings WHERE seat_id = ? AND reservation_id = ? AND state = 'held'",
 			)->execute([$seatId, $draftId]);
 			$this->refreshHolds($draftId);
 		});
@@ -326,7 +330,7 @@ final class ReservationService
 			// after the launch is a real reservation (it must not be deleted with the test ones).
 			$channel = $this->settings->mode()->channel();
 			$this->db->prepare(
-				"UPDATE seats SET state = 'reserved', booked_at = NULL WHERE reservation_id = ? AND state = 'book'",
+				"UPDATE seat_bookings SET state = 'reserved', held_at = NULL WHERE reservation_id = ? AND state = 'held'",
 			)->execute([$draftId]);
 			$this->db->prepare(
 				"UPDATE reservations
@@ -444,17 +448,15 @@ final class ReservationService
 
 	private function releaseHolds(int $reservationId): void
 	{
-		$this->db->prepare(
-			"UPDATE seats SET state = 'free', reservation_id = NULL, booked_at = NULL
-			WHERE reservation_id = ? AND state = 'book'",
-		)->execute([$reservationId]);
+		$this->db->prepare("DELETE FROM seat_bookings WHERE reservation_id = ? AND state = 'held'")
+			->execute([$reservationId]);
 	}
 
 
 	/** Any change restarts the hold timer for all seats of the reservation. */
 	private function refreshHolds(int $reservationId): void
 	{
-		$this->db->prepare("UPDATE seats SET booked_at = NOW() WHERE reservation_id = ? AND state = 'book'")
+		$this->db->prepare("UPDATE seat_bookings SET held_at = NOW() WHERE reservation_id = ? AND state = 'held'")
 			->execute([$reservationId]);
 	}
 
@@ -462,17 +464,28 @@ final class ReservationService
 	/** @return list<int> */
 	private function heldSeatIds(int $reservationId): array
 	{
-		$stmt = $this->db->prepare("SELECT id FROM seats WHERE reservation_id = ? AND state = 'book' FOR UPDATE");
+		$stmt = $this->db->prepare("SELECT seat_id FROM seat_bookings WHERE reservation_id = ? AND state = 'held' FOR UPDATE");
 		$stmt->execute([$reservationId]);
 		return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+	}
+
+
+	/** @return list<string> labels of all seats of a reservation (held or reserved) */
+	private function reservationSeatLabels(int $reservationId): array
+	{
+		$stmt = $this->db->prepare(
+			'SELECT s.label FROM seat_bookings b JOIN seats s ON s.id = b.seat_id WHERE b.reservation_id = ? ORDER BY s.id',
+		);
+		$stmt->execute([$reservationId]);
+		return $stmt->fetchAll(PDO::FETCH_COLUMN);
 	}
 
 
 	private function holdExpiresIn(int $reservationId): ?int
 	{
 		$stmt = $this->db->prepare(
-			"SELECT TIMESTAMPDIFF(SECOND, NOW(), MAX(booked_at) + INTERVAL ? SECOND)
-			FROM seats WHERE reservation_id = ? AND state = 'book'",
+			"SELECT TIMESTAMPDIFF(SECOND, NOW(), MAX(held_at) + INTERVAL ? SECOND)
+			FROM seat_bookings WHERE reservation_id = ? AND state = 'held'",
 		);
 		$stmt->execute([$this->holdSeconds(), $reservationId]);
 		$value = $stmt->fetchColumn();

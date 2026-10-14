@@ -101,7 +101,7 @@
 						{else}–{/if}
 					</td>
 					<td data-label="Poslední změna">
-						{$seat['changed_at']|date:'j. n. Y H:i'}
+						{if $seat['changed_at']}{$seat['changed_at']|date:'j. n. Y H:i'}{else}–{/if}
 						<a n:href="Log:default, seat: $seat['label']" class="muted">historie</a>
 					</td>
 				</tr>

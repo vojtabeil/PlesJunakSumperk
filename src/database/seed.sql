@@ -10,8 +10,9 @@ INSERT INTO reservations (id, email, name, standing_tickets, status, total_price
     (1, 'test@example.com', 'Testovací Rezervace', 1, 'confirmed', 950, NOW()),
     (2, 'platba@example.com', 'Zaplacená Rezervace', 0, 'paid', 1400, NOW());
 
-UPDATE seats SET state = 'reserved', reservation_id = 1 WHERE id IN (101, 102);
-UPDATE seats SET state = 'reserved', reservation_id = 2 WHERE id IN (501, 502, 503, 504);
+INSERT INTO seat_bookings (seat_id, reservation_id, state) VALUES
+    (101, 1, 'reserved'), (102, 1, 'reserved'),
+    (501, 2, 'reserved'), (502, 2, 'reserved'), (503, 2, 'reserved'), (504, 2, 'reserved');
 
 -- Local administrator: login "admin", password "admin".
 INSERT INTO admin_users (login, name, password_hash) VALUES

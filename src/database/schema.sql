@@ -51,27 +51,34 @@ CREATE TABLE hall_tables (
     height SMALLINT UNSIGNED NOT NULL
 ) ENGINE=InnoDB;
 
--- Seats. x/y is the seat centre in map units.
--- state: free, book = temporarily held (hold_seconds), reserved = confirmed.
+-- Seats of the hall: the layout only, what is sold is in seat_bookings. x/y is the seat centre in map units.
 CREATE TABLE seats (
-    id             INT UNSIGNED NOT NULL PRIMARY KEY,
-    label          VARCHAR(16)  NOT NULL,
-    table_id       SMALLINT UNSIGNED NULL,
-    x              SMALLINT UNSIGNED NOT NULL,
-    y              SMALLINT UNSIGNED NOT NULL,
-    state          ENUM('free', 'book', 'reserved') NOT NULL DEFAULT 'free',
-    reservation_id INT UNSIGNED NULL,
-    booked_at      DATETIME NULL,
-    updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id       INT UNSIGNED NOT NULL PRIMARY KEY,
+    label    VARCHAR(16)  NOT NULL,
+    table_id SMALLINT UNSIGNED NULL,
+    x        SMALLINT UNSIGNED NOT NULL,
+    y        SMALLINT UNSIGNED NOT NULL,
     -- Seat labels ("3/5") are unique; the admin search and the log filter look seats up by label.
     UNIQUE KEY uq_seats_label (label),
+    CONSTRAINT fk_seats_table FOREIGN KEY (table_id) REFERENCES hall_tables (id)
+) ENGINE=InnoDB;
+
+-- Sale of seats. A row exists only while a seat is held or reserved; a free seat has none.
+-- held = temporarily held by a draft (hold_seconds since held_at), reserved = in a confirmed reservation.
+-- Holding a seat is an INSERT: the primary key lets only one reservation have it.
+CREATE TABLE seat_bookings (
+    seat_id        INT UNSIGNED NOT NULL PRIMARY KEY,
+    reservation_id INT UNSIGNED NOT NULL,
+    state          ENUM('held', 'reserved') NOT NULL,
+    held_at        DATETIME NULL,
+    updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     -- Expired holds (every API call).
-    KEY ix_seats_state (state, booked_at),
-    -- Seats of a reservation, and its held seats (reservation_id = ? AND state = 'book').
-    KEY ix_seats_reservation (reservation_id, state),
-    CONSTRAINT fk_seats_table FOREIGN KEY (table_id) REFERENCES hall_tables (id),
-    CONSTRAINT fk_seats_reservation FOREIGN KEY (reservation_id)
-        REFERENCES reservations (id) ON DELETE SET NULL
+    KEY ix_seat_bookings_state (state, held_at),
+    -- Seats of a reservation, and its held seats (reservation_id = ? AND state = 'held').
+    KEY ix_seat_bookings_reservation (reservation_id, state),
+    CONSTRAINT fk_seat_bookings_seat FOREIGN KEY (seat_id) REFERENCES seats (id),
+    CONSTRAINT fk_seat_bookings_reservation FOREIGN KEY (reservation_id)
+        REFERENCES reservations (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- Organizers with access to the administration. Passwords via password_hash().

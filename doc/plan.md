@@ -168,7 +168,7 @@ seat_bookings (seat_id PK -> seats, reservation_id NOT NULL -> reservations ON D
 
 ### 6.5 Steps
 
-1. Split `seats` into `seats` (layout) and `seat_bookings` (sale) without changing behaviour; all tests pass.
+1. Split `seats` into `seats` (layout) and `seat_bookings` (sale) without changing behaviour; all tests pass. **Done.**
 2. Parser + sanitization + tests (small fixture SVG).
 3. Seat labels: the seat number instead of "table/seat" (TS `splitSeatLabel`, filter `seatLabel`,
    `SeatOverview`, e-mails, reservation detail, search, log filter).

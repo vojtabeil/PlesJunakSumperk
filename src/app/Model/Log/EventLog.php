@@ -55,7 +55,7 @@ final class EventLog
 		$eventId = (int) $this->db->lastInsertId();
 
 		if ($seatIds === null && $reservationId !== null) {
-			$stmt = $this->db->prepare('SELECT id FROM seats WHERE reservation_id = ?');
+			$stmt = $this->db->prepare('SELECT seat_id FROM seat_bookings WHERE reservation_id = ?');
 			$stmt->execute([$reservationId]);
 			$seatIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 		}

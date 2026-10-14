@@ -30,10 +30,10 @@ final class ReservationAdmin
 	public function stats(): array
 	{
 		$seats = $this->db->query(
-			"SELECT COUNT(*) AS total,
+			"SELECT (SELECT COUNT(*) FROM seats) AS total,
 				COALESCE(SUM(state = 'reserved'), 0) AS reserved,
-				COALESCE(SUM(state = 'book'), 0) AS held
-			FROM seats",
+				COALESCE(SUM(state = 'held'), 0) AS held
+			FROM seat_bookings",
 		)->fetch();
 		$reservations = $this->db->query(
 			"SELECT
@@ -59,7 +59,7 @@ final class ReservationAdmin
 	{
 		$result = ['test' => 0, 'vip' => 0, 'public' => 0];
 		$rows = $this->db->query(
-			"SELECT r.channel, COALESCE(SUM(r.standing_tickets), 0) + (SELECT COUNT(*) FROM seats s JOIN reservations x ON x.id = s.reservation_id
+			"SELECT r.channel, COALESCE(SUM(r.standing_tickets), 0) + (SELECT COUNT(*) FROM seat_bookings b JOIN reservations x ON x.id = b.reservation_id
 				WHERE x.channel = r.channel AND x.status IN (" . ReservationService::FinishedStatuses . ")) AS tickets
 			FROM reservations r WHERE r.status IN (" . ReservationService::FinishedStatuses . ") GROUP BY r.channel",
 		)->fetchAll();
@@ -101,7 +101,9 @@ final class ReservationAdmin
 
 		$stmt = $this->db->prepare(
 			'SELECT r.*, GROUP_CONCAT(s.label ORDER BY s.id SEPARATOR \', \') AS seat_labels, COUNT(s.id) AS seat_count
-			FROM reservations r LEFT JOIN seats s ON s.reservation_id = r.id
+			FROM reservations r
+			LEFT JOIN seat_bookings b ON b.reservation_id = r.id
+			LEFT JOIN seats s ON s.id = b.seat_id
 			WHERE ' . implode(' AND ', $where) . '
 			GROUP BY r.id
 			ORDER BY r.id DESC',
@@ -196,7 +198,9 @@ final class ReservationAdmin
 		if (!$reservation) {
 			return null;
 		}
-		$seats = $this->db->prepare('SELECT label FROM seats WHERE reservation_id = ? ORDER BY id');
+		$seats = $this->db->prepare(
+			'SELECT s.label FROM seat_bookings b JOIN seats s ON s.id = b.seat_id WHERE b.reservation_id = ? ORDER BY s.id',
+		);
 		$seats->execute([$id]);
 		$reservation['seats'] = $seats->fetchAll(PDO::FETCH_COLUMN);
 		$reservation['variable_symbol'] = $this->variableSymbol->forReservation($id);
@@ -239,9 +243,7 @@ final class ReservationAdmin
 			}
 			// The log keeps which seats were freed.
 			$this->eventLog->record('reservation.cancelled', $id);
-			$this->db->prepare(
-				"UPDATE seats SET state = 'free', reservation_id = NULL, booked_at = NULL WHERE reservation_id = ?",
-			)->execute([$id]);
+			$this->db->prepare('DELETE FROM seat_bookings WHERE reservation_id = ?')->execute([$id]);
 			$this->db->commit();
 		} catch (Throwable $e) {
 			$this->db->rollBack();
@@ -270,10 +272,9 @@ final class ReservationAdmin
 				$id = (int) $row['id'];
 				// Logged first, so the event keeps the freed seats.
 				$this->eventLog->record('reservation.test_deleted', $id, ['name' => $row['name'], 'email' => $row['email']]);
-				$this->db->prepare("UPDATE seats SET state = 'free', reservation_id = NULL, booked_at = NULL WHERE reservation_id = ?")
-					->execute([$id]);
 				$this->db->prepare("UPDATE bank_transactions SET reservation_id = NULL, match_status = 'ignored' WHERE reservation_id = ?")
 					->execute([$id]);
+				// Its seat bookings go with it (ON DELETE CASCADE).
 				$this->db->prepare('DELETE FROM reservations WHERE id = ?')->execute([$id]);
 			}
 			$this->db->commit();
@@ -303,7 +304,9 @@ final class ReservationAdmin
 		return $this->db->query(
 			"SELECT r.id, r.name, r.email, r.phone, r.status, r.standing_tickets, r.total_price, r.paid_amount, r.paid_at, r.note,
 				GROUP_CONCAT(s.label ORDER BY s.id SEPARATOR ', ') AS seat_labels, COUNT(s.id) AS seat_count
-			FROM reservations r LEFT JOIN seats s ON s.reservation_id = r.id
+			FROM reservations r
+			LEFT JOIN seat_bookings b ON b.reservation_id = r.id
+			LEFT JOIN seats s ON s.id = b.seat_id
 			WHERE r.status IN (" . ReservationService::FinishedStatuses . ") AND r.channel <> 'test'
 			GROUP BY r.id
 			ORDER BY r.name, r.id",

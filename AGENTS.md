@@ -71,8 +71,9 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
 - Code must work on both MariaDB 11.8 and MySQL 8; avoid vendor-specific SQL.
 - Database access via PDO with prepared statements; charset `utf8mb4`.
 - Reservation rules live only in `ReservationService`; the browser renders server state.
-  Mutations lock the draft reservation row in a transaction; seat holds use atomic
-  `UPDATE ... WHERE state = 'free'`. Draft ownership is a random key from `ReservationSession`.
+  Mutations lock the draft reservation row in a transaction. The hall layout (`seats`, `hall_tables`) and
+  the sale (`seat_bookings`) are separate tables: a booking row exists only for a held or reserved seat,
+  holding a seat is an `INSERT` (the primary key makes it atomic). Draft ownership is a random key from `ReservationSession`.
 - One e-mail may have several reservations. The public API must never look up reservations by
   e-mail or answer differently depending on other people's data (no enumeration, no takeover);
   a draft belongs only to the browser that created it.

@@ -14,8 +14,8 @@ final class SeatOverviewTest extends DatabaseTestCase
 {
 	public function testStatusCombinesSeatAndReservation(): void
 	{
-		self::assertSame('free', SeatOverview::status('free', null));
-		self::assertSame('held', SeatOverview::status('book', 'draft'));
+		self::assertSame('free', SeatOverview::status(null, null));
+		self::assertSame('held', SeatOverview::status('held', 'draft'));
 		self::assertSame('unpaid', SeatOverview::status('reserved', 'confirmed'));
 		self::assertSame('partial', SeatOverview::status('reserved', 'partially_paid'));
 		self::assertSame('paid', SeatOverview::status('reserved', 'paid'));
