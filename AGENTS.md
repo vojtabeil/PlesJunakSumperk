@@ -47,6 +47,7 @@ Read `doc/architecture.md` before larger changes and keep it up to date when add
 | `dev\build.cmd` | Type check + bundle + SCSS into `src/www/build`. |
 | `check.cmd` | `tsc`, `bun test`, PHPUnit, PHPStan (level 6). Run before every commit. |
 | `dev\release.cmd` | Release package `dist/ples-<version>/` (+ ZIP): `web/` to upload (no dev tools, tests, sources, maps, dev dependencies or local config) and `install/` (SQL + `doc/deploy.md`). Verifies the package first like a new installation: fresh database `ples_release` from `install/*.sql`, production mode, checks of the first run, the testing stage and the public sale (MariaDB must run). |
+| `dev\demo.cmd` | Static demo of the reservation page for a customer: `dist/ples-ukazka-<time>/` + ZIP to upload to any static web (FTP, any folder). Pages rendered from the real templates and the local database (`bin/export-demo.php`, changes rolled back), the seat picker on the in-browser demo API (`front-demo.tsx`, `seat-picker/demo-api.ts`; about a third of the seats sold, nothing sent), then a sample "Moje rezervace" with a made-up account. Checks all links. |
 | `dev\init-db.cmd` | Recreates `ples` (schema + seed). `-Test` recreates `ples_test`, `-NoSeed`, `-Import dump.sql`, `-Clean` (wipe data dir). |
 | `dev\php.cmd`, `dev\composer.cmd`, `dev\bun.cmd`, `dev\tsc.cmd`, `dev\sass.cmd` | Run the portable tools with the project environment (run them from `src/`). |
 
