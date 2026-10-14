@@ -8,8 +8,9 @@ use PDO;
 
 
 /**
- * Tickets of reservations: one per seat and one per standing ticket. The code (6 random hex
- * characters) is checked at the entrance; the public print link also needs the secret print token.
+ * Tickets: one per seat and one per standing ticket of a reservation, and one Z-lístek per crew
+ * member (crew_member_id instead of reservation_id). The code (6 random hex characters) is checked
+ * at the entrance; the public print link also needs the secret print token.
  */
 final class Tickets
 {
@@ -18,10 +19,11 @@ final class Tickets
 	/** MySQL / MariaDB error code of a duplicate key. */
 	private const DuplicateKey = 1062;
 
-	private const Columns = 't.id, t.reservation_id, t.seat_id, t.code, t.print_token, t.created_at, t.used_at, t.used_by,
-		s.label AS seat_label, a.name AS used_by_name';
+	private const Columns = 't.id, t.reservation_id, t.crew_member_id, t.seat_id, t.code, t.print_token, t.created_at, t.used_at, t.used_by,
+		s.label AS seat_label, a.name AS used_by_name, c.name AS crew_name, c.role AS crew_role';
 
-	private const Joins = 'LEFT JOIN seats s ON s.id = t.seat_id LEFT JOIN admin_users a ON a.id = t.used_by';
+	private const Joins = 'LEFT JOIN seats s ON s.id = t.seat_id LEFT JOIN admin_users a ON a.id = t.used_by
+		LEFT JOIN crew_members c ON c.id = t.crew_member_id';
 
 
 	public function __construct(
@@ -47,8 +49,24 @@ final class Tickets
 		$standing = (int) $stmt->fetchColumn();
 
 		foreach ([...$seats, ...array_fill(0, $standing, null)] as $seatId) {
-			$this->insert($reservationId, $seatId);
+			$this->insert($reservationId, null, $seatId);
 		}
+	}
+
+
+	/** Creates the Z-lístek of a new crew member (inside the transaction that creates the member). */
+	public function issueCrew(int $crewMemberId): void
+	{
+		$this->insert(null, $crewMemberId, null);
+	}
+
+
+	/** @return array<string, mixed>|null the Z-lístek of a crew member */
+	public function forCrewMember(int $crewMemberId): ?array
+	{
+		$stmt = $this->db->prepare('SELECT ' . self::Columns . ' FROM tickets t ' . self::Joins . ' WHERE t.crew_member_id = ?');
+		$stmt->execute([$crewMemberId]);
+		return $stmt->fetch() ?: null;
 	}
 
 
@@ -82,7 +100,7 @@ final class Tickets
 
 	/**
 	 * The ticket behind a public print link with its reservation (reservation_name, reservation_status,
-	 * remaining in CZK), or null when the code or the token is wrong.
+	 * remaining in CZK; a Z-lístek has crew_name and crew_role instead), or null when the code or the token is wrong.
 	 * @return array<string, mixed>|null
 	 */
 	public function findForPrint(string $code, string $printToken): ?array
@@ -90,6 +108,9 @@ final class Tickets
 		$ticket = $this->findByCode($code);
 		if ($ticket === null || !hash_equals((string) $ticket['print_token'], $printToken)) {
 			return null;
+		}
+		if ($ticket['crew_member_id'] !== null) {
+			return $ticket;
 		}
 		$stmt = $this->db->prepare('SELECT name, status, total_price, paid_amount FROM reservations WHERE id = ?');
 		$stmt->execute([$ticket['reservation_id']]);
@@ -113,15 +134,18 @@ final class Tickets
 	}
 
 
-	private function insert(int $reservationId, ?int $seatId): void
+	private function insert(?int $reservationId, ?int $crewMemberId, ?int $seatId): void
 	{
+		if (($reservationId === null) === ($crewMemberId === null)) {
+			throw new \LogicException('A ticket belongs either to a reservation or to a crew member.');
+		}
 		$stmt = $this->db->prepare(
-			'INSERT INTO tickets (reservation_id, seat_id, code, print_token) VALUES (?, ?, ?, ?)',
+			'INSERT INTO tickets (reservation_id, crew_member_id, seat_id, code, print_token) VALUES (?, ?, ?, ?, ?)',
 		);
 		// 16.7 million codes for a few hundred tickets: a collision is rare, a few retries are plenty.
 		for ($attempt = 1; ; $attempt++) {
 			try {
-				$stmt->execute([$reservationId, $seatId, self::randomCode(), bin2hex(random_bytes(16))]);
+				$stmt->execute([$reservationId, $crewMemberId, $seatId, self::randomCode(), bin2hex(random_bytes(16))]);
 				return;
 			} catch (\PDOException $e) {
 				if (($e->errorInfo[1] ?? null) !== self::DuplicateKey || $attempt >= 10) {

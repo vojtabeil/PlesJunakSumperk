@@ -37,12 +37,43 @@
 			</ul>
 		</div>
 		<p class="muted">
-			Lístky bez místenky: {$stats['standing']} z {$stats['standing_capacity']} ·
 			Zaplaceno {$stats['paid_amount']|price} · čeká na platbu {$stats['unpaid_amount']|price}
 		</p>
-		<p n:if="$entrance['total']" class="entrance-line">
-			Na plese: <strong>{$entrance['used']}</strong> z {$entrance['total']} vstupenek ·
-			<a n:href="Check:default">Kontrola vstupenek</a>
+	</section>
+
+	{* Three kinds of tickets: seats, standing, Z-lístky *}
+	<section class="card" aria-labelledby="kinds-title">
+		<h2 id="kinds-title">Lístky</h2>
+		<div class="table-scroll">
+			<table class="data-table ticket-kinds">
+				<thead>
+					<tr><th scope="col">Druh</th><th scope="col">Prodáno / vydáno</th><th scope="col">Zbývá</th><th scope="col">Na plese</th></tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$ticketKinds as $kind => $k">
+						<th scope="row">
+							{if $kind === 'crew'}<a n:href="Crew:default">{$k['label']}</a>{else}{$k['label']}{/if}
+						</th>
+						<td>
+							<strong>{$k['count']}</strong>{if $k['capacity'] !== null} z {$k['capacity']}{/if}
+							<span n:if="$k['note']" class="muted">· {$k['note']}</span>
+						</td>
+						<td>{if $k['capacity'] !== null}{max(0, $k['capacity'] - $k['count'])}{else}–{/if}</td>
+						<td>{$entrance['kinds'][$kind]['used']} z {$entrance['kinds'][$kind]['total']}</td>
+					</tr>
+				</tbody>
+				<tfoot>
+					<tr>
+						<th scope="row">Celkem</th>
+						<td><strong>{array_sum(array_column($ticketKinds, 'count'))}</strong></td>
+						<td></td>
+						<td><strong>{$entrance['used']}</strong> z {$entrance['total']}</td>
+					</tr>
+				</tfoot>
+			</table>
+		</div>
+		<p class="entrance-line">
+			<a n:href="Check:default">Kontrola vstupenek</a> · <a n:href="Crew:default">Z-lístky</a>
 		</p>
 	</section>
 
@@ -128,6 +159,7 @@
 	<a class="tile" n:href="Customer:default"><strong>Zákazníci</strong><span>lidé podle e-mailu a jejich rezervace</span></a>
 	<a class="tile" n:href="Payment:default"><strong>Platby z Fio</strong><span>všechny platby, spárované i k vyřešení</span></a>
 	<a class="tile" n:href="Log:default"><strong>Log</strong><span>všechny události, filtr podle data, místa a typu</span></a>
+	<a class="tile" n:href="Crew:default"><strong>Z-lístky</strong><span>vstup zdarma pro tým: přidat, vytisknout, poslat e-mailem</span></a>
 	<a class="tile" n:href="Export:guests"><strong>Seznam hostů</strong><span>CSV pro vstup (Excel)</span></a>
 	<a class="tile" n:href="User:default"><strong>Administrátoři</strong><span>účty organizátorů</span></a>
 	<a class="tile" n:href="Site:default"><strong>Stav webu</strong><span>testování, VIP, prodej, konec; odkazy a texty stránek</span></a>

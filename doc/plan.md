@@ -100,7 +100,8 @@ legacy database is out of scope. Each item names the legacy code it replaces.
    Legacy: `ticket.alcohol_strip_count`.
 3. **Discounted tickets.** A product type with its own price.
    Legacy: `loweredCount` / `loweredPrice` in `Model\Tickets::orderTickets`.
-4. **Z-tickets** (guests and sponsors) with a record of pick-up.
+4. ~~**Z-tickets**~~ Done: Z-lístky of the crew (`Admin:Crew`, `CrewMembers`), one per person with a free-text role,
+   checked at the entrance, printed or e-mailed. Comparison of the legacy versions: `doc/legacy/feature-comparison.md`.
    Legacy: table `zTicket`, `Admin\TicketsPresenter::handleToggleZTaken`.
 5. **E-mail templates for the 2027 ball.** Legacy templates in `resource/original-web/ftp/include/app/email/`
    still carry the 2023 date, the old account and the old signatory.

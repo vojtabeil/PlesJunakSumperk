@@ -25,6 +25,9 @@ services:
 	- App\Model\Ticket\TicketCheck
 	- App\Model\Ticket\TicketLinks
 
+	# Z-lístky (free passes of the crew).
+	- App\Model\Crew\CrewMembers
+
 	- App\Model\Admin\AdminUsers
 	- App\Model\Admin\Authenticator
 	- App\Model\Admin\SetupConfig(%setup%)
@@ -59,3 +62,4 @@ services:
 		type: App\Model\Mail\MailSender
 		create: App\Model\Mail\SmtpMailSender(%mail%)
 	- App\Model\Mail\ReservationMailer
+	- App\Model\Mail\CrewMailer

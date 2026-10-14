@@ -31,8 +31,9 @@ test('isLookupInput accepts a code or a reservation number', () => {
 });
 
 test('ticketPlace', () => {
-  expect(ticketPlace({ code: 'A3F09C', seat: '3/5', used_at: null, used_by: null })).toBe('Stůl 3 · místo 5');
-  expect(ticketPlace({ code: 'A3F09C', seat: null, used_at: null, used_by: null })).toBe('Na stání');
+  expect(ticketPlace({ code: 'A3F09C', kind: 'seat', seat: '3/5', used_at: null, used_by: null })).toBe('Stůl 3 · místo 5');
+  expect(ticketPlace({ code: 'A3F09C', kind: 'standing', seat: null, used_at: null, used_by: null })).toBe('Na stání');
+  expect(ticketPlace({ code: 'A3F09C', kind: 'crew', seat: null, used_at: null, used_by: null })).toBe('Z-lístek');
 });
 
 test('formatTime shows the date only for another day', () => {

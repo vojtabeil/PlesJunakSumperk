@@ -78,11 +78,11 @@ final class TicketCheckTest extends DatabaseTestCase
 		$id = $this->paid('tester', [101]);
 		$code = $this->codes($id)[0];
 		self::assertSame('ok', $this->ticketCheck()->lookup($code)['status']);
-		self::assertSame(['used' => 0, 'total' => 1], $this->ticketCheck()->entranceStats());
+		self::assertSame(['used' => 0, 'total' => 1], $this->entranceTotals());
 
 		$this->setSettings(['site_mode' => 'closed']);
 		self::assertSame('invalid', $this->ticketCheck()->lookup($code)['status']);
-		self::assertSame(['used' => 0, 'total' => 0], $this->ticketCheck()->entranceStats());
+		self::assertSame(['used' => 0, 'total' => 0], $this->entranceTotals());
 	}
 
 
@@ -110,7 +110,7 @@ final class TicketCheckTest extends DatabaseTestCase
 		$result = $this->ticketCheck()->useReservation($id);
 		self::assertSame('used', $result['status']);
 		self::assertSame('Všechny vstupenky rezervace už byly použity.', $result['message']);
-		self::assertSame(['used' => 3, 'total' => 3], $this->ticketCheck()->entranceStats());
+		self::assertSame(['used' => 3, 'total' => 3], $this->entranceTotals());
 
 		$details = $this->db->query("SELECT details FROM event_log WHERE action = 'ticket.used' ORDER BY id DESC LIMIT 1")->fetchColumn();
 		self::assertStringContainsString('"count":2', (string) $details);
@@ -149,6 +149,14 @@ final class TicketCheckTest extends DatabaseTestCase
 		$id = $this->confirmed($owner, $seats, $standing);
 		$this->reservationAdmin()->markPaid($id);
 		return $id;
+	}
+
+
+	/** @return array{used: int, total: int} */
+	private function entranceTotals(): array
+	{
+		$stats = $this->ticketCheck()->entranceStats();
+		return ['used' => $stats['used'], 'total' => $stats['total']];
 	}
 
 

@@ -13,7 +13,7 @@ Stav k 14. 10. 2026. Zdroje jsou v `resource/original-web/` (záloha z FTP a dat
 
 | Funkce | Aplikace 2023 | Aplikace 2025/2026 | Naše verze |
 |---|---|---|---|
-| Z-lístky (vstup zdarma pro tým) | ano: jméno, vyzvednutí, tisk s rozpisem služeb | ano: jméno a funkce, tisk kartiček | **ne** |
+| Z-lístky (vstup zdarma pro tým) | ano: jméno, vyzvednutí, tisk s rozpisem služeb | ano: jméno a funkce, tisk kartiček | ano: jméno a funkce, QR kód a kontrola u vstupu, vyzvednutí, tisk i e-mail vybraných, rozpis služeb |
 | Pásky na alkohol (počet lidí 18–30) | ano | ne | **ne** |
 | Zlevněná místa | ano | ne | **ne** |
 | Dvě ceny podle data | ano (natvrdo, nepoužité) | ne | ne |
@@ -69,8 +69,8 @@ fotograf, hasiči a podobně.
   alkohol, zlevněná místa, platbu hotově nebo převodem, vrácení platby, upozornění organizátorovi
   a tištěný seznam hostů. V posledním ročníku je tedy organizátoři neměli. Je potřeba se jich
   zeptat, které opravdu chybí a které vypustili záměrně.
-- **Z-lístky** jsou jediná funkce, kterou mají obě staré verze a my ne, takže se zjevně používá
-  každý rok.
+- **Z-lístky** mají obě staré verze, takže se používají každý rok. Nový web je má od 14. 10. 2026
+  (administrace → Z-lístky).
 - **E-mail o zrušení rezervace** také měly obě staré verze. U nás ho administrace výslovně
   neposílá.
 - **Upravitelné texty e-mailů** jsou novinka verze 2025/2026. Organizátoři si zřejmě zvykli texty
@@ -84,9 +84,7 @@ fotograf, hasiči a podobně.
 
 ## Doporučené pořadí
 
-1. **Z-lístky** jako zvláštní druh vstupenky: jméno a funkce, QR kód, kontrola u vstupu stejně jako
-   u ostatních vstupenek, evidence vyzvednutí a tisk s volitelným rozpisem služeb (časy jako
-   nastavení).
+1. ~~**Z-lístky**~~ hotovo.
 2. **E-maily:** zrušení rezervace, upozornění organizátorovi, aktualizace textů pro rok 2027.
 3. **Pásky na alkohol** a **platba hotově nebo převodem**.
 4. Ostatní podle potřeby.

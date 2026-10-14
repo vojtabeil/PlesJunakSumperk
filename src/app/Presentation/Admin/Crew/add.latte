@@ -1,0 +1,24 @@
+{templateType App\Presentation\Admin\Crew\CrewTemplate}
+
+{block title}Přidat Z-lístky{/block}
+
+{block content}
+<p><a n:href="default">← Zpět na Z-lístky</a></p>
+<h1>Přidat Z-lístky</h1>
+
+<div class="columns">
+	<section class="card">
+		<h2>Jeden člověk</h2>
+		{control memberForm}
+	</section>
+	<section class="card">
+		<h2>Více lidí najednou</h2>
+		{control importForm}
+	</section>
+</div>
+
+{* Roles already used, offered while typing the role. *}
+<datalist id="crew-roles">
+	<option n:foreach="$roles as $name => $count" value="{$name}"></option>
+</datalist>
+{/block}

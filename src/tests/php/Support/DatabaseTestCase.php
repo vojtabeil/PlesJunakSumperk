@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Support;
 
 use App\Bootstrap;
+use App\Model\Crew\CrewMembers;
 use App\Model\Log\Actor;
 use App\Model\Log\EventLog;
 use App\Model\Mail\MailSender;
@@ -42,7 +43,7 @@ abstract class DatabaseTestCase extends TestCase
 	{
 		$this->db = $this->service(PDO::class);
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 0');
-		foreach (['hall_plan', 'tickets', 'seat_bookings', 'seats', 'hall_tables', 'bank_transactions', 'mock_bank_transactions', 'reservations', 'settings', 'event_log_seats', 'event_log', 'admin_users'] as $table) {
+		foreach (['hall_plan', 'tickets', 'crew_members', 'seat_bookings', 'seats', 'hall_tables', 'bank_transactions', 'mock_bank_transactions', 'reservations', 'settings', 'event_log_seats', 'event_log', 'admin_users'] as $table) {
 			$this->db->exec("TRUNCATE TABLE $table");
 		}
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 1');
@@ -89,6 +90,12 @@ abstract class DatabaseTestCase extends TestCase
 	protected function tickets(): Tickets
 	{
 		return new Tickets($this->db);
+	}
+
+
+	protected function crew(): CrewMembers
+	{
+		return new CrewMembers($this->db, $this->tickets(), $this->eventLog());
 	}
 
 

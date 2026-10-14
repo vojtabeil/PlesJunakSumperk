@@ -138,7 +138,10 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
 - Every finished reservation has `access_token`: the page "Moje rezervace" (status, payment, QR)
   is reachable only with it and every e-mail links to it (`ReservationMailer::reservationLink`,
   absolute URL from the current request; tests set `HTTP_HOST`).
-- Tickets (`tickets`): one per seat and standing ticket, created when a reservation is confirmed. The 6-hex
+- Tickets (`tickets`): one per seat and standing ticket, created when a reservation is confirmed, and one per crew
+  member (Z-lístek, `crew_member_id` instead of `reservation_id`; exactly one owner, kept by `Tickets` because MySQL
+  forbids a CHECK there). Z-lístky (`CrewMembers`, `Admin:Crew`) are free, have no seat, count in no capacity and are
+  valid in every stage; the dashboard shows the three kinds (seat, standing, crew) with entrance counts. The 6-hex
   `code` is in the QR code (link `/admin/kontrola/<code>`) and typed at the entrance; it never opens anything
   public. The public print page needs the secret `print_token` (`/vstupenka/<code>/<token>`). Visitors get the
   tickets once the reservation is paid (payment e-mail, or `sendTickets` after marking paid by hand).

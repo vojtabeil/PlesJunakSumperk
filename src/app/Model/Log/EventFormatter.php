@@ -54,8 +54,21 @@ final class EventFormatter
 			'payments.imported' => [isset($d['summary']) ? (string) $d['summary'] : null],
 			'payments.rewound' => [isset($d['since']) ? "od {$d['since']}" : null],
 			'ticket.used', 'ticket.unused' => [
+				isset($d['crew']) ? "Z-lístek {$d['crew']}" : null,
 				isset($d['count']) && (int) $d['count'] > 1 ? "vstupenek {$d['count']}" : null,
 				isset($d['codes']) ? "kód {$d['codes']}" : null,
+			],
+			'crew.created', 'crew.updated', 'crew.deleted', 'crew.picked_up', 'crew.pickup_undone' => [
+				isset($d['name']) ? (string) $d['name'] : null,
+				isset($d['role']) ? (string) $d['role'] : null,
+				isset($d['codes']) ? "kód {$d['codes']}" : null,
+			],
+			'crew.imported' => [isset($d['count']) ? "lidí {$d['count']}" : null],
+			'email.crew_sent' => [isset($d['name']) ? (string) $d['name'] : null, isset($d['to']) ? "na {$d['to']}" : null],
+			'email.crew_failed' => [
+				isset($d['name']) ? (string) $d['name'] : null,
+				isset($d['to']) ? "na {$d['to']}" : null,
+				isset($d['error']) ? "chyba: {$d['error']}" : null,
 			],
 			'email.confirmation_sent', 'email.payment_sent', 'email.tickets_sent' => [isset($d['to']) ? "na {$d['to']}" : null],
 			'email.reminder_sent' => [isset($d['to']) ? "na {$d['to']}" : null, isset($d['amount']) ? 'k zaplacení ' . $money($d['amount']) : null],

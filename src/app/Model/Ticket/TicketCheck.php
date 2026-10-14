@@ -21,7 +21,8 @@ use PDO;
  *   message: Czech headline for the organizer
  *   ticket: the scanned ticket or null (a reservation number was typed)
  *   reservation: id, name, status, remaining amount (CZK) or null
- *   tickets: all tickets of the reservation
+ *   crew: name and role of a Z-lístek (free pass of the crew) or null
+ *   tickets: all tickets of the reservation (of a Z-lístek: just itself)
  */
 final class TicketCheck
 {
@@ -43,6 +44,9 @@ final class TicketCheck
 	public function lookup(string $input): array
 	{
 		$ticket = $this->tickets->findByCode($input);
+		if ($ticket !== null && $ticket['crew_member_id'] !== null) {
+			return $this->crewResult($ticket);
+		}
 		if ($ticket !== null) {
 			return $this->result($ticket, $this->reservation((int) $ticket['reservation_id']));
 		}
@@ -136,15 +140,30 @@ final class TicketCheck
 	}
 
 
-	/** @return array{used: int, total: int} tickets of valid reservations (test ones only in the testing stage) */
+	/**
+	 * Valid tickets and those used at the entrance, in total and by kind (seat, standing, crew = Z-lístky).
+	 * Tickets of reservations count when finished (test ones only in the testing stage).
+	 * @return array{used: int, total: int, kinds: array<string, array{used: int, total: int}>}
+	 */
 	public function entranceStats(): array
 	{
-		$row = $this->db->query(
-			'SELECT COUNT(*) AS total, COALESCE(SUM(t.used_at IS NOT NULL), 0) AS used
-			FROM tickets t JOIN reservations r ON r.id = t.reservation_id
-			WHERE r.status IN (' . ReservationService::FinishedStatuses . ')' . ($this->countsTests() ? '' : " AND r.channel <> 'test'"),
-		)->fetch();
-		return ['used' => (int) $row['used'], 'total' => (int) $row['total']];
+		$rows = $this->db->query(
+			"SELECT CASE WHEN t.crew_member_id IS NOT NULL THEN 'crew' WHEN t.seat_id IS NOT NULL THEN 'seat' ELSE 'standing' END AS kind,
+				COUNT(*) AS total, COALESCE(SUM(t.used_at IS NOT NULL), 0) AS used
+			FROM tickets t LEFT JOIN reservations r ON r.id = t.reservation_id
+			WHERE t.crew_member_id IS NOT NULL OR (r.status IN (" . ReservationService::FinishedStatuses . ')'
+				. ($this->countsTests() ? '' : " AND r.channel <> 'test'") . ')
+			GROUP BY kind',
+		)->fetchAll();
+		$kinds = array_fill_keys(['seat', 'standing', 'crew'], ['used' => 0, 'total' => 0]);
+		foreach ($rows as $row) {
+			$kinds[(string) $row['kind']] = ['used' => (int) $row['used'], 'total' => (int) $row['total']];
+		}
+		return [
+			'used' => array_sum(array_column($kinds, 'used')),
+			'total' => array_sum(array_column($kinds, 'total')),
+			'kinds' => $kinds,
+		];
 	}
 
 
@@ -158,6 +177,9 @@ final class TicketCheck
 	/** @param array<string, mixed> $ticket */
 	private function assertUsable(array $ticket): void
 	{
+		if ($ticket['crew_member_id'] !== null) {
+			return; // a Z-lístek is free and valid in every stage of the site
+		}
 		$problem = $this->invalidReason($this->reservation((int) $ticket['reservation_id']));
 		if ($problem !== null) {
 			throw new TicketError($problem);
@@ -199,7 +221,28 @@ final class TicketCheck
 				'remaining' => $remaining,
 				'unused' => $unused,
 			],
+			'crew' => null,
 			'tickets' => $tickets,
+		];
+	}
+
+
+	/**
+	 * A Z-lístek: valid until used, nothing to pay.
+	 * @param array<string, mixed> $ticket
+	 * @return array<string, mixed>
+	 */
+	private function crewResult(array $ticket): array
+	{
+		$used = $ticket['used_at'] !== null;
+		$view = self::ticketView($ticket);
+		return [
+			'status' => $used ? 'used' : 'ok',
+			'message' => $used ? 'Z-lístek už byl použit.' : 'Z-lístek je v pořádku.',
+			'ticket' => $view,
+			'reservation' => null,
+			'crew' => ['name' => (string) $ticket['crew_name'], 'role' => (string) $ticket['crew_role']],
+			'tickets' => [$view],
 		];
 	}
 
@@ -235,12 +278,17 @@ final class TicketCheck
 
 	/**
 	 * @param array<string, mixed> $ticket
-	 * @return array{code: string, seat: ?string, used_at: ?string, used_by: ?string}
+	 * @return array{code: string, kind: string, seat: ?string, used_at: ?string, used_by: ?string}
 	 */
 	private static function ticketView(array $ticket): array
 	{
 		return [
 			'code' => (string) $ticket['code'],
+			'kind' => match (true) {
+				$ticket['crew_member_id'] !== null => 'crew',
+				$ticket['seat_id'] !== null => 'seat',
+				default => 'standing',
+			},
 			'seat' => $ticket['seat_label'] !== null ? (string) $ticket['seat_label'] : null,
 			'used_at' => $ticket['used_at'] !== null ? (string) $ticket['used_at'] : null,
 			'used_by' => $ticket['used_by_name'] !== null ? (string) $ticket['used_by_name'] : null,
@@ -251,7 +299,7 @@ final class TicketCheck
 	/** @return array<string, mixed> */
 	private static function invalid(string $message): array
 	{
-		return ['status' => 'invalid', 'message' => $message, 'ticket' => null, 'reservation' => null, 'tickets' => []];
+		return ['status' => 'invalid', 'message' => $message, 'ticket' => null, 'reservation' => null, 'crew' => null, 'tickets' => []];
 	}
 
 
@@ -262,9 +310,10 @@ final class TicketCheck
 			static fn(array $t): ?int => $t['seat_id'] !== null ? (int) $t['seat_id'] : null,
 			$tickets,
 		)));
-		$this->eventLog->record($action, (int) $tickets[0]['reservation_id'], [
+		$crew = $tickets[0]['crew_member_id'] !== null;
+		$this->eventLog->record($action, $crew ? null : (int) $tickets[0]['reservation_id'], [
 			'codes' => implode(', ', array_column($tickets, 'code')),
 			'count' => count($tickets),
-		], $seats);
+		] + ($crew ? ['crew' => "{$tickets[0]['crew_name']} ({$tickets[0]['crew_role']})"] : []), $seats);
 	}
 }

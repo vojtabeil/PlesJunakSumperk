@@ -58,6 +58,11 @@ final class SettingsPresenter extends BasePresenter
 			->addCondition($form::Filled)
 			->addRule($form::Pattern, 'Telefon zadejte jen jako čísla, např. +420 777 123 456.', '\+?[0-9 ]{9,20}');
 
+		$form->addGroup('Z-lístky');
+		$form->addTextArea('crew_schedule', 'Rozpis služeb týmu', rows: 5)
+			->setOption('description', 'Tiskne se na Z-lístky (volitelně) a posílá s nimi e-mailem. Co řádek, to položka; sloupce oddělte svislítkem, např. „Přípravy v pátek | 3. 2. | 16:00–18:30“.')
+			->setMaxLength(2000);
+
 		$form->setCurrentGroup(null);
 		$form->addSubmit('save', 'Uložit nastavení');
 

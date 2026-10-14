@@ -1,0 +1,82 @@
+{templateType App\Presentation\Admin\Crew\CrewTemplate}
+
+{block title}Z-lístky{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Z-lístky</h1>
+	<a class="button" n:href="add">Přidat Z-lístky</a>
+</div>
+<p class="muted">Vstup zdarma pro tým, který ples připravuje a obsluhuje. Každý má jeden Z-lístek s QR kódem, který se kontroluje u vstupu jako ostatní vstupenky.</p>
+
+<div class="stats">
+	<div class="stat"><span class="stat-value">{$stats['total']}</span><span class="stat-label">Z-lístků</span></div>
+	<div class="stat"><span class="stat-value">{$stats['picked_up']}</span><span class="stat-label">vyzvednuto</span></div>
+	<div class="stat"><span class="stat-value">{$stats['emailed']}</span><span class="stat-label">posláno e-mailem</span></div>
+	<div class="stat"><span class="stat-value">{$stats['used']}</span><span class="stat-label">prošlo vstupem</span></div>
+</div>
+
+<section class="card">
+	<form class="filter-form" method="get" action="{link this}">
+		<label>Funkce
+			<select name="role">
+				<option value="">všechny</option>
+				<option n:foreach="$roles as $name => $count" value="{$name}" n:attr="selected: $presenter->role === $name">{$name} ({$count})</option>
+			</select>
+		</label>
+		<label>Hledat <input type="search" name="q" value="{$presenter->q}" placeholder="jméno, funkce nebo kód"></label>
+		<button class="button">Filtrovat</button>
+		<a n:if="$presenter->role !== '' || $presenter->q !== ''" n:href="this, role: '', q: ''">zrušit filtr</a>
+	</form>
+
+	{if $members}
+	<form n:name="selectionForm" class="crew-selection">
+		<ul class="form-errors" n:ifcontent><li n:foreach="$form->getOwnErrors() as $error">{$error}</li></ul>
+		<div class="table-scroll">
+			<table class="data-table data-table--cards">
+				<thead>
+					<tr>
+						<th scope="col"><label class="crew-check"><input type="checkbox" data-check-all="ids[]"><span class="visually-hidden">Vybrat všechny</span></label></th>
+						<th scope="col">Jméno</th><th scope="col">Funkce</th><th scope="col">Kód</th><th scope="col">Vyzvednuto</th><th scope="col">E-mail</th><th scope="col">Vstup</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$members as $m">
+						<td data-label="Vybrat"><label class="crew-check"><input n:name="ids:$m['id']"><span class="visually-hidden">Vybrat {$m['name']}</span></label></td>
+						<td data-label="Jméno"><a n:href="edit $m['id']"><strong>{$m['name']}</strong></a></td>
+						<td data-label="Funkce">{$m['role']}</td>
+						<td data-label="Kód"><span class="ticket-code">{$m['code']}</span></td>
+						<td data-label="Vyzvednuto">{if $m['picked_up_at']}<span class="badge badge--paid">{$m['picked_up_at']|date:'j. n. H:i'}</span>{else}–{/if}</td>
+						<td data-label="E-mail">{if $m['email']}{$m['email']}{if $m['emailed_at']} <span class="muted">(posláno)</span>{/if}{else}–{/if}</td>
+						<td data-label="Vstup">{if $m['used_at']}{$m['used_at']|date:'j. n. H:i'}{else}–{/if}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="crew-actions">
+			<span class="muted">Se zaškrtnutými:</span>
+			<input n:name="print" class="button">
+			<label n:if="$hasSchedule" class="crew-check"><input n:name="schedule"> s rozpisem služeb</label>
+			<input n:name="email" class="button">
+			<input n:name="pickedUp" class="button">
+			<input n:name="notPickedUp" class="button">
+		</div>
+	</form>
+	<script>
+		// "Select all" checkbox in the table head.
+		document.querySelectorAll('[data-check-all]').forEach((all) => all.addEventListener('change', () => {
+			all.form.querySelectorAll('input[name="' + all.dataset.checkAll + '"]').forEach((box) => { box.checked = all.checked; });
+		}));
+	</script>
+	{else}
+	<p class="empty">
+		{if $presenter->role !== '' || $presenter->q !== ''}
+			<strong>Filtru neodpovídá žádný Z-lístek.</strong> <a n:href="this, role: '', q: ''">Zobrazit všechny</a>
+		{else}
+			<strong>Zatím žádné Z-lístky.</strong> <a n:href="add">Přidat lidi z týmu</a>
+		{/if}
+	</p>
+	{/if}
+	<p n:if="!$hasSchedule" class="muted">Rozpis služeb (přípravy, úklid) pro tisk a e-maily vyplníte v <a n:href="Settings:default">Nastavení</a>.</p>
+</section>
+{/block}

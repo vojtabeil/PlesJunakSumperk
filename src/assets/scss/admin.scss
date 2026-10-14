@@ -1006,3 +1006,138 @@ h3 {
   color: var(--error);
   font-weight: 600;
 }
+
+// --- Z-lístky (Crew) ------------------------------------------------------------
+
+.crew-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+
+  input {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+// What to do with the checked passes, under the table.
+.crew-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 1rem;
+}
+
+// Printable sheet: cards of 2 x 4 on A4, cut along the dashed lines.
+.crew-print {
+  background: #fff;
+}
+
+.crew-print-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 190mm;
+  margin: 1rem auto;
+}
+
+.crew-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 190mm;
+  margin: 0 auto;
+}
+
+.crew-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 66mm;
+  padding: 5mm;
+  border: 1px dashed #999;
+  break-inside: avoid;
+  font-size: 10pt;
+  line-height: 1.3;
+
+  h2 {
+    margin: 0;
+    font-size: 12pt;
+    color: var(--green);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.crew-card-kicker {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.crew-card-event {
+  color: var(--muted);
+}
+
+.crew-card-name {
+  margin-top: 3mm !important;
+  font-size: 14pt;
+  font-weight: 700;
+}
+
+.crew-card-role {
+  font-weight: 600;
+}
+
+.crew-card-schedule {
+  margin-top: 2mm;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+
+  td {
+    padding: 0 3mm 0 0;
+  }
+}
+
+.crew-card-code {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1mm;
+
+  strong {
+    font-family: ui-monospace, Consolas, monospace;
+    letter-spacing: 0.12em;
+  }
+}
+
+// Ticket kinds on the dashboard.
+.ticket-kinds {
+  td,
+  th {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media print {
+  .crew-print-bar {
+    display: none;
+  }
+
+  .crew-cards {
+    max-width: none;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}

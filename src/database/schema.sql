@@ -110,13 +110,33 @@ CREATE TABLE hall_plan (
     CONSTRAINT fk_hall_plan_admin FOREIGN KEY (applied_by) REFERENCES admin_users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- Z-lístky: free passes for the crew (people who prepare and run the ball). Each person has exactly
+-- one ticket (tickets.crew_member_id); no seat, no price, not counted in any capacity.
+CREATE TABLE crew_members (
+    id           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(150) NOT NULL,
+    -- Free text: bar, kuchyně, šatna, ...
+    role         VARCHAR(100) NOT NULL,
+    email        VARCHAR(254) NULL,
+    note         VARCHAR(500) NULL,
+    -- The organizer handed the printed pass over.
+    picked_up_at DATETIME NULL,
+    emailed_at   DATETIME NULL,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY ix_crew_members_role (role)
+) ENGINE=InnoDB;
+
 -- Tickets: one per seat and one per standing ticket of a reservation, created when it is confirmed.
 -- code = 6 random hex characters, in the QR code and typed by hand at the entrance; it never opens
 -- anything public. print_token = secret part of the public print link /vstupenka/<code>/<print_token>.
 -- A cancelled reservation keeps its tickets, they are invalid by the reservation status.
 CREATE TABLE tickets (
     id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    reservation_id INT UNSIGNED NOT NULL,
+    -- Exactly one owner: a reservation (seat or standing ticket) or a crew member (Z-lístek).
+    -- Kept by Tickets (MySQL forbids a CHECK on columns with ON DELETE CASCADE).
+    reservation_id INT UNSIGNED NULL,
+    crew_member_id INT UNSIGNED NULL,
     seat_id        INT UNSIGNED NULL,
     code           CHAR(6)  NOT NULL,
     print_token    CHAR(32) NOT NULL,
@@ -127,7 +147,9 @@ CREATE TABLE tickets (
     KEY ix_tickets_reservation (reservation_id),
     -- Entrance statistics (used tickets).
     KEY ix_tickets_used (used_at),
+    UNIQUE KEY uq_tickets_crew_member (crew_member_id),
     CONSTRAINT fk_tickets_reservation FOREIGN KEY (reservation_id) REFERENCES reservations (id) ON DELETE CASCADE,
+    CONSTRAINT fk_tickets_crew_member FOREIGN KEY (crew_member_id) REFERENCES crew_members (id) ON DELETE CASCADE,
     CONSTRAINT fk_tickets_seat FOREIGN KEY (seat_id) REFERENCES seats (id),
     CONSTRAINT fk_tickets_used_by FOREIGN KEY (used_by) REFERENCES admin_users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

@@ -1,0 +1,26 @@
+{contentType text}
+{varType array $member}
+{varType array $settings}
+{varType list $schedule}
+{varType string $printLink}
+Dobrý den,
+
+posíláme Z-lístek – vstup na ples pro tým, který ho připravuje.
+
+Kdy: {$settings['event_date'] ?? ''}
+Kde: {$settings['venue'] ?? ''}
+
+Z-lístek – {$member['name']}, funkce: {$member['role']}
+Kód: {$member['code']}
+Z-lístek k vytištění: {$printLink}
+
+Na vstupu ukažte QR kód – vytištěný, nebo na mobilu.
+{if $schedule}
+
+Rozpis služeb:
+{foreach $schedule as $row}
+{implode(' · ', $row)}
+{/foreach}
+{/if}
+
+{include '@footer.txt.latte'}

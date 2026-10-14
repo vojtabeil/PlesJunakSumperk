@@ -21,7 +21,7 @@ interface Props {
 export function ResultCard({ result, justUsed, busy, onUse, onUseReservation, onUndo, onClose }: Props) {
   const [askUndo, setAskUndo] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const { ticket, reservation, tickets } = result;
+  const { ticket, reservation, crew, tickets } = result;
 
   useEffect(() => {
     setAskUndo(false);
@@ -52,6 +52,15 @@ export function ResultCard({ result, justUsed, busy, onUse, onUseReservation, on
           Vstup {formatTime(ticket.used_at)}
           {ticket.used_by ? ` · ${ticket.used_by}` : ''}
         </p>
+      )}
+
+      {crew && (
+        <dl class="check-card-facts">
+          <dt>Jméno</dt>
+          <dd>{crew.name}</dd>
+          <dt>Funkce</dt>
+          <dd>{crew.role}</dd>
+        </dl>
       )}
 
       {reservation && (

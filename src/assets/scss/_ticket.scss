@@ -125,3 +125,19 @@
     break-inside: avoid;
   }
 }
+
+// Crew timetable on a printed Z-lístek.
+.crew-schedule {
+  margin: 0 0 1rem;
+  border-collapse: collapse;
+
+  caption {
+    margin-bottom: 0.25rem;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  td {
+    padding: 0.15rem 1.25rem 0.15rem 0;
+  }
+}

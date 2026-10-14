@@ -34,8 +34,11 @@ export const StatusTitles: Record<CheckStatus, string> = {
   invalid: 'Neplatné',
 };
 
-/** "Stůl 3 · místo 5" or "Na stání". */
+/** "Stůl 3 · místo 5", "Na stání" or "Z-lístek". */
 export function ticketPlace(ticket: TicketView): string {
+  if (ticket.kind === 'crew') {
+    return 'Z-lístek';
+  }
   return ticket.seat === null ? 'Na stání' : formatSeat(ticket.seat);
 }
 

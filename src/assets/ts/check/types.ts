@@ -2,9 +2,13 @@
 
 export type CheckStatus = 'ok' | 'used' | 'unpaid' | 'invalid';
 
+/** seat / standing ticket of a reservation, crew = Z-lístek (free pass of the crew). */
+export type TicketKind = 'seat' | 'standing' | 'crew';
+
 export interface TicketView {
   code: string;
-  /** Seat label "<table>/<seat>", null = standing ticket. */
+  kind: TicketKind;
+  /** Seat label "<table>/<seat>", null = standing ticket or Z-lístek. */
   seat: string | null;
   used_at: string | null;
   used_by: string | null;
@@ -26,7 +30,15 @@ export interface CheckResult {
   /** The scanned ticket; null when a reservation number was typed. */
   ticket: TicketView | null;
   reservation: ReservationView | null;
+  /** Owner of a Z-lístek; null for tickets of reservations. */
+  crew: CrewView | null;
   tickets: TicketView[];
+}
+
+export interface CrewView {
+  name: string;
+  /** Free text: bar, kuchyně, šatna, ... */
+  role: string;
 }
 
 export interface Stats {

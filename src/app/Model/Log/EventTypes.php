@@ -12,6 +12,7 @@ final class EventTypes
 		'reservation' => 'Rezervace',
 		'payment' => 'Platby',
 		'entrance' => 'Vstup na ples',
+		'crew' => 'Z-lístky',
 		'email' => 'E-maily',
 		'admin' => 'Administrace',
 		'login' => 'Přihlášení',
@@ -28,6 +29,13 @@ final class EventTypes
 		'ticket.used' => ['entrance', 'Vstupenka použita (vstup)'],
 		'ticket.unused' => ['entrance', 'Vrácen vstup vstupenky'],
 
+		'crew.created' => ['crew', 'Nový Z-lístek'],
+		'crew.imported' => ['crew', 'Hromadné vložení Z-lístků'],
+		'crew.updated' => ['crew', 'Úprava Z-lístku'],
+		'crew.deleted' => ['crew', 'Smazání Z-lístku'],
+		'crew.picked_up' => ['crew', 'Z-lístek vyzvednut'],
+		'crew.pickup_undone' => ['crew', 'Vráceno vyzvednutí Z-lístku'],
+
 		'email.confirmation_sent' => ['email', 'Odeslán potvrzovací e-mail'],
 		'email.confirmation_failed' => ['email', 'Potvrzovací e-mail se nepodařilo odeslat'],
 		'email.payment_sent' => ['email', 'Odeslán e-mail o platbě'],
@@ -36,6 +44,8 @@ final class EventTypes
 		'email.reminder_failed' => ['email', 'Připomínku platby se nepodařilo odeslat'],
 		'email.tickets_sent' => ['email', 'Odeslány vstupenky'],
 		'email.tickets_failed' => ['email', 'Vstupenky se nepodařilo odeslat'],
+		'email.crew_sent' => ['email', 'Odeslán Z-lístek'],
+		'email.crew_failed' => ['email', 'Z-lístek se nepodařilo odeslat'],
 
 		'payment.matched' => ['payment', 'Platba přijata'],
 		'payment.partial' => ['payment', 'Přijata částečná platba'],

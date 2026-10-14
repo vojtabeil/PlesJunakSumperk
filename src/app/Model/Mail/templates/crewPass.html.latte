@@ -1,0 +1,34 @@
+{layout '@layout.html.latte'}
+{varType array $member}
+{varType array $settings}
+{varType list $schedule}
+{varType string $printLink}
+{varType string $cid}
+
+{block content}
+<p>Dobrý den,</p>
+<p>posíláme Z-lístek – vstup na ples pro tým, který ho připravuje.</p>
+<p>Kdy: <strong>{$settings['event_date'] ?? ''}</strong><br>Kde: <strong>{$settings['venue'] ?? ''}</strong></p>
+<table style="border-collapse:collapse;width:100%;margin:8px 0 16px">
+	<tr>
+		<td style="padding:8px 12px 8px 0;border-top:1px solid #ddd5c6;vertical-align:middle;width:140px">
+			<img src="cid:{$cid}" alt="QR kód Z-lístku {$member['code']}" width="130" height="130" style="display:block">
+		</td>
+		<td style="padding:8px 0;border-top:1px solid #ddd5c6;vertical-align:middle">
+			<strong>Z-lístek – {$member['name']}</strong><br>
+			Funkce: {$member['role']}<br>
+			Kód: <strong style="font-family:Consolas,monospace;letter-spacing:2px">{$member['code']}</strong><br>
+			<a href="{$printLink}" style="color:#287234">Z-lístek k vytištění</a>
+		</td>
+	</tr>
+</table>
+<p>Na vstupu ukažte QR kód – vytištěný, nebo na mobilu.</p>
+{if $schedule}
+<p><strong>Rozpis služeb</strong></p>
+<table style="border-collapse:collapse;margin:0 0 16px">
+	<tr n:foreach="$schedule as $row">
+		<td n:foreach="$row as $cell" style="padding:2px 16px 2px 0">{$cell}</td>
+	</tr>
+</table>
+{/if}
+{/block}

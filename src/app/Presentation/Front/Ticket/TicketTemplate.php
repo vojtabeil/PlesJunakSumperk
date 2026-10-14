@@ -14,4 +14,7 @@ final class TicketTemplate extends BaseTemplate
 
 	/** QR code (SVG data URI) with the link of the entrance check. */
 	public string $qrCode;
+
+	/** @var list<list<string>> crew timetable of a Z-lístek (CrewSchedule), empty otherwise */
+	public array $schedule;
 }

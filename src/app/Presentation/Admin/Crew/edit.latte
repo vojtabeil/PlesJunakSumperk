@@ -1,0 +1,44 @@
+{templateType App\Presentation\Admin\Crew\CrewTemplate}
+
+{block title}{$member['name']} – Z-lístek{/block}
+
+{block content}
+{var $m = $member}
+<p><a n:href="default">← Zpět na Z-lístky</a></p>
+<div class="page-head">
+	<h1>{$m['name']} <span class="muted">{$m['role']}</span></h1>
+	<span class="ticket-code">{$m['code']}</span>
+</div>
+
+<div class="columns">
+	<section class="card">
+		<h2>Údaje</h2>
+		{control memberForm}
+	</section>
+	<section class="card">
+		<h2>Z-lístek</h2>
+		<dl class="details">
+			<dt>Vyzvednuto</dt><dd>{if $m['picked_up_at']}{$m['picked_up_at']|date:'j. n. Y H:i'}{else}ne{/if}</dd>
+			<dt>E-mailem</dt><dd>{if $m['emailed_at']}posláno {$m['emailed_at']|date:'j. n. Y H:i'}{elseif $m['email']}zatím neposláno{else}bez e-mailu{/if}</dd>
+			<dt>Vstup</dt><dd>{if $m['used_at']}{$m['used_at']|date:'j. n. Y H:i'}{if $m['used_by_name']} · {$m['used_by_name']}{/if}{else}zatím ne{/if}</dd>
+		</dl>
+		<div class="inline-actions">
+			{control pickUpForm}
+			{if $m['email']}{control emailForm}{/if}
+			<a class="button" n:href="print, ids: (string) $m['id'], schedule: true">Vytisknout</a>
+			<a href="{$printUrl}" target="_blank" rel="noopener">Veřejný odkaz k tisku</a>
+		</div>
+	</section>
+</div>
+
+<section class="card">
+	<h2>Smazání</h2>
+	<p class="muted">Z-lístek, který už prošel vstupem, smazat nejde.</p>
+	<div class="danger-zone">{control deleteForm}</div>
+</section>
+
+{* Roles already used, offered while typing the role. *}
+<datalist id="crew-roles">
+	<option n:foreach="$roles as $name => $count" value="{$name}"></option>
+</datalist>
+{/block}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Dashboard;
 
+use App\Model\Crew\CrewMembers;
 use App\Model\Hall\HallSync;
 use App\Model\Mail\ReservationMailer;
 use App\Model\Payment\PaymentImporter;
@@ -47,6 +48,7 @@ final class DashboardPresenter extends BasePresenter
 		private readonly ReservationMailer $mailer,
 		private readonly TicketCheck $ticketCheck,
 		private readonly HallSync $hallSync,
+		private readonly CrewMembers $crew,
 	) {
 		parent::__construct();
 	}
@@ -62,6 +64,15 @@ final class DashboardPresenter extends BasePresenter
 		$t = $this->template;
 		$t->stats = $stats;
 		$t->entrance = $this->ticketCheck->entranceStats();
+		$crew = $this->crew->stats();
+		// The three kinds of tickets: sold seats, sold standing tickets, Z-lístky of the crew (free, no capacity).
+		$t->ticketKinds = [
+			'seat' => ['label' => 'Místa u stolů', 'count' => $stats['reserved'], 'capacity' => $stats['total'],
+				'note' => $stats['held'] ? "právě vybírá: {$stats['held']}" : null],
+			'standing' => ['label' => 'Na stání', 'count' => $stats['standing'], 'capacity' => $stats['standing_capacity'], 'note' => null],
+			'crew' => ['label' => 'Z-lístky (tým)', 'count' => $crew['total'], 'capacity' => null,
+				'note' => $crew['total'] ? "vyzvednuto: {$crew['picked_up']}" : null],
+		];
 		$t->hasPlan = $this->hallSync->plan() !== null;
 		$t->siteMode = $this->settings->mode();
 		$t->seatCounts = $counts;

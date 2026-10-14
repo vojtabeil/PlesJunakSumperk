@@ -30,4 +30,6 @@ INSERT INTO settings (name, value) VALUES
     ('hold_seconds', '300'),
     ('price_seat', '350'),
     ('price_standing', '250'),
-    ('standing_capacity', '50');
+    ('standing_capacity', '50'),
+    -- Timetable printed on Z-lístky and sent with them: one line per item, e.g. "Přípravy v pátek | 16:00–18:30".
+    ('crew_schedule', '');

@@ -1,0 +1,36 @@
+{templateType App\Presentation\Admin\Crew\CrewTemplate}
+{layout none}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex">
+	<title>Z-lístky – tisk</title>
+	<link rel="stylesheet" href="{$basePath}/{asset('build/admin.css')}">
+</head>
+<body class="crew-print">
+<p class="crew-print-bar">
+	<a n:href="default">← Zpět na Z-lístky</a>
+	<button type="button" class="button" onclick="print()">Vytisknout ({count($members)})</button>
+</p>
+<div class="crew-cards">
+	<article n:foreach="$members as $i => $m" class="crew-card">
+		<div class="crew-card-text">
+			<p class="crew-card-kicker">Z-lístek</p>
+			<h2>{$settings['event_name'] ?? 'Skautský ples'}</h2>
+			<p class="crew-card-event">{$settings['event_date'] ?? ''}{if !empty($settings['venue'])} · {$settings['venue']}{/if}</p>
+			<p class="crew-card-name">{$m['name']}</p>
+			<p class="crew-card-role">{$m['role']}</p>
+			<table n:if="$schedule" class="crew-card-schedule">
+				<tr n:foreach="$schedule as $row"><td n:foreach="$row as $cell">{$cell}</td></tr>
+			</table>
+		</div>
+		<div class="crew-card-code">
+			<img src="{$qrCodes[$i]|nocheck}" alt="QR kód {$m['code']}" width="110" height="110">
+			<strong>{$m['code']}</strong>
+		</div>
+	</article>
+</div>
+</body>
+</html>

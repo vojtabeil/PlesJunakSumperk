@@ -1,28 +1,34 @@
 {templateType App\Presentation\Front\Ticket\TicketTemplate}
 
-{block title}Vstupenka {$ticket['code']}{/block}
+{block title}{if $ticket['crew_member_id'] !== null}Z-lístek{else}Vstupenka{/if} {$ticket['code']}{/block}
 
 {block content}
 {var $t = $ticket}
+{var $crew = $t['crew_member_id'] !== null}
 <section class="panel ticket-page">
-	<p n:if="$t['reservation_status'] === 'cancelled'" class="message message--error">
+	<p n:if="!$crew && $t['reservation_status'] === 'cancelled'" class="message message--error">
 		Rezervace byla zrušena, tato vstupenka neplatí.
 	</p>
-	<p n:if="in_array($t['reservation_status'], ['confirmed', 'partially_paid'], true)" class="message message--error">
+	<p n:if="!$crew && in_array($t['reservation_status'], ['confirmed', 'partially_paid'], true)" class="message message--error">
 		Rezervace ještě není zaplacená (zbývá {$t['remaining']|price}). U vstupu bude potřeba doplatit.
 	</p>
 	<p n:if="$t['used_at']" class="message">Vstupenka byla použita {$t['used_at']|date:'j. n. Y H:i'}.</p>
 
 	<article class="ticket">
 		<div class="ticket-info">
-			<p class="ticket-kicker">Vstupenka</p>
+			<p class="ticket-kicker">{if $crew}Z-lístek{else}Vstupenka{/if}</p>
 			<h2>{$settings['event_name'] ?? 'Skautský ples'}</h2>
 			<dl class="ticket-facts">
 				<dt>Kdy</dt><dd>{$settings['event_date'] ?? ''}</dd>
 				<dt>Kde</dt><dd>{$settings['venue'] ?? ''}</dd>
+				{if $crew}
+				<dt>Jméno</dt><dd class="ticket-seat">{$t['crew_name']}</dd>
+				<dt>Funkce</dt><dd>{$t['crew_role']}</dd>
+				{else}
 				<dt>Místo</dt><dd class="ticket-seat">{if $t['seat_label'] !== null}{$t['seat_label']|seatLabel|firstUpper}{else}Bez místenky (na stání){/if}</dd>
 				<dt>Jméno</dt><dd>{$t['reservation_name']}</dd>
 				<dt>Rezervace</dt><dd>č. {$t['reservation_id']}</dd>
+				{/if}
 			</dl>
 		</div>
 		<div class="ticket-code">
@@ -30,6 +36,11 @@
 			<p>Kód vstupenky<br><strong>{$t['code']}</strong></p>
 		</div>
 	</article>
+
+	<table n:if="$schedule" class="crew-schedule">
+		<caption>Rozpis služeb</caption>
+		<tr n:foreach="$schedule as $row"><td n:foreach="$row as $cell">{$cell}</td></tr>
+	</table>
 
 	<p class="prices">U vstupu ukažte QR kód vytištěný nebo na mobilu. Každá vstupenka platí pro jeden vstup.</p>
 	<p class="no-print"><button type="button" class="button" data-print>Vytisknout</button></p>

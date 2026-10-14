@@ -40,8 +40,11 @@ final class DashboardTemplate extends BaseTemplate
 
 	public bool $importOverdue;
 
-	/** @var array{used: int, total: int} tickets used at the entrance */
+	/** @var array{used: int, total: int, kinds: array<string, array{used: int, total: int}>} tickets used at the entrance */
 	public array $entrance;
+
+	/** @var array<string, array{label: string, count: int, capacity: ?int, note: ?string}> seat, standing, crew */
+	public array $ticketKinds;
 
 	/** A hall plan is uploaded (without it seats cannot be sold). */
 	public bool $hasPlan;
