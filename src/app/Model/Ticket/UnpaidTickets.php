@@ -10,7 +10,8 @@ use PDO;
 
 /**
  * Tickets of a reservation that is not paid yet are not shown anywhere (no QR code, no public print page).
- * An administrator may still show and print them, but only with a reason, which goes to the event log.
+ * A logged-in administrator may still show and print one on its print page, with a reason that is printed
+ * on the ticket and goes to the event log.
  */
 final class UnpaidTickets
 {
@@ -40,34 +41,31 @@ final class UnpaidTickets
 
 
 	/**
-	 * An administrator shows the tickets of an unpaid reservation (e.g. to print them for a guest who pays
-	 * at the entrance). The reason is required and logged with the codes.
-	 * @return list<array<string, mixed>> the tickets (Tickets::forReservation)
+	 * A logged-in administrator shows and prints one ticket of an unpaid reservation (e.g. the guest pays in
+	 * cash at the entrance). The reason is required, printed in red on the ticket and logged.
+	 * @return string the cleaned reason
 	 * @throws TicketError when the reservation is not unpaid or the reason is missing
 	 */
-	public function reveal(int $reservationId, string $reason): array
+	public function reveal(string $code, string $reason): string
 	{
 		$reason = trim((string) preg_replace('~\s+~u', ' ', $reason));
 		if (mb_strlen($reason) < self::MinReasonLength) {
-			throw new TicketError(sprintf('Napište důvod, proč vstupenky zobrazujete (aspoň %d znaků).', self::MinReasonLength));
+			throw new TicketError(sprintf('Napište důvod, proč vstupenku zobrazujete (aspoň %d znaků).', self::MinReasonLength));
 		}
 		if (mb_strlen($reason) > self::MaxReasonLength) {
 			throw new TicketError(sprintf('Důvod může mít nejvýše %d znaků.', self::MaxReasonLength));
 		}
+		$ticket = $this->tickets->findByCode($code) ?? throw new TicketError('Vstupenka neexistuje.');
 		$stmt = $this->db->prepare('SELECT status FROM reservations WHERE id = ?');
-		$stmt->execute([$reservationId]);
-		$status = $stmt->fetchColumn();
-		if (!in_array($status, self::UnpaidStatuses, true)) {
-			throw new TicketError($status === 'paid'
-				? 'Rezervace je zaplacená, vstupenky lze zobrazit bez důvodu.'
-				: 'Vstupenky této rezervace nelze zobrazit (rezervace není potvrzená nebo je zrušená).');
+		$stmt->execute([$ticket['reservation_id']]);
+		if (!in_array($stmt->fetchColumn(), self::UnpaidStatuses, true)) {
+			throw new TicketError('Vstupenku lze takto zobrazit jen u potvrzené nezaplacené rezervace.');
 		}
-		$tickets = $this->tickets->forReservation($reservationId);
-		$this->eventLog->record('ticket.revealed', $reservationId, [
+		$this->eventLog->record('ticket.revealed', (int) $ticket['reservation_id'], [
 			'reason' => $reason,
-			'codes' => implode(', ', array_column($tickets, 'code')),
-			'count' => count($tickets),
-		]);
-		return $tickets;
+			'codes' => (string) $ticket['code'],
+			'count' => 1,
+		], $ticket['seat_id'] !== null ? [(int) $ticket['seat_id']] : []);
+		return $reason;
 	}
 }

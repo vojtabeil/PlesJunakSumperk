@@ -42,28 +42,30 @@ final class UnpaidTicketsTest extends DatabaseTestCase
 	public function testRevealNeedsAReasonAndIsLogged(): void
 	{
 		$id = $this->confirmed('alice', [101], standing: 1);
+		$code = (string) $this->tickets()->forReservation($id)[0]['code'];
 
 		try {
-			$this->unpaid()->reveal($id, '  ok ');
+			$this->unpaid()->reveal($code, '  ok ');
 			self::fail('A reason is required');
 		} catch (TicketError) {
 		}
 
-		$tickets = $this->unpaid()->reveal($id, 'zaplatí   hotově u vstupu');
-		self::assertCount(2, $tickets);
+		self::assertSame('zaplatí hotově u vstupu', $this->unpaid()->reveal(strtolower($code), " zaplatí   hotově\nu vstupu "));
 		$log = $this->db->query("SELECT reservation_id, admin_user_id, details FROM event_log WHERE action = 'ticket.revealed'")->fetch();
 		self::assertSame($id, (int) $log['reservation_id']);
 		self::assertSame(7, (int) $log['admin_user_id']);
 		self::assertStringContainsString('zaplatí hotově u vstupu', (string) $log['details']);
+		self::assertStringContainsString($code, (string) $log['details']);
 	}
 
 
-	public function testPaidOrCancelledReservationsNeedNoReveal(): void
+	public function testOnlyTicketsOfUnpaidReservationsAreRevealed(): void
 	{
 		$id = $this->confirmed('alice', [101]);
+		$code = (string) $this->tickets()->forReservation($id)[0]['code'];
 		$this->db->exec("UPDATE reservations SET status = 'cancelled' WHERE id = $id");
 		$this->expectException(TicketError::class);
-		$this->unpaid()->reveal($id, 'chci je vidět');
+		$this->unpaid()->reveal($code, 'chci ji vidět');
 	}
 
 

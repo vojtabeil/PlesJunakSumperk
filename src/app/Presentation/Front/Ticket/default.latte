@@ -14,6 +14,12 @@
 		<p>Rezervace č. {$t['reservation_id']} ještě není zaplacená (zbývá {$t['remaining']|price}).
 			Vstupenky s QR kódem pošleme e-mailem, jakmile platba dorazí na účet.</p>
 	{/if}
+	{* Only a logged-in organizer sees this; the reason is printed on the ticket and logged. *}
+	<div n:if="$canReveal" class="reveal-box no-print">
+		<h3>Jste přihlášený organizátor</h3>
+		<p>Vstupenku můžete zobrazit a vytisknout i bez zaplacení. Napište důvod: vytiskne se červeně na vstupenku a zapíše se do logu.</p>
+		{control revealForm}
+	</div>
 </section>
 {else}
 <section class="panel ticket-page">
@@ -35,6 +41,9 @@
 				<dt>Rezervace</dt><dd>č. {$t['reservation_id']}</dd>
 				{/if}
 			</dl>
+			<p n:if="$revealReason !== null" class="ticket-reveal">
+				Nezaplaceno (zbývá {$t['remaining']|price}) – vytištěno organizátorem: {$revealReason}
+			</p>
 		</div>
 		<div class="ticket-code">
 			<img src="{$qrCode|nocheck}" alt="QR kód vstupenky {$t['code']}" width="220" height="220">

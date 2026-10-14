@@ -141,3 +141,31 @@
     padding: 0.15rem 1.25rem 0.15rem 0;
   }
 }
+
+// An unpaid ticket printed by an organizer: the reason in red, also on paper.
+.ticket-reveal {
+  margin: 0.75rem 0 0;
+  font-weight: 700;
+  color: var(--error);
+}
+
+.reveal-box {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid var(--orange);
+  background: var(--surface-alt);
+
+  h3 {
+    margin-bottom: 0.25rem;
+  }
+}
+
+.reveal-box .form-field {
+  margin-bottom: 0.6rem;
+}
+
+.reveal-box .form-error,
+.reveal-box .form-errors {
+  color: var(--error);
+  font-weight: 600;
+}

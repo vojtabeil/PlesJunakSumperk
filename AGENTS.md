@@ -150,8 +150,8 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
   valid in every stage; the dashboard shows the three kinds (seat, standing, crew) with entrance counts. The 6-hex
   `code` is in the QR code (link `/admin/kontrola/<code>`) and typed at the entrance; it never opens anything
   public. The public print page needs the secret `print_token` (`/vstupenka/<code>/<token>`) and shows the QR code and
-  the code only for a paid reservation (and Z-lístky); unpaid tickets can be shown and printed only by an administrator
-  with a reason (`UnpaidTickets::reveal`, logged as `ticket.revealed`; `Admin:Reservation:tickets`). Visitors get the
+  the code only for a paid reservation (and Z-lístky); on that page a logged-in administrator may show and print an unpaid
+  ticket after writing a reason, printed in red on the ticket and logged (`UnpaidTickets::reveal`, `ticket.revealed`). Visitors get the
   tickets once the reservation is paid (payment e-mail, or `sendTickets` after marking paid by hand).
   The entrance check (`TicketCheck`) lets unpaid reservations in with a warning; test tickets are valid only in
   the testing stage; any administrator may undo an entry. Its API (`Admin:Check`) answers 401 JSON without login.
