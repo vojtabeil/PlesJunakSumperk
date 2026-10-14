@@ -50,6 +50,24 @@ final class HallPlanParserTest extends TestCase
 	}
 
 
+	public function testJoinsTextsSplitByCorelDraw(): void
+	{
+		// CorelDRAW writes each line and each font run as a <text> with the same id.
+		$plan = HallPlanParser::parse(<<<'SVG'
+			<svg xmlns="http://www.w3.org/2000/svg">
+				<g id="table-36"><rect id="seat-240"/></g>
+				<text x="10" y="100" id="table-36-name">Eduard Marek</text>
+				<text x="10" y="120" id="table-36-name">-Hrozný</text>
+				<text x="40" y="120" id="table-36-name">š-</text>
+				<text id="label-seat-240">240</text><text id="label-seat-240">240</text>
+			</svg>
+			SVG);
+
+		self::assertTrue($plan->isValid(), implode("\n", $plan->errors));
+		self::assertSame('Eduard Marek -Hroznýš-', $plan->tables[36]['name']);
+	}
+
+
 	public function testReportsProblems(): void
 	{
 		$plan = HallPlanParser::parse(<<<'SVG'

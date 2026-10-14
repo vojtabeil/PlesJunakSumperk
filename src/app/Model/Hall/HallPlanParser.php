@@ -67,15 +67,21 @@ final class HallPlanParser
 			if ($id === '') {
 				continue;
 			}
+			if (preg_match('~^table-(\d+)-name$~', $id, $m)) {
+				// CorelDRAW writes every line (and font run) of a text as its own <text> with the same id.
+				$names[(int) $m[1]][] = [$element->getAttribute('y'), $element->textContent];
+				continue;
+			}
 			if (isset($seen[$id])) {
-				$errors[] = "Id „{$id}“ je v plánku víckrát.";
+				// Repeated ids of decoration (texts split by CorelDRAW) do not matter; seats and tables must be unique.
+				if (preg_match('~^(seat|table)-\d+$~', $id)) {
+					$errors[] = "Id „{$id}“ je v plánku víckrát.";
+				}
 				continue;
 			}
 			$seen[$id] = true;
 
-			if (preg_match('~^table-(\d+)-name$~', $id, $m)) {
-				$names[(int) $m[1]] = trim((string) preg_replace('~\s+~u', ' ', $element->textContent));
-			} elseif (preg_match('~^table-(\d+)$~', $id, $m) && (int) $m[1] > 0) {
+			if (preg_match('~^table-(\d+)$~', $id, $m) && (int) $m[1] > 0) {
 				$tables[(int) $m[1]] = ['svg_id' => $id, 'name' => null];
 			} elseif (preg_match('~^seat-(\d+)$~', $id, $m) && (int) $m[1] > 0) {
 				$table = self::tableOf($element);
@@ -88,7 +94,8 @@ final class HallPlanParser
 			}
 		}
 
-		foreach ($names as $number => $name) {
+		foreach ($names as $number => $parts) {
+			$name = self::joinTextParts($parts);
 			if (isset($tables[$number]) && $name !== '') {
 				$tables[$number]['name'] = mb_substr($name, 0, 255);
 			}
@@ -102,6 +109,23 @@ final class HallPlanParser
 		ksort($tables);
 		ksort($seats);
 		return [$tables, $seats, $errors];
+	}
+
+
+	/**
+	 * One text from the parts CorelDRAW split it into: parts on the same line (same y) are joined
+	 * directly, a new line adds a space.
+	 * @param list<array{string, string}> $parts [y, text] in document order
+	 */
+	private static function joinTextParts(array $parts): string
+	{
+		$text = '';
+		$lastY = null;
+		foreach ($parts as [$y, $part]) {
+			$text .= ($lastY !== null && $y !== $lastY ? ' ' : '') . $part;
+			$lastY = $y;
+		}
+		return trim((string) preg_replace('~\s+~u', ' ', $text));
 	}
 
 
