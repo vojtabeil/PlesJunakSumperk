@@ -11,6 +11,7 @@ final class EventTypes
 	public const Categories = [
 		'reservation' => 'Rezervace',
 		'payment' => 'Platby',
+		'entrance' => 'Vstup na ples',
 		'email' => 'E-maily',
 		'admin' => 'Administrace',
 		'login' => 'Přihlášení',
@@ -24,12 +25,17 @@ final class EventTypes
 		'reservation.note' => ['reservation', 'Změna poznámky'],
 		'reservation.test_deleted' => ['reservation', 'Smazána testovací rezervace'],
 
+		'ticket.used' => ['entrance', 'Vstupenka použita (vstup)'],
+		'ticket.unused' => ['entrance', 'Vrácen vstup vstupenky'],
+
 		'email.confirmation_sent' => ['email', 'Odeslán potvrzovací e-mail'],
 		'email.confirmation_failed' => ['email', 'Potvrzovací e-mail se nepodařilo odeslat'],
 		'email.payment_sent' => ['email', 'Odeslán e-mail o platbě'],
 		'email.payment_failed' => ['email', 'E-mail o platbě se nepodařilo odeslat'],
 		'email.reminder_sent' => ['email', 'Odeslána připomínka platby'],
 		'email.reminder_failed' => ['email', 'Připomínku platby se nepodařilo odeslat'],
+		'email.tickets_sent' => ['email', 'Odeslány vstupenky'],
+		'email.tickets_failed' => ['email', 'Vstupenky se nepodařilo odeslat'],
 
 		'payment.matched' => ['payment', 'Platba přijata'],
 		'payment.partial' => ['payment', 'Přijata částečná platba'],

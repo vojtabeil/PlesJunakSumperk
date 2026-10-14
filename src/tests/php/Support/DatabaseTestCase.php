@@ -14,6 +14,7 @@ use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
 use App\Model\Settings\Settings;
+use App\Model\Ticket\TicketCheck;
 use App\Model\Ticket\Tickets;
 use Nette\Application\LinkGenerator;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
@@ -87,6 +88,12 @@ abstract class DatabaseTestCase extends TestCase
 	protected function tickets(): Tickets
 	{
 		return new Tickets($this->db);
+	}
+
+
+	protected function ticketCheck(): TicketCheck
+	{
+		return new TicketCheck($this->db, $this->tickets(), $this->settings(), new VariableSymbol($this->settings()), $this->eventLog(), $this->actor());
 	}
 
 

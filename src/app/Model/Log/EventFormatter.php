@@ -45,9 +45,13 @@ final class EventFormatter
 			],
 			'payments.imported' => [isset($d['summary']) ? (string) $d['summary'] : null],
 			'payments.rewound' => [isset($d['since']) ? "od {$d['since']}" : null],
-			'email.confirmation_sent', 'email.payment_sent' => [isset($d['to']) ? "na {$d['to']}" : null],
+			'ticket.used', 'ticket.unused' => [
+				isset($d['count']) && (int) $d['count'] > 1 ? "vstupenek {$d['count']}" : null,
+				isset($d['codes']) ? "kód {$d['codes']}" : null,
+			],
+			'email.confirmation_sent', 'email.payment_sent', 'email.tickets_sent' => [isset($d['to']) ? "na {$d['to']}" : null],
 			'email.reminder_sent' => [isset($d['to']) ? "na {$d['to']}" : null, isset($d['amount']) ? 'k zaplacení ' . $money($d['amount']) : null],
-			'email.confirmation_failed', 'email.payment_failed', 'email.reminder_failed' => [
+			'email.confirmation_failed', 'email.payment_failed', 'email.reminder_failed', 'email.tickets_failed' => [
 				isset($d['to']) ? "na {$d['to']}" : null,
 				isset($d['error']) ? "chyba: {$d['error']}" : null,
 			],

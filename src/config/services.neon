@@ -19,6 +19,7 @@ services:
 	- App\Model\Site\SiteAccess
 
 	- App\Model\Ticket\Tickets
+	- App\Model\Ticket\TicketCheck
 
 	- App\Model\Admin\AdminUsers
 	- App\Model\Admin\Authenticator
