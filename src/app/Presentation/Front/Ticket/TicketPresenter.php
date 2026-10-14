@@ -7,13 +7,15 @@ namespace App\Presentation\Front\Ticket;
 use App\Model\Crew\CrewSchedule;
 use App\Model\Ticket\TicketLinks;
 use App\Model\Ticket\Tickets;
+use App\Model\Ticket\UnpaidTickets;
 use App\Presentation\Front\BasePresenter;
 
 
 /**
  * One printable ticket (/vstupenka/<code>/<print token>), linked from the e-mail with the tickets
  * (also a Z-lístek of the crew, with the crew timetable).
- * The code alone could be enumerated, so a wrong print token is a plain 404.
+ * The code alone could be enumerated, so a wrong print token is a plain 404. A ticket of a reservation
+ * that is not paid (or was cancelled) shows no QR code and no code: only the reason why.
  * @property-read TicketTemplate $template
  */
 final class TicketPresenter extends BasePresenter
@@ -30,8 +32,10 @@ final class TicketPresenter extends BasePresenter
 	{
 		$ticket = $this->tickets->findForPrint($code, $token) ?? $this->error();
 		$this->getHttpResponse()->setHeader('X-Robots-Tag', 'noindex');
+		$visible = UnpaidTickets::isVisible($ticket);
 		$this->template->ticket = $ticket;
-		$this->template->qrCode = $this->links->svgDataUri((string) $ticket['code']);
+		$this->template->visible = $visible;
+		$this->template->qrCode = $visible ? $this->links->svgDataUri((string) $ticket['code']) : '';
 		$this->template->schedule = $ticket['crew_member_id'] !== null ? CrewSchedule::parse($this->settings->get('crew_schedule')) : [];
 	}
 }

@@ -53,6 +53,10 @@ final class EventFormatter
 			],
 			'payments.imported' => [isset($d['summary']) ? (string) $d['summary'] : null],
 			'payments.rewound' => [isset($d['since']) ? "od {$d['since']}" : null],
+			'ticket.revealed' => [
+				isset($d['reason']) ? "důvod: {$d['reason']}" : null,
+				isset($d['codes']) ? "kód {$d['codes']}" : null,
+			],
 			'ticket.used', 'ticket.unused' => [
 				isset($d['crew']) ? "Z-lístek {$d['crew']}" : null,
 				isset($d['count']) && (int) $d['count'] > 1 ? "vstupenek {$d['count']}" : null,

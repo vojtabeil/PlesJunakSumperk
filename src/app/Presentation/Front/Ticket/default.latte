@@ -1,17 +1,22 @@
 {templateType App\Presentation\Front\Ticket\TicketTemplate}
 
-{block title}{if $ticket['crew_member_id'] !== null}Z-lístek{else}Vstupenka{/if} {$ticket['code']}{/block}
+{block title}{if $ticket['crew_member_id'] !== null}Z-lístek{else}Vstupenka{/if}{/block}
 
 {block content}
 {var $t = $ticket}
 {var $crew = $t['crew_member_id'] !== null}
+{if !$visible}
 <section class="panel ticket-page">
-	<p n:if="!$crew && $t['reservation_status'] === 'cancelled'" class="message message--error">
-		Rezervace byla zrušena, tato vstupenka neplatí.
-	</p>
-	<p n:if="!$crew && in_array($t['reservation_status'], ['confirmed', 'partially_paid'], true)" class="message message--error">
-		Rezervace ještě není zaplacená (zbývá {$t['remaining']|price}). U vstupu bude potřeba doplatit.
-	</p>
+	<h2>Vstupenka zatím není k dispozici</h2>
+	{if $t['reservation_status'] === 'cancelled'}
+		<p class="message message--error">Rezervace byla zrušena, vstupenka neplatí.</p>
+	{else}
+		<p>Rezervace č. {$t['reservation_id']} ještě není zaplacená (zbývá {$t['remaining']|price}).
+			Vstupenky s QR kódem pošleme e-mailem, jakmile platba dorazí na účet.</p>
+	{/if}
+</section>
+{else}
+<section class="panel ticket-page">
 	<p n:if="$t['used_at']" class="message">Vstupenka byla použita {$t['used_at']|date:'j. n. Y H:i'}.</p>
 
 	<article class="ticket">
@@ -45,6 +50,7 @@
 	<p class="prices">U vstupu ukažte QR kód vytištěný nebo na mobilu. Každá vstupenka platí pro jeden vstup.</p>
 	<p class="no-print"><button type="button" class="button" data-print>Vytisknout</button></p>
 </section>
+{/if}
 {/block}
 
 {block scripts}

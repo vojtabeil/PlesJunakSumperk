@@ -78,7 +78,9 @@
 		<h2>Vstupenky</h2>
 		<a n:href="Check:default">kontrola vstupenek</a>
 	</div>
-	<p n:if="$r['status'] !== 'paid'" class="muted">Host dostane vstupenky e-mailem, až bude rezervace zaplacená.</p>
+	{var $unpaid = in_array($r['status'], \App\Model\Ticket\UnpaidTickets::UnpaidStatuses, true)}
+	<p n:if="$r['status'] === 'paid'"><a class="button" n:href="tickets $r['id']">Zobrazit a vytisknout vstupenky</a></p>
+	<p n:if="$unpaid" class="muted">Rezervace není zaplacená: vstupenky (QR kódy) host neuvidí a dostane je e-mailem až po zaplacení.</p>
 	<ul class="activity">
 		<li n:foreach="$tickets as $ticket">
 			<strong class="ticket-code">{$ticket['code']}</strong>
@@ -87,9 +89,14 @@
 			{if $ticket['used_at']}
 				<strong>vstup {$ticket['used_at']|date:'j. n. Y H:i'}</strong>{if $ticket['used_by_name']} ({$ticket['used_by_name']}){/if}
 			{else}nepoužita{/if}
-			· <a href="{$ticket['print_link']}" target="_blank">k vytištění</a>
+			<span n:if="$r['status'] === 'paid'">· <a href="{$ticket['print_link']}" target="_blank">veřejný odkaz k tisku</a></span>
 		</li>
 	</ul>
+	<details n:if="$unpaid" class="reveal-details">
+		<summary>Zobrazit vstupenky i bez zaplacení</summary>
+		<p class="muted">Např. host zaplatí hotově u vstupu. Zobrazení se zapíše do logu i s důvodem.</p>
+		{control revealForm}
+	</details>
 </section>
 
 <section class="card">

@@ -24,6 +24,7 @@ services:
 	- App\Model\Ticket\Tickets
 	- App\Model\Ticket\TicketCheck
 	- App\Model\Ticket\TicketLinks
+	- App\Model\Ticket\UnpaidTickets
 
 	# Z-lístky (free passes of the crew).
 	- App\Model\Crew\CrewMembers

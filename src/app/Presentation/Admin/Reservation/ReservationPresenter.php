@@ -9,8 +9,11 @@ use App\Model\Payment\PaymentRepository;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationError;
 use App\Model\Reservation\ReservationService;
+use App\Model\Settings\Settings;
 use App\Model\Ticket\TicketLinks;
+use App\Model\Ticket\TicketError;
 use App\Model\Ticket\Tickets;
+use App\Model\Ticket\UnpaidTickets;
 use App\Presentation\Accessory\TemplateExtension;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\Attributes\Persistent;
@@ -20,6 +23,9 @@ use Nette\Application\UI\Form;
 /** @property-read ReservationTemplate $template */
 final class ReservationPresenter extends BasePresenter
 {
+	/** How long the tickets of an unpaid reservation stay shown after the reason was given. */
+	private const RevealSeconds = 30 * 60;
+
 	#[Persistent]
 	public string $status = '';
 
@@ -41,6 +47,8 @@ final class ReservationPresenter extends BasePresenter
 		private readonly ReservationService $reservations,
 		private readonly Tickets $tickets,
 		private readonly TicketLinks $ticketLinks,
+		private readonly UnpaidTickets $unpaidTickets,
+		private readonly Settings $settings,
 	) {
 		parent::__construct();
 	}
@@ -137,6 +145,58 @@ final class ReservationPresenter extends BasePresenter
 	}
 
 
+	public function actionTickets(int $id): void
+	{
+		$this->reservation = $this->reservationAdmin->get($id) ?? $this->error('Rezervace neexistuje.');
+		$status = (string) $this->reservation['status'];
+		$revealed = $this->revealedReason($id);
+		if ($status !== 'paid' && $revealed === null) {
+			$this->flashMessage(in_array($status, UnpaidTickets::UnpaidStatuses, true)
+				? 'Rezervace není zaplacená: vstupenky zobrazíte jen s důvodem (formulář u vstupenek).'
+				: 'Vstupenky zrušené rezervace nelze zobrazit.', 'error');
+			$this->redirect('detail', $id);
+		}
+	}
+
+
+	/** Printable tickets of a reservation (paid, or unpaid shown with a reason). */
+	public function renderTickets(int $id): void
+	{
+		$tickets = $this->tickets->forReservation($id);
+		$t = $this->template;
+		$t->reservation = $this->reservation;
+		$t->printTickets = $tickets;
+		$t->qrCodes = array_map(fn(array $ticket): string => $this->ticketLinks->svgDataUri((string) $ticket['code']), $tickets);
+		$t->revealReason = $this->reservation['status'] === 'paid' ? null : $this->revealedReason($id);
+		$t->settings = $this->settings->all();
+	}
+
+
+	/** An administrator shows the tickets of an unpaid reservation: the reason is required and logged. */
+	protected function createComponentRevealForm(): Form
+	{
+		$form = $this->formFactory->create();
+		$form->addText('reason', 'Důvod')
+			->setRequired('Napište důvod, proč vstupenky zobrazujete.')
+			->addRule($form::MinLength, 'Důvod napište aspoň %d znaky.', UnpaidTickets::MinReasonLength)
+			->setMaxLength(UnpaidTickets::MaxReasonLength)
+			->setHtmlAttribute('placeholder', 'např. zaplatí hotově u vstupu');
+		$form->addSubmit('reveal', 'Zobrazit a vytisknout vstupenky');
+		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
+			$id = (int) $this->reservation['id'];
+			try {
+				$this->unpaidTickets->reveal($id, $data->reason);
+			} catch (TicketError $e) {
+				$form->addError($e->getMessage());
+				return;
+			}
+			$this->getSession('unpaidTickets')->set((string) $id, ['reason' => trim($data->reason), 'until' => time() + self::RevealSeconds]);
+			$this->redirect('tickets', $id);
+		};
+		return $form;
+	}
+
+
 	protected function createComponentSendTicketsForm(): Form
 	{
 		return $this->createSimpleForm('Poslat vstupenky znovu', function (int $id): string {
@@ -173,6 +233,14 @@ final class ReservationPresenter extends BasePresenter
 			$this->redirect('this');
 		};
 		return $form;
+	}
+
+
+	/** The reason given for showing the unpaid tickets of a reservation, while it is still valid. */
+	private function revealedReason(int $id): ?string
+	{
+		$grant = $this->getSession('unpaidTickets')->get((string) $id);
+		return is_array($grant) && ($grant['until'] ?? 0) > time() ? (string) $grant['reason'] : null;
 	}
 
 

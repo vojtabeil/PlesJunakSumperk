@@ -1249,3 +1249,35 @@ h3 {
   padding: 0.35rem 0.85rem;
   font-size: 0.9rem;
 }
+
+// --- Tickets of an unpaid reservation shown by an administrator ---------------------
+
+.reveal-details {
+  margin-top: 1rem;
+
+  summary {
+    font-weight: 700;
+    color: var(--navy);
+    cursor: pointer;
+  }
+}
+
+.unpaid-note {
+  max-width: 190mm;
+  margin: 0 auto 1rem;
+  padding: 0.6rem 0.9rem;
+  background: #fdecc8;
+  border-left: 4px solid var(--orange);
+}
+
+.crew-card-unpaid {
+  margin-top: 2mm !important;
+  font-weight: 700;
+  color: var(--error);
+}
+
+@media print {
+  .unpaid-note {
+    display: none;
+  }
+}
