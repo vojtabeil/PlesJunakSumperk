@@ -11,7 +11,7 @@ lebedahosting.cz (skautIS login), support at podpora@skaut.cz.
 
 Stack: **Nette 3.3** (PHP 8.3+), Latte, plain PDO, MariaDB locally / MySQL 8 in production,
 **Preact** island for the seat picker, TypeScript (checked by TypeScript 7), SCSS (Dart Sass),
-bundled by **Bun**. The implementation plan is `doc/plan.md` - follow it phase by phase.
+bundled by **Bun**. Decisions, open questions and the backlog are in `doc/plan.md`.
 
 ## Language rules
 
@@ -25,40 +25,14 @@ bundled by **Bun**. The implementation plan is `doc/plan.md` - follow it phase b
 
 ## Layout
 
-Top level: `src/` = the application (a self-contained Nette project with its own `composer.json`,
-`package.json`, `vendor/`, `node_modules/` and `var/`), `doc/` = documentation, `resource/` = materials
-that are not code (old site, drawings), `dev/` = local environment. In the table below, paths of the
-application are relative to `src/`; the other top-level folders are written in full.
-
 | Path | Purpose |
 |---|---|
-| `app/Bootstrap.php` | Nette configurator (debug mode only on localhost, Tracy logs in `var/log`). |
-| `app/Core/RouterFactory.php` | Routes: `/` reservation, `/rezervace/<id>/<token>` "Moje rezervace" (secret link from the e-mails), `/api/<op>` JSON, `/tester/<token>` and `/vip/<token>` secret links, `/admin/<presenter>/<action>[/<id>]`, `/dev/status`. |
-| `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout + per-request DB check (`Authenticator` as `IdentityHandler`), `SetupConfig`. |
-| `app/Core/SetupGuard.php` | No administrator = site not configured: every presenter except the setup wizard is disabled (pages redirect, API 503). |
-| `app/Model/Payment/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, `Fio/FioApiSource` in production, chosen by `bank.driver`; both `RewindableSource`), `PaymentImporter` (fetch -> store -> match -> e-mail; manual button or cron), `PaymentMatcher` (partial payments add up), `VariableSymbol` (VS = prefix + id, e.g. 20260003), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
-| `app/Model/Http/` | `HttpClient` interface + `CurlHttpClient` (tests use `tests/php/FakeHttpClient`; no test calls a real service). |
-| `app/Presentation/Front/Cron/` | `GET /cron/payments?key=` for a scheduler; 404 while `cron.key` is empty. |
-| `app/Model/Log/` | Event log of everything that happens (`EventLog::record`, actor from `Actor`: customer/admin/cron/system), `EventTypes` (Czech labels, categories), `EventLogRepository` (filters by date, seat, type, actor, reservation), `EventFormatter`. |
-| `app/Model/Clock/` | `Clock` interface (`SystemClock`; `tests/php/FrozenClock` in tests). |
-| `app/Presentation/Admin/` | Administration: Setup (first-run wizard), Sign, Dashboard (seat pie chart, to-do list, table of all seats), Reservation, Customer (reservations grouped by e-mail), Payment (filters, resolving in the row), Site (stage of the site, secret links, pages for visitors who cannot buy), Log, Search (header search box), Settings (event, prices, payments), User (administrators), Export (CSV), Account (own password). |
-| `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
-| `app/Model/` | Business logic: `Reservation/` (ReservationService = all reservation rules, ReservationAdmin, SeatOverview, Settings, SiteMode, SiteAccess, ReservationSession), `Mail/` (MailSender interface, SMTP implementation, ReservationMailer + Latte e-mail templates), `Database/` (PDO factory). |
-| `app/Presentation/` | Presenters + Latte templates (`Front/`, `Error/`, `Dev/`), typed template classes (`*Template.php`), `@layout.latte`, `Accessory/TemplateExtension.php` (filters `price`, `seatLabel`, function `asset`). |
-| `config/` | `common.neon`, `services.neon` (interfaces -> implementations), `local.neon` (git-ignored, from `local.neon.example`), `test.neon` (PHPUnit database). |
-| `assets/ts/` | TypeScript: `front.tsx` entry, `seat-picker/` (types, pure logic, API client, signals store, components). |
-| `assets/scss/` | SCSS partials; `front.scss` is the entry. |
-| `www/` | Document root: `index.php`, `.htaccess`, `img/`, `build/` (generated, git-ignored). |
-| `tests/php/`, `tests/ts/` | PHPUnit (against `ples_test`) and `bun test`. |
-| `database/` | `schema.sql` + `defaults.sql` + `hall.sql` (also the production installation), `seed.sql` (local test data). |
-| `doc/` | `plan.md` (implementation plan + backlog), `deploy.md` (deployment on Lebeda), `legacy/` (notes on the old site). |
-| `dev/` | Local environment scripts and tool wrappers; `dev/env.cmd` = tool environment, `dev/router.php` = router of the PHP built-in server. |
-| `resource/original/` | Old site as served over HTTP (frontend only), local URL `/original/`. |
-| `resource/original-web/` | Complete FTP backup of the old site (PHP sources; credentials and dumps git-ignored). |
-| `resource/design/` | CorelDRAW drawings (hall plan); `Backup_*.cdr` are git-ignored. |
-| `.tools/` | Portable PHP, MariaDB, Mailpit, Adminer, Composer, Bun, TypeScript 7, Dart Sass (git-ignored). |
-| `.devdata/` | Local DB data, captured e-mails, logs, PID files, sessions, temp files, package caches (git-ignored). |
-| `var/` | Nette cache (`var/temp`) and logs (`var/log`) (git-ignored). |
+| `src/` | The application: a self-contained Nette project (`app/`, `assets/`, `bin/`, `config/`, `database/`, `tests/`, `www/`) with its own `composer.json`, `package.json`, `vendor/`, `node_modules/` and `var/`. |
+| `doc/` | `plan.md` (decisions, open questions, backlog), `deploy.md`, `architecture.md` (**map of all folders and classes**), `legacy/`. |
+| `resource/` | Not code: `original/` and `original-web/` (two copies of the old site), `design/` (CorelDRAW drawings). |
+| `dev/` | Local environment scripts and wrappers of the portable tools. |
+
+Read `doc/architecture.md` before larger changes and keep it up to date when adding folders or main classes.
 
 ## Local environment (Windows, nothing installed system-wide)
 
@@ -88,10 +62,10 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
 
 ## Conventions and gotchas
 
-- PHP in `app/` and `tests/php/` follows the Nette coding style (tabs, two blank lines
+- PHP in `src/app/` and `src/tests/php/` follows the Nette coding style (tabs, two blank lines
   between methods). TypeScript/SCSS use 2 spaces.
 - **IoC**: depend on interfaces (`MailSender`, Tracy `ILogger`, later `BankTransactionSource`),
-  bind implementations in `config/services.neon`; no static calls like `Debugger::log()` in services.
+  bind implementations in `src/config/services.neon`; no static calls like `Debugger::log()` in services.
 - Templates are typed: every presenter has a `*Template` class and `{templateType}` in its Latte file.
   Standard variables (`$basePath`, ...) must be declared on the template class to be filled.
 - Code must work on both MariaDB 11.8 and MySQL 8; avoid vendor-specific SQL.
@@ -110,8 +84,8 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
 - Every request re-checks the logged-in account in the DB (`Authenticator::wakeupIdentity`):
   a deleted account or a changed password (`session_version`) logs the user out everywhere.
   After changing one's own account, re-login with `Authenticator::identity()`.
-- Deny by default: `tests/php/Presentation/PresenterAccessTest` fails for any presenter that is
-  reachable without login and not on its allowlist. Public by design: Front (Home, Reservation, Api, Access),
+- Deny by default: `src/tests/php/Presentation/PresenterAccessTest` fails for any presenter that is
+  reachable without login and not on its allowlist. Public by design: Front (Home, Reservation, Api, Access), Cron,
   Error, Admin Sign/Setup and `Dev:*` (debug mode only; must be excluded from the release build).
 - Admin: every presenter extends `Admin\BasePresenter` (login required unless `isPublic()`).
   State changes go only through POST forms from `FormFactory` (CSRF token) - never GET links -
@@ -123,7 +97,7 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   before matching. Reservation statuses: draft -> confirmed -> partially_paid -> paid, or cancelled;
   "finished" = `ReservationService::FinishedStatuses`.
 - Dev-only pages (`/dev/*`) check `Debugger::$productionMode`; `/dev/bank` also requires the mock bank.
-  The release build leaves `app/Presentation/Dev` out and always runs in production mode (file `VERSION`).
+  The release build leaves `src/app/Presentation/Dev` out and always runs in production mode (file `VERSION`).
 - The bank account is the scout group's main account: payments whose VS lacks the ball prefix
   are `foreign` (not a problem, never matched). Keep the VS prefix stable during a sale.
 - Payments may be imported only manually (no cron on the hosting): keep the dashboard button and
@@ -158,8 +132,10 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
 - Event info, prices and limits are rows in the `settings` table, not code.
 - Greenfield project: the database schema is `src/database/schema.sql`, edited directly (no migrations).
   After a change run `dev\init-db.cmd` and `dev\init-db.cmd -Test`.
-- PHPUnit tests that touch the DB extend `App\Tests\DatabaseTestCase` (fresh fixture per test,
+- PHPUnit tests that touch the DB extend `App\Tests\Support\DatabaseTestCase` (fresh fixture per test,
   fresh services so cached settings never leak).
 - In PowerShell 5.1, native program arguments lose embedded double quotes, and stderr output
   from native programs can abort a script; use `Invoke-Native` from `dev/_common.ps1`.
+- The Composer class map is optimized: after moving or renaming classes run `..\dev\composer.cmd dump-autoload`
+  in `src/` and delete `src/var/temp/cache`.
 - Never commit `.tools/`, `.devdata/`, `dist/` or in `src/`: `config/local.neon`, `var/`, `vendor/`, `node_modules/`, `www/build/`.

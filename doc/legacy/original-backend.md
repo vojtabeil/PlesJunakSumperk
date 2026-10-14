@@ -58,7 +58,7 @@ only treated as free by the client.
 - Race conditions: two people could likely hold the same seat at once.
 - jQuery loaded twice; 10 MB background image.
 
-## New implementation (see `app/Model/Reservation/ReservationService.php`)
+## New implementation (see `src/app/Model/Reservation/ReservationService.php`)
 
 All rules live on the server. The flow differs from the original: the hall map with live
 availability is shown right away and the e-mail is asked for at the end.
