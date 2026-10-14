@@ -94,7 +94,7 @@ The current structure is described in `doc/architecture.md`.
 Features of the old site (`resource/original-web/`, see `doc/legacy/original-web.md`) that the new site does not have yet. Data import from the
 legacy database is out of scope. Each item names the legacy code it replaces.
 
-1. **Entrance check.** QR scanner at the door, record the use of a seat or ticket, detect a second entry.
+1. **Entrance check.** Planned in section 7.
    Legacy: `resource/original-web/ftp/www/check/tets.php` (jsQR camera scanner), `place.usedTime`.
 2. **Alcohol wristbands.** Count issued and remaining wristbands per reservation.
    Legacy: `ticket.alcohol_strip_count`.
@@ -177,3 +177,63 @@ seat_bookings (seat_id PK -> seats, reservation_id NOT NULL -> reservations ON D
 6. Real drawing: object ids and table groups set through the CorelDRAW MCP, SVG export, first upload.
 7. `HallMap` on the inlined SVG.
 8. Clean-up (`HallAreas`, `map_*`, `hall.sql`), release checks, `doc/architecture.md`, `AGENTS.md`.
+
+## 7. Tickets and the entrance check (decided 2026-10-14)
+
+Replaces the legacy `check/` (QR with `/check/<seat>/<e-mail>`, guessable; undo allowed to one hard-coded admin).
+UI inspired by the Pomuckar QR app (full-screen camera, result card over it, round buttons).
+
+### 7.1 Tickets
+
+```
+tickets (id, reservation_id -> reservations ON DELETE CASCADE, seat_id NULL -> seats (NULL = standing),
+         code CHAR(6) UNIQUE, print_token CHAR(32), created_at, used_at NULL, used_by NULL -> admin_users)
+```
+
+- One ticket per seat and per standing ticket, created when the reservation is confirmed.
+- `code`: 6 random hex characters (`random_bytes`, regenerated on a collision), unrelated to the seat,
+  reservation or e-mail. It is in the QR code and typed by hand at the entrance (case-insensitive, O = 0).
+- QR content: `https://<site>/admin/kontrola/<code>`; the scanner extracts the code, a phone camera opens the
+  check page after login.
+- `print_token`: secret part of the public link `/vstupenka/<code>/<print_token>` (one printable ticket).
+  The 6-character code alone could be enumerated, so it never opens anything public.
+- A cancelled reservation keeps its tickets but they are invalid; deleting a test reservation deletes them.
+
+### 7.2 Decisions
+
+- Per-ticket codes (a group may arrive one by one); the check can confirm the remaining tickets of the reservation at once.
+- An unpaid or partially paid reservation is let in with a clear warning and the amount to pay.
+- Visitors get the tickets once the reservation is fully paid (bank import or marked paid by hand):
+  e-mail with QR codes and print links, list on "Moje rezervace"; "Poslat vstupenky znovu" in the admin.
+- Any administrator may undo an entry (all administrators are equal); it asks for confirmation and is logged.
+- Online only; an offline mode (preloaded codes) only if the hall turns out to have no signal.
+
+### 7.3 Check (`App\Model\Ticket`)
+
+- `lookup(code)`: ticket, reservation, payment state, other tickets of the reservation; result
+  ok (paid, unused) / used (when, by whom) / unpaid (amount left) / invalid (cancelled, unknown code, test ticket).
+- `use(code)`: atomic `UPDATE ... WHERE code = ? AND used_at IS NULL`; `useReservation(id)`; `undo(code)`.
+- Manual input also accepts the reservation number or variable symbol (shows all its tickets).
+- Event log (in the model): `ticket.used`, `ticket.unused`, `ticket.sent`.
+
+### 7.4 Check application
+
+- `/admin/kontrola[/<code>]`, presenter `Admin:Check` (login required), own full-screen layout.
+- Preact entry `assets/ts/check.tsx`, `assets/scss/check.scss`, scanner library `qr-scanner` (works on iOS).
+- Scan pauses on a result until it is confirmed or closed; big confirm button, colour, vibration, sound.
+- Round buttons: camera choice (remembered), torch, full screen, install (PWA manifest), back to the admin;
+  Wake Lock keeps the screen on.
+- JSON: `GET lookup`, `POST use`, `POST useReservation`, `POST undo`, header `X-CSRF-Token`.
+
+### 7.5 Administration
+
+- Reservation detail: tickets with code, state, print link; "Poslat vstupenky znovu".
+- Dashboard: "Na plese: N / M" and a link to the check; guest list CSV: used tickets.
+
+### 7.6 Steps
+
+1. Table `tickets`, creation on confirmation, codes, tests, seed.
+2. `TicketCheck` model + event types + tests.
+3. Tickets for visitors: print page, e-mail after full payment, "Moje rezervace", resend.
+4. Check application (presenter, layout, JSON, Preact, scanner, manual input, PWA).
+5. Dashboard, reservation detail, CSV, documentation.
