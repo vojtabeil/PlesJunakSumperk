@@ -118,6 +118,8 @@ $DbPass  = 'ples'
 
 $DbPidFile  = Join-Path $RunDir 'mariadb.pid'
 $WebPidFile = Join-Path $RunDir 'php.pid'
+# Address the running PHP server listens on (127.0.0.1, or 0.0.0.0 with start.cmd -Lan).
+$WebListenFile = Join-Path $RunDir 'php.listen'
 $MailPidFile = Join-Path $RunDir 'mailpit.pid'
 
 # Environment shared with the root *.cmd wrappers (caches and temp files inside .devdata).

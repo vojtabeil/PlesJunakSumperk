@@ -4,6 +4,15 @@
 
 $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/');
 
+// With start.cmd -Lan other devices reach the server too: the dev tools below stay on this computer.
+$local = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
+$isTool = static fn(string $prefix): bool => $path === $prefix || str_starts_with($path, $prefix . '/');
+if (!$local && ($isTool('/adminer') || $isTool('/original'))) {
+    http_response_code(404);
+    echo 'Not found';
+    return true;
+}
+
 // Adminer for managing the local database.
 if ($path === '/adminer' || str_starts_with($path, '/adminer/')) {
     require __DIR__ . '/../.tools/adminer/adminer.php';

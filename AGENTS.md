@@ -39,7 +39,7 @@ Read `doc/architecture.md` before larger changes and keep it up to date when add
 | Command | What it does |
 |---|---|
 | `setup.cmd` | Downloads all tools (SHA256-verified), generates `php.ini`, runs `composer install` and `bun install`, creates `src/config/local.neon`, creates `ples` (schema + seed data) and `ples_test` if missing. Idempotent; never deletes data. `-Force` re-extracts tools. |
-| `start.cmd` | Starts MariaDB (127.0.0.1:3307), Mailpit (SMTP 1025, web 8025), `bun build --watch` and `sass --watch`, and the PHP server (127.0.0.1:8000). `-NoBrowser` skips opening the browser. |
+| `start.cmd` | Starts MariaDB (127.0.0.1:3307), Mailpit (SMTP 1025, web 8025), `bun build --watch` and `sass --watch`, and the PHP server (127.0.0.1:8000). `-NoBrowser` skips opening the browser. `-Lan` lets the PHP server listen on all interfaces (to try the site on a phone; the LAN URLs are printed; run `stop.cmd` first when it runs without it). |
 | `stop.cmd` | Stops everything (MariaDB is shut down cleanly). |
 | `dev\build.cmd` | Type check + bundle + SCSS into `src/www/build`. |
 | `check.cmd` | `tsc`, `bun test`, PHPUnit, PHPStan (level 6). Run before every commit. |
@@ -58,7 +58,9 @@ including temp files (`.devdata/tmp` via `TEMP`/`TMP`, `sys_temp_dir`, MariaDB `
 and package caches (`COMPOSER_HOME`, `COMPOSER_CACHE_DIR`, `BUN_INSTALL*`; `DO_NOT_TRACK=1`).
 New tools must follow the same rule: download + SHA256 in `dev/_common.ps1`, install in
 `dev/setup.ps1`, caches redirected in `dev/env.cmd`, wrapper in `dev/`.
-All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailpit.
+All listeners bind to 127.0.0.1 only, except the PHP server with `start.cmd -Lan`: requests from other devices run in
+production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.php` answers 404 to them for `/adminer` and
+`/original`. Windows Firewall must allow inbound TCP 8000 for other devices. Local PHP `mail()` is also routed to Mailpit.
 
 ## Conventions and gotchas
 

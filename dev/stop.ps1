@@ -9,7 +9,7 @@ $web = Get-PidProcess $WebPidFile 'php'
 if ($web) {
     Write-Step 'Stopping PHP server'
     Stop-Process -Id $web.Id -Force
-    Remove-Item $WebPidFile -Force -ErrorAction SilentlyContinue
+    Remove-Item $WebPidFile, $WebListenFile -Force -ErrorAction SilentlyContinue
     Write-Ok 'PHP server stopped'
 }
 
