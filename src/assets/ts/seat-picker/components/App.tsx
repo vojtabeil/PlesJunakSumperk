@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'preact/hooks';
-import { formatPrice, freeSeats, totals } from '../logic';
+import { totals } from '../logic';
 import type { Store } from '../store';
 import type { PickerData } from '../types';
 import { HallMap } from './HallMap';
 import { OrderButton } from './OrderButton';
-import { StandingTickets } from './StandingTickets';
 import { Summary } from './Summary';
+import { Tickets } from './Tickets';
 
 const PollMs = 3000;
 
@@ -15,8 +15,8 @@ interface Props {
 }
 
 /**
- * One screen with everything needed to choose: availability, the whole map (live seat states) and tickets
- * without a seat. The summary with the form follows below; the order button floats over the screen until it is seen.
+ * One screen with everything needed to choose: both kinds of tickets above, the whole map (live seat
+ * states) below them. The summary with the form follows below; the order button floats over the screen until it is seen.
  */
 export function App({ store, data }: Props) {
   const state = store.state.value;
@@ -55,19 +55,7 @@ export function App({ store, data }: Props) {
   return (
     <div class={`picker${busy ? ' is-busy' : ''}`}>
       <div class={`picker-stage${hasPlan ? '' : ' picker-stage--empty'}`}>
-        {hasPlan && (
-          <div class="stage-head">
-            <p class="availability">
-              Volná místa u stolů: <strong>{freeSeats(data.layout.seats.length, state)}</strong>
-              <span class="availability-price"> · místenka {formatPrice(state.prices.seat)}</span>
-            </p>
-            <ul class="legend" aria-label="Legenda">
-              <li><span class="swatch swatch--free" /> volné</li>
-              <li><span class="swatch swatch--mine" /> vybrané</li>
-              <li><span class="swatch swatch--taken" /> obsazené</li>
-            </ul>
-          </div>
-        )}
+        <Tickets store={store} state={state} seatCount={hasPlan ? data.layout.seats.length : 0} />
         <p class={`message picker-message${message?.error ? ' message--error' : ''}`} role="status" aria-live="polite">
           {message?.text}
         </p>
@@ -84,7 +72,6 @@ export function App({ store, data }: Props) {
         ) : (
           <p class="stage-note">Plánek sálu připravujeme. Zatím lze koupit jen lístky bez místenky.</p>
         )}
-        <StandingTickets store={store} state={state} />
       </div>
       <OrderButton state={state} onOrder={() => setAwake(false)} />
       {totals(state.reservation, state.prices).tickets > 0 && <Summary store={store} state={state} />}
