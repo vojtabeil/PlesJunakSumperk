@@ -10,7 +10,7 @@ Assert-BuildTools
 Write-MyIni
 $started = Start-Db
 $failed = @()
-Push-Location $Root
+Push-Location $SrcDir
 try {
     $steps = [ordered]@{
         'TypeScript (tsc)'   = @($TscExe, @('-p', 'tsconfig.json'))

@@ -1,6 +1,6 @@
 <?php
 // Router for the PHP built-in server - used only for local development (start.cmd).
-// Document root is www/; this emulates www/.htaccess (front controller) plus dev-only tools.
+// Document root is src/www/; this emulates www/.htaccess (front controller) plus dev-only tools.
 
 $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/');
 
@@ -12,7 +12,7 @@ if ($path === '/adminer' || str_starts_with($path, '/adminer/')) {
 
 // Static copy of the original site (without its PHP backend) for comparing the look.
 if ($path === '/original' || str_starts_with($path, '/original/')) {
-    $base = realpath(__DIR__ . '/../original');
+    $base = realpath(__DIR__ . '/../resource/original');
     $relative = substr($path, strlen('/original'));
     if ($relative === '' || $relative === '/') {
         $relative = '/index.rendered.html';
@@ -30,8 +30,8 @@ if ($path === '/original' || str_starts_with($path, '/original/')) {
     return true;
 }
 
-// Existing files in www/ (built assets, images) are served directly; dotfiles never.
-$www = realpath(__DIR__ . '/../www');
+// Existing files in src/www/ (built assets, images) are served directly; dotfiles never.
+$www = realpath(__DIR__ . '/../src/www');
 $file = realpath($www . $path);
 if ($file !== false && is_file($file) && str_starts_with($file, $www . DIRECTORY_SEPARATOR)
     && !str_contains($path, '/.') && pathinfo($file, PATHINFO_EXTENSION) !== 'php') {

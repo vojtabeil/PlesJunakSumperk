@@ -38,15 +38,15 @@ Write-Step "Assembling $outDir"
 if (Test-Path $outDir) { Remove-Item $outDir -Recurse -Force }
 New-Item -ItemType Directory -Force $web, $install | Out-Null
 
-Copy-Item (Join-Path $Root 'app') (Join-Path $web 'app') -Recurse
+Copy-Item (Join-Path $SrcDir 'app') (Join-Path $web 'app') -Recurse
 Remove-Item (Join-Path $web 'app\Presentation\Dev') -Recurse -Force
 
 New-Item -ItemType Directory -Force (Join-Path $web 'config') | Out-Null
 foreach ($file in @('common.neon', 'services.neon', 'local.neon.example')) {
-    Copy-Item (Join-Path $Root "config\$file") (Join-Path $web "config\$file")
+    Copy-Item (Join-Path $SrcDir "config\$file") (Join-Path $web "config\$file")
 }
 
-Copy-Item (Join-Path $Root 'www') (Join-Path $web 'www') -Recurse
+Copy-Item (Join-Path $SrcDir 'www') (Join-Path $web 'www') -Recurse
 Get-ChildItem (Join-Path $web 'www\build') -Filter '*.map' | Remove-Item -Force
 
 foreach ($dir in @('var\temp', 'var\log')) {
@@ -71,7 +71,7 @@ Write-Utf8NoBom (Join-Path $web '.htaccess') @'
 '@
 
 Write-Step 'Installing PHP dependencies without dev packages'
-Copy-Item (Join-Path $Root 'composer.json'), (Join-Path $Root 'composer.lock') $web
+Copy-Item (Join-Path $SrcDir 'composer.json'), (Join-Path $SrcDir 'composer.lock') $web
 $r = Invoke-Native $PhpExe @('-c', $PhpIni, $ComposerPhar, 'install', '--no-dev', '--optimize-autoloader',
     '--no-interaction', '--no-progress', "--working-dir=$web")
 if ($r.Code -ne 0) { throw "composer install failed:`n$($r.Output)" }
@@ -80,13 +80,13 @@ Write-Utf8NoBom (Join-Path $web 'vendor\.htaccess') $deny
 Write-Utf8NoBom (Join-Path $web 'VERSION') "$version`n"
 
 foreach ($file in @('schema.sql', 'defaults.sql', 'hall.sql')) {
-    Copy-Item (Join-Path $PSScriptRoot "db\$file") (Join-Path $install $file)
+    Copy-Item (Join-Path $DbFilesDir $file) (Join-Path $install $file)
 }
-Copy-Item (Join-Path $Root 'docs\deploy.md') (Join-Path $install 'deploy.md')
+Copy-Item (Join-Path $Root 'doc\deploy.md') (Join-Path $install 'deploy.md')
 
 # --- Checks of the package contents -------------------------------------------
 Write-Step 'Checking package contents'
-$forbidden = @('app\Presentation\Dev', 'config\local.neon', 'config\test.neon', 'vendor\phpunit', 'vendor\phpstan', 'tests', 'dev', 'assets', 'node_modules')
+$forbidden = @('app\Presentation\Dev', 'config\local.neon', 'config\test.neon', 'vendor\phpunit', 'vendor\phpstan', 'tests', 'dev', 'assets', 'database', 'node_modules')
 foreach ($path in $forbidden) {
     if (Test-Path (Join-Path $web $path)) { throw "Package must not contain $path" }
 }

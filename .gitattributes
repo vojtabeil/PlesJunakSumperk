@@ -4,4 +4,7 @@
 *.bat text eol=crlf
 
 # Recovered files of the original site are kept byte-for-byte.
-original/** -text
+resource/original/** -text
+
+# CorelDRAW drawings
+*.cdr binary

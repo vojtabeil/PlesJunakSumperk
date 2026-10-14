@@ -72,6 +72,8 @@ $Versions = @{
 
 # --- Paths and ports -----------------------------------------------------------
 $Root       = Split-Path -Parent $PSScriptRoot
+$SrcDir     = Join-Path $Root 'src'      # the application (Nette project)
+$DbFilesDir = Join-Path $SrcDir 'database'
 $ToolsDir   = Join-Path $Root '.tools'
 $CacheDir   = Join-Path $ToolsDir '_downloads'
 $PhpDir     = Join-Path $ToolsDir 'php'
@@ -349,17 +351,17 @@ function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
         Import-DbFile $Import $DbName
     } else {
         foreach ($file in @('schema.sql', 'defaults.sql', 'hall.sql')) {
-            Import-DbFile (Join-Path $PSScriptRoot "db\$file") $DbName
+            Import-DbFile (Join-Path $DbFilesDir $file) $DbName
         }
-        if (-not $NoSeed) { Import-DbFile (Join-Path $PSScriptRoot 'db\seed.sql') $DbName }
+        if (-not $NoSeed) { Import-DbFile (Join-Path $DbFilesDir 'seed.sql') $DbName }
     }
     Write-Ok 'Database ready'
 }
 
-# Recreates the empty test database used by PHPUnit (config/test.neon).
+# Recreates the empty test database used by PHPUnit (src/config/test.neon).
 function Reset-TestDatabase {
     Reset-Database $TestDbName
-    Import-DbFile (Join-Path $PSScriptRoot 'db\schema.sql') $TestDbName
+    Import-DbFile (Join-Path $DbFilesDir 'schema.sql') $TestDbName
     Write-Ok 'Test database ready'
 }
 
@@ -404,12 +406,12 @@ $BunPidFile  = Join-Path $RunDir 'bun-watch.pid'
 $SassPidFile = Join-Path $RunDir 'sass-watch.pid'
 
 function Assert-BuildTools {
-    foreach ($exe in @($BunExe, $TscExe, $DartExe, (Join-Path $Root 'node_modules\preact\package.json'))) {
+    foreach ($exe in @($BunExe, $TscExe, $DartExe, (Join-Path $SrcDir 'node_modules\preact\package.json'))) {
         if (-not (Test-Path $exe)) { throw "Missing $exe. Run setup.cmd first." }
     }
 }
 
-# Paths are relative to the repository root (callers run from there).
+# Paths are relative to src/ (callers run from there).
 function Get-BunBuildArgs([switch]$Watch) {
     $a = @('build', 'assets/ts/front.tsx', '--outdir', 'www/build', '--target', 'browser',
         '--format', 'esm', '--minify', '--sourcemap=linked')
@@ -432,7 +434,7 @@ function Start-Watchers {
         $procName = [IO.Path]::GetFileNameWithoutExtension($w.Exe)
         if (Get-PidProcess $w.Pid $procName) { continue }
         $argLine = ($w.Args | ForEach-Object { if ($_ -match ' ') { "`"$_`"" } else { $_ } }) -join ' '
-        $proc = Start-Process -FilePath $w.Exe -ArgumentList $argLine -WorkingDirectory $Root -WindowStyle Hidden -PassThru `
+        $proc = Start-Process -FilePath $w.Exe -ArgumentList $argLine -WorkingDirectory $SrcDir -WindowStyle Hidden -PassThru `
             -RedirectStandardOutput (Join-Path $LogDir "$($w.Log).log") `
             -RedirectStandardError (Join-Path $LogDir "$($w.Log).err.log")
         Write-Utf8NoBom $w.Pid "$($proc.Id)"
@@ -471,9 +473,9 @@ function Test-ReleasePackage([string]$Web, [string]$Install) {
 
     # Local configuration, but with the fresh database.
     $config = Join-Path $Web 'config\local.neon'
-    $neon = Get-Content (Join-Path $Root 'config\local.neon') -Raw -Encoding UTF8
+    $neon = Get-Content (Join-Path $SrcDir 'config\local.neon') -Raw -Encoding UTF8
     $neon = [regex]::Replace($neon, "(?m)^(\s+name:\s*)$DbName\s*$", "`${1}$ReleaseDbName")
-    if ($neon -notmatch "name:\s*$ReleaseDbName") { throw "config/local.neon: database name '$DbName' not found." }
+    if ($neon -notmatch "name:\s*$ReleaseDbName") { throw "src/config/local.neon: database name '$DbName' not found." }
     Write-Utf8NoBom $config $neon
 
     $router = Join-Path $TmpDir 'release-router.php'

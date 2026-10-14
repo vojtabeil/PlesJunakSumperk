@@ -12,7 +12,7 @@ Start-Db | Out-Null
 Start-Mailpit
 
 Assert-BuildTools
-if (-not (Test-Path (Join-Path $Root 'www\build\front.js'))) {
+if (-not (Test-Path (Join-Path $SrcDir 'www\build\front.js'))) {
     & (Join-Path $PSScriptRoot 'build.ps1') -SkipTypeCheck
 }
 Write-Step 'Starting asset watchers'
@@ -24,7 +24,7 @@ if (Get-PidProcess $WebPidFile 'php') {
 } else {
     if (Test-PortInUse $WebPort) { throw "Port $WebPort is already used by another program." }
     Write-Step "Starting PHP server on port $WebPort"
-    $public = Join-Path $Root 'www'
+    $public = Join-Path $SrcDir 'www'
     $router = Join-Path $PSScriptRoot 'router.php'
     $proc = Start-Process -FilePath $PhpExe -WindowStyle Hidden -PassThru `
         -ArgumentList "-c `"$PhpIni`" -S 127.0.0.1:$WebPort -t `"$public`" `"$router`"" `

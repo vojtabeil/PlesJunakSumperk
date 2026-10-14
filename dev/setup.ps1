@@ -149,18 +149,18 @@ function Install-Sass {
 
 # Installs project dependencies once their manifests exist (added in phase 2).
 function Install-Dependencies {
-    if (Test-Path (Join-Path $Root 'composer.json')) {
+    if (Test-Path (Join-Path $SrcDir 'composer.json')) {
         Write-Step 'Installing PHP dependencies (composer install)'
-        Push-Location $Root
+        Push-Location $SrcDir
         try {
             $r = Invoke-Native $PhpExe @('-c', $PhpIni, $ComposerPhar, 'install', '--no-interaction', '--no-progress')
             if ($r.Code -ne 0) { throw "composer install failed:`n$($r.Output)" }
         } finally { Pop-Location }
         Write-Ok 'PHP dependencies installed'
     }
-    if (Test-Path (Join-Path $Root 'package.json')) {
+    if (Test-Path (Join-Path $SrcDir 'package.json')) {
         Write-Step 'Installing frontend dependencies (bun install)'
-        Push-Location $Root
+        Push-Location $SrcDir
         try {
             $r = Invoke-Native $BunExe @('install', '--frozen-lockfile')
             if ($r.Code -ne 0) { throw "bun install failed:`n$($r.Output)" }
@@ -192,19 +192,19 @@ Install-TypeScript
 Install-Sass
 Install-Dependencies
 
-$localConfig = Join-Path $Root 'config\local.neon'
+$localConfig = Join-Path $SrcDir 'config\local.neon'
 if (-not (Test-Path $localConfig)) {
-    Copy-Item (Join-Path $Root 'config\local.neon.example') $localConfig
-    Write-Ok 'Created config/local.neon'
+    Copy-Item (Join-Path $SrcDir 'config\local.neon.example') $localConfig
+    Write-Ok 'Created src/config/local.neon'
 }
 # Nette cache and logs.
-New-Item -ItemType Directory -Force (Join-Path $Root 'var\temp'), (Join-Path $Root 'var\log') | Out-Null
+New-Item -ItemType Directory -Force (Join-Path $SrcDir 'var\temp'), (Join-Path $SrcDir 'var\log') | Out-Null
 
 Write-MyIni
 $started = Start-Db
 try {
     if (Test-DatabaseExists $DbName) {
-        Write-Ok "Database '$DbName' already exists, keeping it (reset with init-db.cmd)"
+        Write-Ok "Database '$DbName' already exists, keeping it (reset with dev\init-db.cmd)"
     } else {
         Reset-AppDatabase
     }

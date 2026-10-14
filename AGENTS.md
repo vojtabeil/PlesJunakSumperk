@@ -11,7 +11,7 @@ lebedahosting.cz (skautIS login), support at podpora@skaut.cz.
 
 Stack: **Nette 3.3** (PHP 8.3+), Latte, plain PDO, MariaDB locally / MySQL 8 in production,
 **Preact** island for the seat picker, TypeScript (checked by TypeScript 7), SCSS (Dart Sass),
-bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase by phase.
+bundled by **Bun**. The implementation plan is `doc/plan.md` - follow it phase by phase.
 
 ## Language rules
 
@@ -20,9 +20,15 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 - Text shown to end users of the site (visitors, organizers) and e-mails are in Czech.
 - Keep `.ps1` files ASCII-only. Windows PowerShell 5.1 reads BOM-less files as
   ANSI, so any non-ASCII character would be garbled.
-- `original/` is the recovered legacy site and is kept as-is (Czech, untouched).
+- `resource/original/` and `resource/original-web/` are two different copies of the legacy site,
+  kept as-is (Czech, untouched); notes on them are in `doc/legacy/`.
 
 ## Layout
+
+Top level: `src/` = the application (a self-contained Nette project with its own `composer.json`,
+`package.json`, `vendor/`, `node_modules/` and `var/`), `doc/` = documentation, `resource/` = materials
+that are not code (old site, drawings), `dev/` = local environment. In the table below, paths of the
+application are relative to `src/`; the other top-level folders are written in full.
 
 | Path | Purpose |
 |---|---|
@@ -44,9 +50,12 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 | `assets/scss/` | SCSS partials; `front.scss` is the entry. |
 | `www/` | Document root: `index.php`, `.htaccess`, `img/`, `build/` (generated, git-ignored). |
 | `tests/php/`, `tests/ts/` | PHPUnit (against `ples_test`) and `bun test`. |
-| `docs/` | `plan.md` (implementation plan), `legacy-backend.md` (reconstruction of the old site). |
-| `dev/` | Local environment scripts; `dev/db/schema.sql` = database schema, `dev/db/seed.sql` = local test data; `dev/env.cmd` = tool environment. |
-| `original/` | Recovered files of the old site + `OBNOVA.md`. |
+| `database/` | `schema.sql` + `defaults.sql` + `hall.sql` (also the production installation), `seed.sql` (local test data). |
+| `doc/` | `plan.md` (implementation plan + backlog), `deploy.md` (deployment on Lebeda), `legacy/` (notes on the old site). |
+| `dev/` | Local environment scripts and tool wrappers; `dev/env.cmd` = tool environment, `dev/router.php` = router of the PHP built-in server. |
+| `resource/original/` | Old site as served over HTTP (frontend only), local URL `/original/`. |
+| `resource/original-web/` | Complete FTP backup of the old site (PHP sources; credentials and dumps git-ignored). |
+| `resource/design/` | CorelDRAW drawings (hall plan); `Backup_*.cdr` are git-ignored. |
 | `.tools/` | Portable PHP, MariaDB, Mailpit, Adminer, Composer, Bun, TypeScript 7, Dart Sass (git-ignored). |
 | `.devdata/` | Local DB data, captured e-mails, logs, PID files, sessions, temp files, package caches (git-ignored). |
 | `var/` | Nette cache (`var/temp`) and logs (`var/log`) (git-ignored). |
@@ -55,14 +64,14 @@ bundled by **Bun**. The implementation plan is `docs/plan.md` - follow it phase 
 
 | Command | What it does |
 |---|---|
-| `setup.cmd` | Downloads all tools (SHA256-verified), generates `php.ini`, runs `composer install` and `bun install`, creates `config/local.neon`, creates `ples` (schema + seed data) and `ples_test` if missing. Idempotent; never deletes data. `-Force` re-extracts tools. |
+| `setup.cmd` | Downloads all tools (SHA256-verified), generates `php.ini`, runs `composer install` and `bun install`, creates `src/config/local.neon`, creates `ples` (schema + seed data) and `ples_test` if missing. Idempotent; never deletes data. `-Force` re-extracts tools. |
 | `start.cmd` | Starts MariaDB (127.0.0.1:3307), Mailpit (SMTP 1025, web 8025), `bun build --watch` and `sass --watch`, and the PHP server (127.0.0.1:8000). `-NoBrowser` skips opening the browser. |
 | `stop.cmd` | Stops everything (MariaDB is shut down cleanly). |
-| `build.cmd` | Type check + bundle + SCSS into `www/build`. |
+| `dev\build.cmd` | Type check + bundle + SCSS into `src/www/build`. |
 | `check.cmd` | `tsc`, `bun test`, PHPUnit, PHPStan (level 6). Run before every commit. |
-| `release.cmd` | Release package `dist/ples-<version>/` (+ ZIP): `web/` to upload (no dev tools, tests, sources, maps, dev dependencies or local config) and `install/` (SQL + `docs/deploy.md`). Verifies the package first like a new installation: fresh database `ples_release` from `install/*.sql`, production mode, checks of the first run, the testing stage and the public sale (MariaDB must run). |
-| `init-db.cmd` | Recreates `ples` (schema + seed). `-Test` recreates `ples_test`, `-NoSeed`, `-Import dump.sql`, `-Clean` (wipe data dir). |
-| `php.cmd`, `composer.cmd`, `bun.cmd`, `tsc.cmd`, `sass.cmd` | Run the portable tools with the project environment. |
+| `dev\release.cmd` | Release package `dist/ples-<version>/` (+ ZIP): `web/` to upload (no dev tools, tests, sources, maps, dev dependencies or local config) and `install/` (SQL + `doc/deploy.md`). Verifies the package first like a new installation: fresh database `ples_release` from `install/*.sql`, production mode, checks of the first run, the testing stage and the public sale (MariaDB must run). |
+| `dev\init-db.cmd` | Recreates `ples` (schema + seed). `-Test` recreates `ples_test`, `-NoSeed`, `-Import dump.sql`, `-Clean` (wipe data dir). |
+| `dev\php.cmd`, `dev\composer.cmd`, `dev\bun.cmd`, `dev\tsc.cmd`, `dev\sass.cmd` | Run the portable tools with the project environment (run them from `src/`). |
 
 URLs while running: site `/`, administration `/admin` (local seed account `admin` / `admin`),
 mock bank `/dev/bank` (create fake payments, then "Načíst platby z banky" in admin -> Platby),
@@ -74,7 +83,7 @@ The environment is fully portable: everything lives in `.tools/` and `.devdata/`
 including temp files (`.devdata/tmp` via `TEMP`/`TMP`, `sys_temp_dir`, MariaDB `tmpdir`)
 and package caches (`COMPOSER_HOME`, `COMPOSER_CACHE_DIR`, `BUN_INSTALL*`; `DO_NOT_TRACK=1`).
 New tools must follow the same rule: download + SHA256 in `dev/_common.ps1`, install in
-`dev/setup.ps1`, caches redirected in `dev/env.cmd`, wrapper in the repo root.
+`dev/setup.ps1`, caches redirected in `dev/env.cmd`, wrapper in `dev/`.
 All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailpit.
 
 ## Conventions and gotchas
@@ -96,7 +105,7 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
 - User-facing errors are thrown as `ReservationError` with a Czech message.
 - First run: with an empty `admin_users` the site is off and `/admin/setup` asks for the setup
   password (`setup.password`, default `skaut-sumperk`) and creates the first administrator.
-  `init-db.cmd -NoAdmin` reproduces this locally. All administrators are equal; any of them can
+  `dev\init-db.cmd -NoAdmin` reproduces this locally. All administrators are equal; any of them can
   create, edit (incl. password) and delete any account except the last one.
 - Every request re-checks the logged-in account in the DB (`Authenticator::wakeupIdentity`):
   a deleted account or a changed password (`session_version`) logs the user out everywhere.
@@ -133,7 +142,7 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
   The API answers 503; `ReservationService` also refuses changes when the stage does not sell.
   Reservations store their `channel` (test/vip/public); test ones are left out of the guest list
   and can be deleted. "Moje rezervace" (payment details) works in every stage.
-- Database data files: `dev/db/schema.sql` + `defaults.sql` + `hall.sql` are also the production
+- Database data files: `src/database/schema.sql` + `defaults.sql` + `hall.sql` are also the production
   installation; `seed.sql` is local test data only.
 - Do not depend on `bcmath` (may be missing on the hosting).
 - Every finished reservation has `access_token`: the page "Moje rezervace" (status, payment, QR)
@@ -147,10 +156,10 @@ All listeners bind to 127.0.0.1 only. Local PHP `mail()` is also routed to Mailp
 - POST requests to `/api/*` require the `X-CSRF-Token` header (token printed into the page).
 - JSON printed into a `<script>` must use `Json::encode(..., htmlSafe: true)`.
 - Event info, prices and limits are rows in the `settings` table, not code.
-- Greenfield project: the database schema is `dev/db/schema.sql`, edited directly (no migrations).
-  After a change run `init-db.cmd` and `init-db.cmd -Test`.
+- Greenfield project: the database schema is `src/database/schema.sql`, edited directly (no migrations).
+  After a change run `dev\init-db.cmd` and `dev\init-db.cmd -Test`.
 - PHPUnit tests that touch the DB extend `App\Tests\DatabaseTestCase` (fresh fixture per test,
   fresh services so cached settings never leak).
 - In PowerShell 5.1, native program arguments lose embedded double quotes, and stderr output
   from native programs can abort a script; use `Invoke-Native` from `dev/_common.ps1`.
-- Never commit `config/local.neon`, `.tools/`, `.devdata/`, `var/`, `vendor/`, `node_modules/`, `www/build/`.
+- Never commit `.tools/`, `.devdata/`, `dist/` or in `src/`: `config/local.neon`, `var/`, `vendor/`, `node_modules/`, `www/build/`.
