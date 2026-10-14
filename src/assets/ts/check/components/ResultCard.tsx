@@ -3,6 +3,9 @@ import { formatPrice, plural } from '../../seat-picker/logic';
 import { formatTime, StatusTitles, ticketPlace } from '../logic';
 import type { CheckResult } from '../types';
 
+/** What the ✕ buttons do: the card closes and the camera scans the next ticket. */
+const CloseLabel = 'Zavřít a skenovat další vstupenku';
+
 interface Props {
   result: CheckResult;
   /** The entry was just recorded by this phone. */
@@ -28,6 +31,17 @@ export function ResultCard({ result, justUsed, busy, onUse, onUseReservation, on
     titleRef.current?.focus();
   }, [result]);
 
+  // Escape closes the card like the ✕ buttons (a keyboard or a scanner with a keyboard).
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const status = justUsed ? 'ok' : result.status;
   const title = justUsed ? 'Vstup zapsán' : StatusTitles[result.status];
   const canEnter = result.status === 'ok' || result.status === 'unpaid';
@@ -36,9 +50,14 @@ export function ResultCard({ result, justUsed, busy, onUse, onUseReservation, on
 
   return (
     <section class={`check-card check-card--${status}`} role="dialog" aria-modal="true" aria-labelledby="check-title">
-      <h1 id="check-title" class="check-card-title" tabIndex={-1} ref={titleRef}>
-        {title}
-      </h1>
+      <div class="check-card-head">
+        <h1 id="check-title" class="check-card-title" tabIndex={-1} ref={titleRef}>
+          {title}
+        </h1>
+        <button type="button" class="check-card-close" onClick={onClose} aria-label={CloseLabel} title={CloseLabel}>
+          ✕
+        </button>
+      </div>
       {!justUsed && <p class="check-card-message">{result.message}</p>}
 
       {ticket && (
@@ -124,8 +143,8 @@ export function ResultCard({ result, justUsed, busy, onUse, onUseReservation, on
             </button>
           </div>
         )}
-        <button type="button" class="check-button check-button--next" onClick={onClose}>
-          Další
+        <button type="button" class="check-button check-button--close" onClick={onClose} aria-label={CloseLabel}>
+          <span aria-hidden="true">✕</span> Zavřít
         </button>
       </div>
     </section>
