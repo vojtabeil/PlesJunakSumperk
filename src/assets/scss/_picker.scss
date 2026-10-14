@@ -235,7 +235,7 @@
 }
 
 // --- The SVG plan: CSS paints the drawing in the look of the site ----------------
-// Shapes are found by their ids (see doc/hall-plan.md); any SVG primitive works.
+// Shapes are found by the ids of the drawing conventions (table-N-desk, label-table-N, ...); any SVG primitive works.
 
 .hall-plan {
   // Numbers and labels drawn over the seats must not catch clicks.
