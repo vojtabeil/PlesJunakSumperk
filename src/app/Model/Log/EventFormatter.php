@@ -36,6 +36,14 @@ final class EventFormatter
 					default => null,
 				},
 			],
+			'reservation.cancelled' => [isset($d['reason']) ? "důvod: {$d['reason']}" : null],
+			'hall.replaced' => [
+				isset($d['file']) ? (string) $d['file'] : null,
+				isset($d['new_seats']) ? "nová místa {$d['new_seats']}" : null,
+				isset($d['removed_seats']) ? "odebraná místa {$d['removed_seats']}" : null,
+				isset($d['moved_seats']) ? "přesunutá místa {$d['moved_seats']}" : null,
+				isset($d['cancelled']) ? "zrušeno rezervací {$d['cancelled']}" : null,
+			],
 			'reservation.paid_manually' => [isset($d['amount']) ? $money($d['amount']) . ' hotově' : null],
 			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.unmatched', 'payment.assigned', 'payment.ignored', 'payment.settled' => [
 				isset($d['amount']) ? $money($d['amount']) : null,

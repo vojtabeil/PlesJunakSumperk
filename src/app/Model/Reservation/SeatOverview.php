@@ -42,6 +42,7 @@ final class SeatOverview
 			LEFT JOIN hall_tables t ON t.id = s.table_id
 			LEFT JOIN seat_bookings b ON b.seat_id = s.id
 			LEFT JOIN reservations r ON r.id = b.reservation_id
+			WHERE s.active = 1
 			ORDER BY s.table_id, s.id',
 		)->fetchAll();
 

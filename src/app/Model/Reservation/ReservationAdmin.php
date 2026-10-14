@@ -30,7 +30,7 @@ final class ReservationAdmin
 	public function stats(): array
 	{
 		$seats = $this->db->query(
-			"SELECT (SELECT COUNT(*) FROM seats) AS total,
+			"SELECT (SELECT COUNT(*) FROM seats WHERE active = 1) AS total,
 				COALESCE(SUM(state = 'reserved'), 0) AS reserved,
 				COALESCE(SUM(state = 'held'), 0) AS held
 			FROM seat_bookings",
@@ -234,21 +234,31 @@ final class ReservationAdmin
 	{
 		$this->db->beginTransaction();
 		try {
-			$stmt = $this->db->prepare(
-				"UPDATE reservations SET status = 'cancelled', session_id = NULL WHERE id = ? AND status <> 'cancelled'",
-			);
-			$stmt->execute([$id]);
-			if ($stmt->rowCount() === 0) {
-				throw new ReservationError('Rezervace neexistuje nebo už je zrušená.');
-			}
-			// The log keeps which seats were freed.
-			$this->eventLog->record('reservation.cancelled', $id);
-			$this->db->prepare('DELETE FROM seat_bookings WHERE reservation_id = ?')->execute([$id]);
+			$this->cancelInTransaction($id);
 			$this->db->commit();
 		} catch (Throwable $e) {
 			$this->db->rollBack();
 			throw $e;
 		}
+	}
+
+
+	/**
+	 * cancel() for a caller that already runs a transaction (e.g. replacing the hall plan).
+	 * @param string|null $reason shown in the log
+	 */
+	public function cancelInTransaction(int $id, ?string $reason = null): void
+	{
+		$stmt = $this->db->prepare(
+			"UPDATE reservations SET status = 'cancelled', session_id = NULL WHERE id = ? AND status <> 'cancelled'",
+		);
+		$stmt->execute([$id]);
+		if ($stmt->rowCount() === 0) {
+			throw new ReservationError('Rezervace neexistuje nebo už je zrušená.');
+		}
+		// The log keeps which seats were freed.
+		$this->eventLog->record('reservation.cancelled', $id, $reason !== null ? ['reason' => $reason] : []);
+		$this->db->prepare('DELETE FROM seat_bookings WHERE reservation_id = ?')->execute([$id]);
 	}
 
 

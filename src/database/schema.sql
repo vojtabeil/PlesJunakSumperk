@@ -41,23 +41,31 @@ CREATE TABLE reservations (
     KEY ix_reservations_session (session_id)
 ) ENGINE=InnoDB;
 
--- Tables in the hall. Coordinates are in hall map units (see settings map_width / map_height).
+-- Tables in the hall: id = number of the table in the plan, svg_id = id of its group in the SVG.
+-- Removed from the plan = active 0 (kept for the history). x/y/width/height: old map, removed with it.
 CREATE TABLE hall_tables (
     id     SMALLINT UNSIGNED NOT NULL PRIMARY KEY,
     label  VARCHAR(16) NOT NULL,
-    x      SMALLINT UNSIGNED NOT NULL,
-    y      SMALLINT UNSIGNED NOT NULL,
-    width  SMALLINT UNSIGNED NOT NULL,
-    height SMALLINT UNSIGNED NOT NULL
+    name   VARCHAR(255) NULL,
+    svg_id VARCHAR(64) NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    x      SMALLINT UNSIGNED NULL,
+    y      SMALLINT UNSIGNED NULL,
+    width  SMALLINT UNSIGNED NULL,
+    height SMALLINT UNSIGNED NULL
 ) ENGINE=InnoDB;
 
--- Seats of the hall: the layout only, what is sold is in seat_bookings. x/y is the seat centre in map units.
+-- Seats of the hall: the layout only, what is sold is in seat_bookings. id = number of the seat in the plan,
+-- svg_id = id of its shape in the SVG. Removed from the plan = active 0 (the event log still refers to it).
+-- x/y: seat centre on the old map, removed with it.
 CREATE TABLE seats (
     id       INT UNSIGNED NOT NULL PRIMARY KEY,
     label    VARCHAR(16)  NOT NULL,
     table_id SMALLINT UNSIGNED NULL,
-    x        SMALLINT UNSIGNED NOT NULL,
-    y        SMALLINT UNSIGNED NOT NULL,
+    svg_id   VARCHAR(64)  NULL,
+    active   TINYINT(1) NOT NULL DEFAULT 1,
+    x        SMALLINT UNSIGNED NULL,
+    y        SMALLINT UNSIGNED NULL,
     -- Seat labels ("3/5") are unique; the admin search and the log filter look seats up by label.
     UNIQUE KEY uq_seats_label (label),
     CONSTRAINT fk_seats_table FOREIGN KEY (table_id) REFERENCES hall_tables (id)
@@ -95,6 +103,17 @@ CREATE TABLE admin_users (
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_admin_users_login (login)
+) ENGINE=InnoDB;
+
+-- The hall plan (SVG drawing): at most one row, there is only one version. Replacing it is a dangerous
+-- action in the administration (HallSync); tables and seats below are synchronized from it.
+CREATE TABLE hall_plan (
+    id         TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+    svg        MEDIUMTEXT   NOT NULL,
+    file_name  VARCHAR(255) NOT NULL,
+    applied_by INT UNSIGNED NULL,
+    applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_hall_plan_admin FOREIGN KEY (applied_by) REFERENCES admin_users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Tickets: one per seat and one per standing ticket of a reservation, created when it is confirmed.

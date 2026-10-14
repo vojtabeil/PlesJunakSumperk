@@ -48,6 +48,7 @@ final class EventTypes
 		'payments.rewound' => ['payment', 'Nové stažení pohybů od data'],
 
 		'site.mode_changed' => ['admin', 'Změna stavu webu'],
+		'hall.replaced' => ['admin', 'Nový plánek sálu'],
 		'settings.changed' => ['admin', 'Změna nastavení'],
 		'tester.link_regenerated' => ['admin', 'Nový testerský odkaz'],
 		'vip.link_regenerated' => ['admin', 'Nový VIP odkaz'],

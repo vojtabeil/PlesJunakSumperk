@@ -22,9 +22,8 @@ final class ReservationService
 	/** Reservations that hold their seats and tickets (as an SQL list). */
 	public const FinishedStatuses = "'confirmed', 'partially_paid', 'paid'";
 
-	/** MySQL / MariaDB error codes of a failed seat hold. */
+	/** MySQL / MariaDB error code of a seat held by somebody else. */
 	private const DuplicateKey = 1062;
-	private const MissingParent = 1452;
 
 	/** Static decorations of the hall map, in map units like hall_tables. */
 	private const HallAreas = [
@@ -64,11 +63,11 @@ final class ReservationService
 			'areas' => self::HallAreas,
 			'tables' => array_map(
 				static fn(array $row): array => $cast($row, ['id', 'x', 'y', 'width', 'height']),
-				$this->db->query('SELECT id, label, x, y, width, height FROM hall_tables ORDER BY id')->fetchAll(),
+				$this->db->query('SELECT id, label, x, y, width, height FROM hall_tables WHERE active = 1 ORDER BY id')->fetchAll(),
 			),
 			'seats' => array_map(
 				static fn(array $row): array => $cast($row, ['id', 'table_id', 'x', 'y']),
-				$this->db->query('SELECT id, label, table_id, x, y FROM seats ORDER BY id')->fetchAll(),
+				$this->db->query('SELECT id, label, table_id, x, y FROM seats WHERE active = 1 ORDER BY id')->fetchAll(),
 			),
 		];
 	}
@@ -221,17 +220,22 @@ final class ReservationService
 				throw new ReservationError("Na jednu rezervaci lze koupit nejvýše $max lístků.");
 			}
 
-			// The primary key on seat_id lets only one reservation have the seat; an unknown seat
-			// fails on the foreign key. Neither aborts the transaction.
+			// The primary key on seat_id lets only one reservation have the seat (a duplicate does not
+			// abort the transaction); a seat not in the hall plan inserts nothing.
 			try {
-				$this->db->prepare(
-					"INSERT INTO seat_bookings (seat_id, reservation_id, state, held_at) VALUES (?, ?, 'held', NOW())",
-				)->execute([$seatId, $draftId]);
+				$stmt = $this->db->prepare(
+					"INSERT INTO seat_bookings (seat_id, reservation_id, state, held_at)
+					SELECT id, ?, 'held', NOW() FROM seats WHERE id = ? AND active = 1",
+				);
+				$stmt->execute([$draftId, $seatId]);
 			} catch (\PDOException $e) {
-				if (in_array($e->errorInfo[1] ?? null, [self::DuplicateKey, self::MissingParent], true)) {
+				if (($e->errorInfo[1] ?? null) === self::DuplicateKey) {
 					throw new ReservationError('Toto místo už je obsazené.');
 				}
 				throw $e;
+			}
+			if ($stmt->rowCount() === 0) {
+				throw new ReservationError('Toto místo už je obsazené.');
 			}
 			$this->refreshHolds($draftId);
 		});

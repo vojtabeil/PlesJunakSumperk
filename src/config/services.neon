@@ -18,6 +18,8 @@ services:
 	- App\Model\Reservation\SeatOverview
 	- App\Model\Site\SiteAccess
 
+	- App\Model\Hall\HallSync
+
 	- App\Model\Ticket\Tickets
 	- App\Model\Ticket\TicketCheck
 	- App\Model\Ticket\TicketLinks
