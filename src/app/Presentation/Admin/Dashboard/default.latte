@@ -111,7 +111,73 @@
 	</section>
 </div>
 
-{* 2. Table of all seats *}
+{* 2. Full lists of the three kinds of tickets, folded *}
+<section class="card ticket-lists" aria-labelledby="ticket-lists-title">
+	<h2 id="ticket-lists-title">Seznamy lístků</h2>
+
+	<details class="seat-details">
+		<summary>Lístky na místo ({count($ticketLists['seat'])})</summary>
+		<div class="table-scroll">
+			<table class="data-table data-table--cards">
+				<thead><tr><th scope="col">Místo</th><th scope="col">Rezervace</th><th scope="col">Stav</th><th scope="col">Kód</th><th scope="col">Vstup</th></tr></thead>
+				<tbody>
+					<tr n:foreach="$ticketLists['seat'] as $t">
+						<td data-label="Místo"><strong>{$t['seat_label']|seatLabel|firstUpper}</strong></td>
+						<td data-label="Rezervace">{include reservationLink, t: $t}</td>
+						<td data-label="Stav"><span class="badge badge--{$t['status']}">{$t['status']|statusLabel}</span></td>
+						<td data-label="Kód"><span class="ticket-code">{$t['code']}</span></td>
+						<td data-label="Vstup">{if $t['used_at']}{$t['used_at']|date:'j. n. H:i'}{else}–{/if}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<p n:if="!$ticketLists['seat']" class="empty"><strong>Zatím žádné lístky na místo.</strong></p>
+	</details>
+
+	<details class="seat-details">
+		<summary>Lístky na stání ({count($ticketLists['standing'])})</summary>
+		<div class="table-scroll">
+			<table class="data-table data-table--cards">
+				<thead><tr><th scope="col">Rezervace</th><th scope="col">Stav</th><th scope="col">Kód</th><th scope="col">Vstup</th></tr></thead>
+				<tbody>
+					<tr n:foreach="$ticketLists['standing'] as $t">
+						<td data-label="Rezervace">{include reservationLink, t: $t}</td>
+						<td data-label="Stav"><span class="badge badge--{$t['status']}">{$t['status']|statusLabel}</span></td>
+						<td data-label="Kód"><span class="ticket-code">{$t['code']}</span></td>
+						<td data-label="Vstup">{if $t['used_at']}{$t['used_at']|date:'j. n. H:i'}{else}–{/if}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<p n:if="!$ticketLists['standing']" class="empty"><strong>Zatím žádné lístky na stání.</strong></p>
+	</details>
+
+	<details class="seat-details">
+		<summary>Z-lístky ({count($ticketLists['crew'])})</summary>
+		<div class="table-scroll">
+			<table class="data-table data-table--cards">
+				<thead><tr><th scope="col">Jméno</th><th scope="col">Funkce</th><th scope="col">Vyzvednuto</th><th scope="col">Kód</th><th scope="col">Vstup</th></tr></thead>
+				<tbody>
+					<tr n:foreach="$ticketLists['crew'] as $t">
+						<td data-label="Jméno"><a n:href="Crew:edit $t['crew_member_id']">{$t['name']}</a></td>
+						<td data-label="Funkce">{$t['role']}</td>
+						<td data-label="Vyzvednuto">{if $t['picked_up_at']}{$t['picked_up_at']|date:'j. n. H:i'}{else}–{/if}</td>
+						<td data-label="Kód"><span class="ticket-code">{$t['code']}</span></td>
+						<td data-label="Vstup">{if $t['used_at']}{$t['used_at']|date:'j. n. H:i'}{else}–{/if}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<p n:if="!$ticketLists['crew']" class="empty"><strong>Zatím žádné Z-lístky.</strong> <a n:href="Crew:add">Přidat</a></p>
+	</details>
+</section>
+
+{define reservationLink}
+	<a n:href="Reservation:detail $t['reservation_id']">č. {$t['reservation_id']} {$t['name']}</a>
+	{include '../Accessory/channelBadge.latte', channel: $t['channel']}
+{/define}
+
+{* 3. Table of all seats *}
 <section class="card" aria-labelledby="seats-title">
 <details id="seat-table" class="seat-details" n:attr="open: $seatFilter || $presenter->seatSearch">
 	<summary>Tabulka všech míst ({$seatTotal}){if $seatFilter} – {$seatFilter|seatStatus}{/if}</summary>
@@ -149,11 +215,9 @@
 	</div>
 	<p n:if="!$seatRows" class="empty"><strong>Žádná místa neodpovídají filtru.</strong> <a n:href="this, seats: '', seatSearch: ''">Zobrazit všechna místa</a></p>
 </details>
-{* Wide screens show the table right away; phones keep it folded (96 cards). *}
-<script>if (matchMedia('(min-width: 901px)').matches) document.getElementById('seat-table').open = true;</script>
 </section>
 
-{* 3. Other sections *}
+{* 4. Other sections *}
 <nav class="tiles" aria-label="Další části administrace">
 	<a class="tile" n:href="Reservation:default"><strong>Rezervace</strong><span>seznam, hledání, detail a zásahy</span></a>
 	<a class="tile" n:href="Customer:default"><strong>Zákazníci</strong><span>lidé podle e-mailu a jejich rezervace</span></a>

@@ -140,6 +140,18 @@ final class CrewMembersTest extends DatabaseTestCase
 	}
 
 
+	public function testListsTicketsByKind(): void
+	{
+		$this->confirmed('alice', [102, 101], standing: 2);
+		$this->crew()->import("Petr; Kuchyně
+Jana; Bar");
+
+		self::assertSame(['1/1', '1/2'], array_column($this->tickets()->listing('seat'), 'seat_label'));
+		self::assertSame(['Test Host', 'Test Host'], array_column($this->tickets()->listing('standing'), 'name'));
+		self::assertSame(['Jana', 'Petr'], array_column($this->tickets()->listing('crew'), 'name'), 'By role, then name');
+	}
+
+
 	public function testDeleteRemovesTheTicketButNotAfterEntry(): void
 	{
 		$this->crew()->import("Jana; Bar\nPetr; Bar");

@@ -46,6 +46,9 @@ final class DashboardTemplate extends BaseTemplate
 	/** @var array<string, array{label: string, count: int, capacity: ?int, note: ?string}> seat, standing, crew */
 	public array $ticketKinds;
 
+	/** @var array<string, list<array<string, mixed>>> full lists of the tickets by kind (Tickets::listing) */
+	public array $ticketLists;
+
 	/** A hall plan is uploaded (without it seats cannot be sold). */
 	public bool $hasPlan;
 }

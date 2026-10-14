@@ -1141,3 +1141,8 @@ h3 {
     margin: 10mm;
   }
 }
+
+// Folded full lists of tickets on the dashboard.
+.ticket-lists details + details {
+  margin-top: 0.75rem;
+}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Ticket;
 
+use App\Model\Reservation\ReservationService;
 use PDO;
 
 
@@ -82,6 +83,28 @@ final class Tickets
 		);
 		$stmt->execute([$reservationId]);
 		return $stmt->fetchAll();
+	}
+
+
+	/**
+	 * All valid tickets of one kind for the lists on the dashboard: seat or standing (tickets of finished
+	 * reservations with reservation id, name, status and channel) or crew (Z-lístky with name, role, pick-up).
+	 * @param 'seat'|'standing'|'crew' $kind
+	 * @return list<array<string, mixed>>
+	 */
+	public function listing(string $kind): array
+	{
+		$sql = match ($kind) {
+			'seat' => 'SELECT t.code, t.used_at, s.label AS seat_label, r.id AS reservation_id, r.name, r.status, r.channel
+				FROM tickets t JOIN reservations r ON r.id = t.reservation_id JOIN seats s ON s.id = t.seat_id
+				WHERE r.status IN (' . ReservationService::FinishedStatuses . ') ORDER BY s.table_id, s.id',
+			'standing' => 'SELECT t.code, t.used_at, r.id AS reservation_id, r.name, r.status, r.channel
+				FROM tickets t JOIN reservations r ON r.id = t.reservation_id
+				WHERE t.seat_id IS NULL AND r.status IN (' . ReservationService::FinishedStatuses . ') ORDER BY r.id, t.id',
+			'crew' => 'SELECT t.code, t.used_at, c.id AS crew_member_id, c.name, c.role, c.picked_up_at
+				FROM tickets t JOIN crew_members c ON c.id = t.crew_member_id ORDER BY c.role, c.name, c.id',
+		};
+		return $this->db->query($sql)->fetchAll();
 	}
 
 
