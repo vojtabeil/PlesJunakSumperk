@@ -85,7 +85,7 @@ The current structure is described in `doc/architecture.md`.
 2. Can the Lebeda document root point to `www/`? Is cron available? Is outbound HTTPS to `fioapi.fio.cz` allowed?
 3. SMTP for production: Lebeda SMTP or Seznam (`ples@junak-sumperk.cz`)?
 4. Who creates the Fio API token (treasurer) and who receives admin accounts?
-5. Real hall layout of the venue (tables, seats) and real prices / capacities.
+5. Real prices / capacities (the hall layout comes from the drawing, section 6).
 6. Should unpaid reservations expire automatically after N days (releasing seats)? If yes, how many days
    and should a reminder e-mail be sent first? (Not in the plan yet.)
 
@@ -104,3 +104,76 @@ legacy database is out of scope. Each item names the legacy code it replaces.
    Legacy: table `zTicket`, `Admin\TicketsPresenter::handleToggleZTaken`.
 5. **E-mail templates for the 2027 ball.** Legacy templates in `resource/original-web/ftp/include/app/email/`
    still carry the 2023 date, the old account and the old signatory.
+6. **Closing a year.** Archive the reservations of the past ball and clear `seat_bookings`, so the next
+   year starts empty (needed before a new hall plan can remove seats that were sold last year).
+
+## 6. Hall plan from SVG (decided 2026-10-14)
+
+Goal: one source of truth for the hall. The drawing (`resource/design/hall-plan-2025.cdr`, CorelDRAW)
+is the source; the database only references its shapes. The drawing is edited and exported through
+the CorelDRAW MCP server (`c:\Git\coreldraw-mcp`).
+
+### 6.1 Principles
+
+- The database stores no coordinates or sizes, only the identity of a seat or table and the `id` of its
+  shape in the SVG (`svg_id`).
+- The page inlines the SVG; the seat picker finds shapes by `svg_id`, changes their classes and
+  attributes (state, `role="button"`, `tabindex`, `aria-*`) and handles clicks on them.
+  Neighbours for arrow keys come from the shapes' positions in the browser (`getBBox()`).
+- The plan is uploaded in the administration ("Plánek sálu"), so next year only a new export is needed.
+- The hall layout and the sale are two tables: the layout is changed only by a plan upload,
+  the sale only by reservations.
+
+### 6.2 Drawing conventions
+
+| Shape | `id` | Meaning |
+|---|---|---|
+| Chair | `seat-87` | Seat no. 87 (the number is the identity and the label of the seat). |
+| Group of a table (table, its chairs, labels) | `table-12` | Table no. 12; seats inside the group belong to it. |
+| Text with the table name (optional) | `table-12-name` | Name of the table (scout personality). |
+| Anything else | any | Decoration only. |
+
+Seats are numbered across the hall (1-270 in the 2025 drawing); the label "table/seat" goes away.
+
+### 6.3 Database
+
+```
+hall_plans    (id, svg, file_name, uploaded_by, uploaded_at, active)
+hall_tables   (id, label, name, svg_id)
+seats         (id, label, table_id, svg_id, active)
+seat_bookings (seat_id PK -> seats, reservation_id NOT NULL -> reservations ON DELETE CASCADE,
+               state ENUM('held', 'reserved'), held_at)
+```
+
+- A booking row exists only for a held or reserved seat; a free seat has none. Holding a seat is an
+  `INSERT` (the primary key makes it atomic), an expired hold is deleted.
+- Removed: settings `map_width` / `map_height` (the `viewBox` has the size), `ReservationService::HallAreas`
+  (stage and dance floor are in the drawing), the hand-written `hall.sql`.
+
+### 6.4 Upload and synchronization (`App\Model\Hall`)
+
+- `HallPlanParser`: reads the SVG, finds `seat-*` / `table-*` and their nesting, reports errors
+  (duplicate ids, seat outside a table, empty plan) and sanitizes the SVG (no scripts,
+  `foreignObject`, `on*` attributes, external references, inline colours of seats).
+- `HallSync`: diff against the database (new / removed seats and tables, seat moved to another table,
+  renamed table), shown as a preview; applied in a transaction, activates the new `hall_plans` row,
+  event log `hall.import`. Never touches `seat_bookings`.
+- A removed seat without a booking gets `active = 0` (history in the event log stays readable; it is
+  reactivated if it comes back). A removed seat with a booking makes the upload fail with the list of seats.
+- Administration "Plánek sálu": upload -> preview with highlighted seats and the list of changes and
+  errors -> "Použít plánek" (POST, CSRF); list of tables and seats, history of uploads.
+- A new installation has no plan: the dashboard asks to upload one and seats cannot be sold until then
+  (standing tickets can).
+- `bin/import-hall.php` uses the same code; `init-db` imports a small demo plan (`src/database/demo-hall.svg`).
+
+### 6.5 Steps
+
+1. Split `seats` into `seats` (layout) and `seat_bookings` (sale) without changing behaviour; all tests pass.
+2. Parser + sanitization + tests (small fixture SVG).
+3. Seat labels: the seat number instead of "table/seat" (TS `splitSeatLabel`, filter `seatLabel`,
+   `SeatOverview`, e-mails, reservation detail, search, log filter).
+4. Synchronization + `hall_plans` + event log.
+5. Administration "Plánek sálu" + `bin/import-hall.php` + demo plan.
+6. Real drawing: object ids and table groups set through the CorelDRAW MCP, SVG export, first upload.
+7. `HallMap` on the inlined SVG.
+8. Clean-up (`HallAreas`, `map_*`, `hall.sql`), release checks, `doc/architecture.md`, `AGENTS.md`.
