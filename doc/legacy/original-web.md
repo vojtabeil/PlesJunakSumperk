@@ -15,4 +15,5 @@ Kept local only (`.gitignore`): the database dump, logs, temp files, `.env`, `in
 and the `db.php` / `mailSet.php` files - they contain credentials or personal data.
 
 Features of the old site that the new one does not have yet are listed in the backlog of
-[`doc/plan.md`](../plan.md).
+[`doc/plan.md`](../plan.md); a feature-by-feature comparison of both legacy layers (2023 Nette app,
+2025/2026 PHP scripts) with the new site is in [feature-comparison.md](feature-comparison.md).

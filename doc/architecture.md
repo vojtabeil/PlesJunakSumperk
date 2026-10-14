@@ -7,7 +7,7 @@
 | `src/` | The application: a self-contained Nette project with its own `composer.json`, `package.json`, `vendor/`, `node_modules/` and `var/`. The release package is built from it. |
 | `doc/` | `plan.md` (decisions, open questions, backlog), `deploy.md` (deployment on Lebeda), this file, `legacy/` (notes on the old site). |
 | `resource/original/` | Old site as served over HTTP (frontend only), local URL `/original/`. Notes: `doc/legacy/original.md`, `doc/legacy/original-backend.md`. |
-| `resource/original-web/` | Complete FTP backup of the old site incl. PHP sources; credentials and dumps are git-ignored. Notes: `doc/legacy/original-web.md`. |
+| `resource/original-web/` | Complete FTP backup of the old site incl. PHP sources; credentials and dumps are git-ignored. Notes: `doc/legacy/original-web.md`, comparison with the new site: `doc/legacy/feature-comparison.md`. |
 | `resource/design/` | CorelDRAW drawings (hall plan); `Backup_*.cdr` are git-ignored. |
 | `dev/` | Local environment: PowerShell scripts, `env.cmd` (tool environment), `router.php` (PHP built-in server), wrappers of the portable tools. |
 | `setup.cmd`, `start.cmd`, `stop.cmd`, `check.cmd` | Everyday commands; the rest is in `dev/`. |
