@@ -92,9 +92,17 @@
 
 .stage-note {
   @extend %stage-bar;
-  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding-block: 1rem;
   color: var(--muted);
+
+  p {
+    margin: 0;
+  }
 }
 
 // Errors and notes of the API over the top of the map.
@@ -124,9 +132,9 @@
 .map-view {
   position: absolute;
   inset: 0;
-  // The whole hall: vertical swipes scroll the page. Zoomed in: every gesture moves the map.
-  touch-action: pan-y;
-  cursor: grab;
+  // Asleep, swipes scroll the page (two fingers still reach the map); awake, every gesture moves the map.
+  touch-action: pan-x pan-y;
+  cursor: pointer;
 
   svg {
     display: block;
@@ -135,56 +143,30 @@
   }
 }
 
-.hall--zoomed .map-view {
-  touch-action: none;
-}
-
-.map-top {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  right: 4rem;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.map-crumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.map-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.5rem;
-  margin: 0;
-  padding: 0.35rem 0.9rem;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--green);
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  pointer-events: auto;
-
-  &--back {
-    color: var(--cream);
-    background: var(--green);
-    border-color: var(--green);
-    cursor: pointer;
-  }
-
-  &--hint {
-    font-weight: 600;
-    color: var(--muted);
+.hall {
+  // Awake: a green frame, faded in.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border: 3px solid var(--green);
+    opacity: 0;
     pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  &--awake::after {
+    opacity: 1;
   }
 }
 
-// Zoom controls: always on the map, on the right edge, out of the way of the thumb's scrolling.
+.hall--awake .map-view {
+  touch-action: none;
+  cursor: grab;
+}
+
+// Zoom controls: always on the map, top right.
 .map-controls {
   position: absolute;
   top: 0.6rem;
@@ -285,7 +267,7 @@
   fill: var(--seat-free);
   stroke: none;
   cursor: pointer;
-  transition: fill 0.1s ease;
+  transition: fill 0.2s ease;
   // Seats are drawn small: show them a little bigger around their own centre.
   transform-box: fill-box;
   transform-origin: center;
@@ -303,6 +285,7 @@
 
   &--mine,
   &--mine:hover {
+    animation: seat-pop 0.3s ease-out;
     fill: var(--yellow);
     stroke: var(--text);
     stroke-width: 24px;
@@ -313,11 +296,6 @@
   &--taken:hover {
     fill: var(--taken);
     cursor: not-allowed;
-  }
-
-  &[aria-disabled='true']:not(.seat--taken) {
-    opacity: 0.55;
-    cursor: default;
   }
 
   &:focus {
@@ -346,7 +324,7 @@
   }
 }
 
-// --- Tickets without a seat and the order bar: the bottom of the screen ------------
+// --- Tickets without a seat: the bottom of the screen ------------------------------
 
 .standing {
   @extend %stage-bar;
@@ -354,6 +332,8 @@
   align-items: center;
   gap: 0.75rem;
   padding-block: 0.5rem;
+  // The phone's home indicator.
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   color: var(--cream);
   background: var(--red);
 }
@@ -421,34 +401,59 @@
   }
 }
 
-.order-bar {
-  @extend %stage-bar;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-block: 0.6rem;
-  // The phone's home indicator.
-  padding-bottom: max(0.6rem, env(safe-area-inset-bottom));
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-}
-
-.order-choice {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.3;
-}
-
-.order-label {
+// Order button: bottom right corner of the map once something is chosen; slides in.
+.order-button {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 3;
+  min-height: 3rem;
+  padding: 0.6rem 1.4rem;
+  font: inherit;
+  font-size: 1.05rem;
   font-weight: 700;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  animation: order-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  transition: background 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background: var(--green-dark);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  // Without a plan the button is part of the note, not over the map.
+  .stage-note & {
+    position: static;
+  }
 }
 
-.order-next {
-  flex: none;
+@keyframes order-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.9);
+  }
+}
 
-  @include below($breakpoint-phone) {
-    padding-inline: 1rem;
+// A chosen seat pops (the seat's own scale is 1.15).
+@keyframes seat-pop {
+  0% { transform: scale(1.15); }
+  45% { transform: scale(1.5); }
+  100% { transform: scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .order-button,
+  .hall-plan .seat--mine,
+  .summary {
+    animation: none;
   }
 }

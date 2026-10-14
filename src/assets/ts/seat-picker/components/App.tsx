@@ -1,9 +1,9 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { formatPrice, freeSeats, totals } from '../logic';
 import type { Store } from '../store';
 import type { PickerData } from '../types';
 import { HallMap } from './HallMap';
-import { OrderBar } from './OrderBar';
+import { OrderButton } from './OrderButton';
 import { StandingTickets } from './StandingTickets';
 import { Summary } from './Summary';
 
@@ -15,13 +15,14 @@ interface Props {
 }
 
 /**
- * One screen with everything needed to choose: availability, the whole map (live seat states),
- * tickets without a seat and the bar with the choice and "Pokračovat k údajům". The form follows below.
+ * One screen with everything needed to choose: availability, the whole map (live seat states) with
+ * the order button in its corner, and tickets without a seat. The summary with the form follows below.
  */
 export function App({ store, data }: Props) {
   const state = store.state.value;
   const message = store.message.value;
   const busy = store.busy.value;
+  const [awake, setAwake] = useState(false);
 
   // Load the state once, then keep seat states fresh while the tab is visible.
   useEffect(() => {
@@ -71,12 +72,24 @@ export function App({ store, data }: Props) {
           {message?.text}
         </p>
         {hasPlan ? (
-          <HallMap layout={data.layout} state={state} prices={state.prices} disabled={busy} onToggle={(id) => void store.toggleSeat(id)} />
+          <HallMap
+            layout={data.layout}
+            state={state}
+            prices={state.prices}
+            disabled={busy}
+            onToggle={(id) => void store.toggleSeat(id)}
+            awake={awake}
+            onAwake={setAwake}
+          >
+            <OrderButton state={state} onOrder={() => setAwake(false)} />
+          </HallMap>
         ) : (
-          <p class="stage-note">Plánek sálu připravujeme. Zatím lze koupit jen lístky bez místenky.</p>
+          <div class="stage-note">
+            <p>Plánek sálu připravujeme. Zatím lze koupit jen lístky bez místenky.</p>
+            <OrderButton state={state} onOrder={() => undefined} />
+          </div>
         )}
         <StandingTickets store={store} state={state} />
-        <OrderBar state={state} />
       </div>
       {totals(state.reservation, state.prices).tickets > 0 && <Summary store={store} state={state} />}
     </div>

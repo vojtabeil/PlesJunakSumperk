@@ -9,6 +9,14 @@
   width: 100%;
   max-width: 34rem;
   margin-inline: auto;
+  animation: summary-in 0.4s ease-out both;
+}
+
+@keyframes summary-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
 }
 
 .muted {

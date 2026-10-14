@@ -18,12 +18,6 @@
 <section n:if="$canBuy" class="reservation" aria-labelledby="reservation-title">
 	<h2 id="reservation-title">Rezervace lístků</h2>
 
-	<ol class="steps">
-		<li>Vyberte místa v plánku nebo lístky bez místenky.</li>
-		<li>Vyplňte e-mail a jméno.</li>
-		<li>Zaplaťte převodem nebo QR kódem, údaje přijdou e-mailem.</li>
-	</ol>
-
 	{* Replaced by the Preact seat picker; without JavaScript the static plan stays visible. *}
 	<div id="seat-picker">
 		<noscript><p class="message message--error">Rezervace vyžaduje zapnutý JavaScript.</p></noscript>
