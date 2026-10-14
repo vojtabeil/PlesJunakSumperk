@@ -16,7 +16,7 @@ export function Summary({ store, state }: Props) {
   const busy = store.busy.value;
 
   return (
-    <aside class="summary" aria-labelledby="summary-title">
+    <aside class="summary" id="summary" aria-labelledby="summary-title">
       <h3 id="summary-title">Váš výběr</h3>
 
       {reservation && reservation.seats.length > 0 ? (

@@ -2,8 +2,9 @@ import { useEffect } from 'preact/hooks';
 import { formatPrice, freeSeats } from '../logic';
 import type { Store } from '../store';
 import type { PickerData } from '../types';
+import { scrollToElement } from '../../scroll';
 import { HallMap } from './HallMap';
-import { MobileBar } from './MobileBar';
+import { OrderButton } from './OrderButton';
 import { Summary } from './Summary';
 
 const PollMs = 3000;
@@ -14,8 +15,8 @@ interface Props {
 }
 
 /**
- * The map with live availability is shown right away; the first chosen ticket starts the
- * reservation and the e-mail is asked for in the form at the end.
+ * The map fills the screen (with live availability); the first chosen ticket starts the reservation.
+ * The green button over the map leads to the summary and the form below it, all on one page.
  */
 export function App({ store, data }: Props) {
   const state = store.state.value;
@@ -50,29 +51,32 @@ export function App({ store, data }: Props) {
   }
 
   return (
-    <>
-      <p class="availability">
-        Volných míst u stolů: <strong>{freeSeats(data.layout.seats.length, state)}</strong> · bez místenky:{' '}
-        <strong>{state.limits.standing_left}</strong> · místenka {formatPrice(state.prices.seat)}, bez místenky{' '}
-        {formatPrice(state.prices.standing)}
-      </p>
-
-      <p class={`message${message?.error ? ' message--error' : ''}`} role="status" aria-live="polite">
-        {message?.text}
-      </p>
-
-      <div class={`picker${busy ? ' is-busy' : ''}`}>
-        <div class="picker-map">
+    <div class={`picker${busy ? ' is-busy' : ''}`}>
+      <div class={`picker-stage${data.layout.svg ? '' : ' picker-stage--empty'}`}>
+        <div class="picker-info">
+          <p class="availability">
+            Volných míst u stolů: <strong>{freeSeats(data.layout.seats.length, state)}</strong> · bez místenky:{' '}
+            <strong>{state.limits.standing_left}</strong> · místenka {formatPrice(state.prices.seat)}, bez místenky{' '}
+            {formatPrice(state.prices.standing)}
+          </p>
           <ul class="legend" aria-label="Legenda">
             <li><span class="swatch swatch--free" /> volné</li>
             <li><span class="swatch swatch--mine">✓</span> vybrané</li>
             <li><span class="swatch swatch--taken" /> obsazené</li>
+            <li>
+              <button type="button" class="link-button" onClick={() => scrollToElement('summary')}>
+                lístky bez místenky
+              </button>
+            </li>
           </ul>
-          <HallMap layout={data.layout} state={state} prices={state.prices} disabled={busy} onToggle={(id) => void store.toggleSeat(id)} />
         </div>
-        <Summary store={store} state={state} />
+        <p class={`message picker-message${message?.error ? ' message--error' : ''}`} role="status" aria-live="polite">
+          {message?.text}
+        </p>
+        <HallMap layout={data.layout} state={state} prices={state.prices} disabled={busy} onToggle={(id) => void store.toggleSeat(id)} />
+        <OrderButton state={state} />
       </div>
-      <MobileBar state={state} />
-    </>
+      <Summary store={store} state={state} />
+    </div>
   );
 }

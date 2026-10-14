@@ -1,15 +1,9 @@
 @use 'tokens' as *;
 
-// Mobile first: one column; from the tablet breakpoint up the summary sits next to the map.
+// The seat picker: the map fills the screen, the summary with the form follows below it.
 .picker {
   display: grid;
-  grid-template-columns: minmax(0, 1fr); // never wider than the screen (the map scrolls inside)
   gap: 1.5rem;
-  align-items: start;
-
-  @media (min-width: $breakpoint-tablet + 1) {
-    grid-template-columns: minmax(0, 1fr) 20rem;
-  }
 
   &.is-busy {
     cursor: progress;
@@ -20,24 +14,71 @@
   display: none;
 }
 
+// --- Stage: availability, the map with its controls, the order button --------------
+
+.picker-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  // The whole screen; "svh" keeps it stable while the phone's address bar shows and hides.
+  height: calc(100vh - 1rem);
+  height: calc(100svh - 1rem);
+  min-height: 26rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+
+  &--empty {
+    height: auto;
+    min-height: 0;
+    padding: 1rem;
+  }
+
+  // Phones and tablets: from edge to edge of the screen (out of the page and panel padding).
+  @include below($breakpoint-tablet) {
+    margin-inline: calc(-16px - 1.5rem - 1px);
+    border-inline: none;
+    border-radius: 0;
+  }
+
+  @include below($breakpoint-phone) {
+    margin-inline: calc(-16px - 1rem - 1px);
+    height: 100vh;
+    height: 100svh;
+  }
+}
+
+.picker-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+
 .availability {
-  margin: 0 0 0.5rem;
-  font-size: 0.95rem;
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin: 0 0 0.75rem;
+  align-items: center;
+  gap: 0.25rem 0.9rem;
+  margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 
   li {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
   }
 }
 
@@ -55,45 +96,143 @@
   &--taken { background: var(--taken); }
 }
 
-// --- Hall map ---------------------------------------------------------------
-
-.zoom {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+// Errors and notes of the API over the top of the map.
+.picker-message {
+  position: absolute;
+  top: 6.5rem;
+  left: 50%;
+  z-index: 4;
+  width: min(30rem, calc(100% - 2rem));
+  margin: 0;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.zoom-button {
-  width: 2.75rem;
-  height: 2.75rem;
-  font-size: 1.4rem;
-  line-height: 1;
+// --- The map ---------------------------------------------------------------------
+
+.hall {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.map-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.map-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.crumb {
+  padding: 0.35rem 0.5rem;
+  font: inherit;
   color: var(--green);
-  background: #fff;
-  border: 1px solid var(--border);
+  background: none;
+  border: none;
   border-radius: var(--radius-small);
   cursor: pointer;
 
-  &:disabled {
-    color: var(--taken-text);
+  &[aria-current] {
+    color: var(--text);
+  }
+
+  &--current {
+    padding-inline: 0;
     cursor: default;
   }
 }
 
-// The map scrolls inside its own box, never the page.
-.map-scroll {
-  max-width: 100%;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
+button.crumb:not([aria-current]) {
+  text-decoration: underline;
 }
 
-.map {
-  width: 100%;
-  min-width: 100%;
+.map-mode {
+  min-height: 2.75rem;
+  padding: 0.4rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--green);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+
+  &[aria-pressed='true'] {
+    color: #fff;
+    background: var(--green);
+    border-color: var(--green);
+  }
+}
+
+.map-view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// Free map: gestures move the plan, not the page.
+.hall--map .map-view {
+  touch-action: none;
+  cursor: grab;
+}
+
+.map-controls {
+  position: absolute;
+  bottom: 3rem;
+  left: 0.75rem;
+  display: grid;
+  grid-template-areas:
+    'in up out'
+    'left . right'
+    '. down .';
+  grid-template-columns: repeat(3, 2.75rem);
+  gap: 0.35rem;
+}
+
+.map-control {
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--green);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+
+  &--in { grid-area: in; }
+  &--out { grid-area: out; }
+  &--up { grid-area: up; }
+  &--down { grid-area: down; }
+  &--left { grid-area: left; }
+  &--right { grid-area: right; }
+}
+
+.hint {
+  margin: 0;
+  padding: 0.4rem 0.75rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 // Preview of the plan before the seat picker loads (and without JavaScript).
@@ -107,12 +246,6 @@
 // --- The SVG plan: seats are shapes of the drawing ---------------------------
 
 .hall-plan {
-  svg {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-
   // Numbers and labels drawn over the seats must not catch clicks.
   text {
     pointer-events: none;
@@ -125,6 +258,10 @@
   stroke-width: 2px;
   cursor: pointer;
   transition: fill 0.1s ease;
+  // Seats are drawn small: show them bigger around their own centre.
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(1.3);
 
   // A seat drawn as a group of shapes.
   * {
@@ -165,30 +302,65 @@
     stroke-width: 4px;
   }
 }
-.hint {
-  margin: 0.5rem 0 0;
-  font-size: 0.85rem;
-  color: var(--muted);
+
+// Seat numbers of the drawing (label-seat-N): readable on the seat colour; HallMap scales them to the seat.
+.hall-plan .seat-label {
+  font-weight: 700;
+  fill: #fff;
+  transform-box: fill-box;
+  transform-origin: center;
+
+  &--mine,
+  &--taken {
+    fill: var(--text);
+  }
 }
 
-// --- Bottom bar on phones -----------------------------------------------------
+// --- Order button over the map ---------------------------------------------------
 
-.mobile-bar {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 20;
+.order-button {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 3rem;
+  z-index: 3;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 16px calc(0.75rem + env(safe-area-inset-bottom));
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  gap: 0.6rem;
+  min-height: 3.25rem;
+  padding: 0.6rem 1.2rem 0.6rem 0.7rem;
+  font: inherit;
+  font-size: 1rem;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
 
-  @media (min-width: $breakpoint-tablet + 1) {
-    display: none;
+  &:hover {
+    background: var(--green-dark);
+  }
+
+  @include below($breakpoint-phone) {
+    left: 0.75rem;
+    justify-content: center;
+  }
+}
+
+.order-tick {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  font-weight: 700;
+  color: var(--green);
+  background: #fff;
+  border-radius: 50%;
+}
+
+// In the free map the controls take the bottom left corner on phones: the order button goes above them.
+.hall--map ~ .order-button {
+  @include below($breakpoint-phone) {
+    bottom: 13rem;
   }
 }

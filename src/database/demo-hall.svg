@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" width="1000" height="640">
-<!-- Demo hall for local development: 12 tables, 96 seats. Seats: id seat-<number> inside groups table-<number>. -->
+<!-- Demo hall for local development: 12 tables, 96 seats. Seats: id seat-<number> inside groups table-<number>, numbers label-seat-<number>. -->
 <style>.floor{fill:#efe8d8}.stage{fill:#c9c3bb}.table{fill:#b98a5a}.label{font:600 16px sans-serif;fill:#1d1d1b;text-anchor:middle;dominant-baseline:central}.name{font:11px sans-serif;fill:#fff;text-anchor:middle;dominant-baseline:central}.num{font:600 11px sans-serif;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none}</style>
 <rect class="stage" x="350" y="18" width="300" height="56" rx="8"/><text class="label" x="500" y="46">Pódium</text>
 <rect class="floor" x="250" y="110" width="500" height="380" rx="8"/><text class="label" x="500" y="300">Parket</text>
@@ -9,251 +9,251 @@
 	<text class="name" x="120" y="123">Stůl 1</text>
 	<text id="table-1-name" class="name" x="120" y="138">Antonín Benjamín Svojsík</text>
 	<circle id="seat-1" cx="60" cy="96" r="13"/>
-	<text class="num" x="60" y="96">1</text>
+	<text id="label-seat-1" class="num" x="60" y="96">1</text>
 	<circle id="seat-2" cx="100" cy="96" r="13"/>
-	<text class="num" x="100" y="96">2</text>
+	<text id="label-seat-2" class="num" x="100" y="96">2</text>
 	<circle id="seat-3" cx="140" cy="96" r="13"/>
-	<text class="num" x="140" y="96">3</text>
+	<text id="label-seat-3" class="num" x="140" y="96">3</text>
 	<circle id="seat-4" cx="180" cy="96" r="13"/>
-	<text class="num" x="180" y="96">4</text>
+	<text id="label-seat-4" class="num" x="180" y="96">4</text>
 	<circle id="seat-5" cx="60" cy="164" r="13"/>
-	<text class="num" x="60" y="164">5</text>
+	<text id="label-seat-5" class="num" x="60" y="164">5</text>
 	<circle id="seat-6" cx="100" cy="164" r="13"/>
-	<text class="num" x="100" y="164">6</text>
+	<text id="label-seat-6" class="num" x="100" y="164">6</text>
 	<circle id="seat-7" cx="140" cy="164" r="13"/>
-	<text class="num" x="140" y="164">7</text>
+	<text id="label-seat-7" class="num" x="140" y="164">7</text>
 	<circle id="seat-8" cx="180" cy="164" r="13"/>
-	<text class="num" x="180" y="164">8</text>
+	<text id="label-seat-8" class="num" x="180" y="164">8</text>
 </g>
 <g id="table-2">
 	<rect class="table" x="40" y="210" width="160" height="40" rx="4"/>
 	<text class="name" x="120" y="223">Stůl 2</text>
 	<text id="table-2-name" class="name" x="120" y="238">Robert Baden-Powell</text>
 	<circle id="seat-9" cx="60" cy="196" r="13"/>
-	<text class="num" x="60" y="196">9</text>
+	<text id="label-seat-9" class="num" x="60" y="196">9</text>
 	<circle id="seat-10" cx="100" cy="196" r="13"/>
-	<text class="num" x="100" y="196">10</text>
+	<text id="label-seat-10" class="num" x="100" y="196">10</text>
 	<circle id="seat-11" cx="140" cy="196" r="13"/>
-	<text class="num" x="140" y="196">11</text>
+	<text id="label-seat-11" class="num" x="140" y="196">11</text>
 	<circle id="seat-12" cx="180" cy="196" r="13"/>
-	<text class="num" x="180" y="196">12</text>
+	<text id="label-seat-12" class="num" x="180" y="196">12</text>
 	<circle id="seat-13" cx="60" cy="264" r="13"/>
-	<text class="num" x="60" y="264">13</text>
+	<text id="label-seat-13" class="num" x="60" y="264">13</text>
 	<circle id="seat-14" cx="100" cy="264" r="13"/>
-	<text class="num" x="100" y="264">14</text>
+	<text id="label-seat-14" class="num" x="100" y="264">14</text>
 	<circle id="seat-15" cx="140" cy="264" r="13"/>
-	<text class="num" x="140" y="264">15</text>
+	<text id="label-seat-15" class="num" x="140" y="264">15</text>
 	<circle id="seat-16" cx="180" cy="264" r="13"/>
-	<text class="num" x="180" y="264">16</text>
+	<text id="label-seat-16" class="num" x="180" y="264">16</text>
 </g>
 <g id="table-3">
 	<rect class="table" x="40" y="310" width="160" height="40" rx="4"/>
 	<text class="name" x="120" y="323">Stůl 3</text>
 	<text id="table-3-name" class="name" x="120" y="338">Olave Baden-Powell</text>
 	<circle id="seat-17" cx="60" cy="296" r="13"/>
-	<text class="num" x="60" y="296">17</text>
+	<text id="label-seat-17" class="num" x="60" y="296">17</text>
 	<circle id="seat-18" cx="100" cy="296" r="13"/>
-	<text class="num" x="100" y="296">18</text>
+	<text id="label-seat-18" class="num" x="100" y="296">18</text>
 	<circle id="seat-19" cx="140" cy="296" r="13"/>
-	<text class="num" x="140" y="296">19</text>
+	<text id="label-seat-19" class="num" x="140" y="296">19</text>
 	<circle id="seat-20" cx="180" cy="296" r="13"/>
-	<text class="num" x="180" y="296">20</text>
+	<text id="label-seat-20" class="num" x="180" y="296">20</text>
 	<circle id="seat-21" cx="60" cy="364" r="13"/>
-	<text class="num" x="60" y="364">21</text>
+	<text id="label-seat-21" class="num" x="60" y="364">21</text>
 	<circle id="seat-22" cx="100" cy="364" r="13"/>
-	<text class="num" x="100" y="364">22</text>
+	<text id="label-seat-22" class="num" x="100" y="364">22</text>
 	<circle id="seat-23" cx="140" cy="364" r="13"/>
-	<text class="num" x="140" y="364">23</text>
+	<text id="label-seat-23" class="num" x="140" y="364">23</text>
 	<circle id="seat-24" cx="180" cy="364" r="13"/>
-	<text class="num" x="180" y="364">24</text>
+	<text id="label-seat-24" class="num" x="180" y="364">24</text>
 </g>
 <g id="table-4">
 	<rect class="table" x="40" y="410" width="160" height="40" rx="4"/>
 	<text class="name" x="120" y="423">Stůl 4</text>
 	<text id="table-4-name" class="name" x="120" y="438">Ernest Thompson Seton</text>
 	<circle id="seat-25" cx="60" cy="396" r="13"/>
-	<text class="num" x="60" y="396">25</text>
+	<text id="label-seat-25" class="num" x="60" y="396">25</text>
 	<circle id="seat-26" cx="100" cy="396" r="13"/>
-	<text class="num" x="100" y="396">26</text>
+	<text id="label-seat-26" class="num" x="100" y="396">26</text>
 	<circle id="seat-27" cx="140" cy="396" r="13"/>
-	<text class="num" x="140" y="396">27</text>
+	<text id="label-seat-27" class="num" x="140" y="396">27</text>
 	<circle id="seat-28" cx="180" cy="396" r="13"/>
-	<text class="num" x="180" y="396">28</text>
+	<text id="label-seat-28" class="num" x="180" y="396">28</text>
 	<circle id="seat-29" cx="60" cy="464" r="13"/>
-	<text class="num" x="60" y="464">29</text>
+	<text id="label-seat-29" class="num" x="60" y="464">29</text>
 	<circle id="seat-30" cx="100" cy="464" r="13"/>
-	<text class="num" x="100" y="464">30</text>
+	<text id="label-seat-30" class="num" x="100" y="464">30</text>
 	<circle id="seat-31" cx="140" cy="464" r="13"/>
-	<text class="num" x="140" y="464">31</text>
+	<text id="label-seat-31" class="num" x="140" y="464">31</text>
 	<circle id="seat-32" cx="180" cy="464" r="13"/>
-	<text class="num" x="180" y="464">32</text>
+	<text id="label-seat-32" class="num" x="180" y="464">32</text>
 </g>
 <g id="table-5">
 	<rect class="table" x="800" y="110" width="160" height="40" rx="4"/>
 	<text class="name" x="880" y="123">Stůl 5</text>
 	<text id="table-5-name" class="name" x="880" y="138">Rudolf Plajner</text>
 	<circle id="seat-33" cx="820" cy="96" r="13"/>
-	<text class="num" x="820" y="96">33</text>
+	<text id="label-seat-33" class="num" x="820" y="96">33</text>
 	<circle id="seat-34" cx="860" cy="96" r="13"/>
-	<text class="num" x="860" y="96">34</text>
+	<text id="label-seat-34" class="num" x="860" y="96">34</text>
 	<circle id="seat-35" cx="900" cy="96" r="13"/>
-	<text class="num" x="900" y="96">35</text>
+	<text id="label-seat-35" class="num" x="900" y="96">35</text>
 	<circle id="seat-36" cx="940" cy="96" r="13"/>
-	<text class="num" x="940" y="96">36</text>
+	<text id="label-seat-36" class="num" x="940" y="96">36</text>
 	<circle id="seat-37" cx="820" cy="164" r="13"/>
-	<text class="num" x="820" y="164">37</text>
+	<text id="label-seat-37" class="num" x="820" y="164">37</text>
 	<circle id="seat-38" cx="860" cy="164" r="13"/>
-	<text class="num" x="860" y="164">38</text>
+	<text id="label-seat-38" class="num" x="860" y="164">38</text>
 	<circle id="seat-39" cx="900" cy="164" r="13"/>
-	<text class="num" x="900" y="164">39</text>
+	<text id="label-seat-39" class="num" x="900" y="164">39</text>
 	<circle id="seat-40" cx="940" cy="164" r="13"/>
-	<text class="num" x="940" y="164">40</text>
+	<text id="label-seat-40" class="num" x="940" y="164">40</text>
 </g>
 <g id="table-6">
 	<rect class="table" x="800" y="210" width="160" height="40" rx="4"/>
 	<text class="name" x="880" y="223">Stůl 6</text>
 	<text id="table-6-name" class="name" x="880" y="238">Jaroslav Foglar</text>
 	<circle id="seat-41" cx="820" cy="196" r="13"/>
-	<text class="num" x="820" y="196">41</text>
+	<text id="label-seat-41" class="num" x="820" y="196">41</text>
 	<circle id="seat-42" cx="860" cy="196" r="13"/>
-	<text class="num" x="860" y="196">42</text>
+	<text id="label-seat-42" class="num" x="860" y="196">42</text>
 	<circle id="seat-43" cx="900" cy="196" r="13"/>
-	<text class="num" x="900" y="196">43</text>
+	<text id="label-seat-43" class="num" x="900" y="196">43</text>
 	<circle id="seat-44" cx="940" cy="196" r="13"/>
-	<text class="num" x="940" y="196">44</text>
+	<text id="label-seat-44" class="num" x="940" y="196">44</text>
 	<circle id="seat-45" cx="820" cy="264" r="13"/>
-	<text class="num" x="820" y="264">45</text>
+	<text id="label-seat-45" class="num" x="820" y="264">45</text>
 	<circle id="seat-46" cx="860" cy="264" r="13"/>
-	<text class="num" x="860" y="264">46</text>
+	<text id="label-seat-46" class="num" x="860" y="264">46</text>
 	<circle id="seat-47" cx="900" cy="264" r="13"/>
-	<text class="num" x="900" y="264">47</text>
+	<text id="label-seat-47" class="num" x="900" y="264">47</text>
 	<circle id="seat-48" cx="940" cy="264" r="13"/>
-	<text class="num" x="940" y="264">48</text>
+	<text id="label-seat-48" class="num" x="940" y="264">48</text>
 </g>
 <g id="table-7">
 	<rect class="table" x="800" y="310" width="160" height="40" rx="4"/>
 	<text class="name" x="880" y="323">Stůl 7</text>
 	<text id="table-7-name" class="name" x="880" y="338">Agnes Baden-Powell</text>
 	<circle id="seat-49" cx="820" cy="296" r="13"/>
-	<text class="num" x="820" y="296">49</text>
+	<text id="label-seat-49" class="num" x="820" y="296">49</text>
 	<circle id="seat-50" cx="860" cy="296" r="13"/>
-	<text class="num" x="860" y="296">50</text>
+	<text id="label-seat-50" class="num" x="860" y="296">50</text>
 	<circle id="seat-51" cx="900" cy="296" r="13"/>
-	<text class="num" x="900" y="296">51</text>
+	<text id="label-seat-51" class="num" x="900" y="296">51</text>
 	<circle id="seat-52" cx="940" cy="296" r="13"/>
-	<text class="num" x="940" y="296">52</text>
+	<text id="label-seat-52" class="num" x="940" y="296">52</text>
 	<circle id="seat-53" cx="820" cy="364" r="13"/>
-	<text class="num" x="820" y="364">53</text>
+	<text id="label-seat-53" class="num" x="820" y="364">53</text>
 	<circle id="seat-54" cx="860" cy="364" r="13"/>
-	<text class="num" x="860" y="364">54</text>
+	<text id="label-seat-54" class="num" x="860" y="364">54</text>
 	<circle id="seat-55" cx="900" cy="364" r="13"/>
-	<text class="num" x="900" y="364">55</text>
+	<text id="label-seat-55" class="num" x="900" y="364">55</text>
 	<circle id="seat-56" cx="940" cy="364" r="13"/>
-	<text class="num" x="940" y="364">56</text>
+	<text id="label-seat-56" class="num" x="940" y="364">56</text>
 </g>
 <g id="table-8">
 	<rect class="table" x="800" y="410" width="160" height="40" rx="4"/>
 	<text class="name" x="880" y="423">Stůl 8</text>
 	<text id="table-8-name" class="name" x="880" y="438">Vlasta Štěpánová-Koseová</text>
 	<circle id="seat-57" cx="820" cy="396" r="13"/>
-	<text class="num" x="820" y="396">57</text>
+	<text id="label-seat-57" class="num" x="820" y="396">57</text>
 	<circle id="seat-58" cx="860" cy="396" r="13"/>
-	<text class="num" x="860" y="396">58</text>
+	<text id="label-seat-58" class="num" x="860" y="396">58</text>
 	<circle id="seat-59" cx="900" cy="396" r="13"/>
-	<text class="num" x="900" y="396">59</text>
+	<text id="label-seat-59" class="num" x="900" y="396">59</text>
 	<circle id="seat-60" cx="940" cy="396" r="13"/>
-	<text class="num" x="940" y="396">60</text>
+	<text id="label-seat-60" class="num" x="940" y="396">60</text>
 	<circle id="seat-61" cx="820" cy="464" r="13"/>
-	<text class="num" x="820" y="464">61</text>
+	<text id="label-seat-61" class="num" x="820" y="464">61</text>
 	<circle id="seat-62" cx="860" cy="464" r="13"/>
-	<text class="num" x="860" y="464">62</text>
+	<text id="label-seat-62" class="num" x="860" y="464">62</text>
 	<circle id="seat-63" cx="900" cy="464" r="13"/>
-	<text class="num" x="900" y="464">63</text>
+	<text id="label-seat-63" class="num" x="900" y="464">63</text>
 	<circle id="seat-64" cx="940" cy="464" r="13"/>
-	<text class="num" x="940" y="464">64</text>
+	<text id="label-seat-64" class="num" x="940" y="464">64</text>
 </g>
 <g id="table-9">
 	<rect class="table" x="170" y="540" width="160" height="40" rx="4"/>
 	<text class="name" x="250" y="553">Stůl 9</text>
 	<text id="table-9-name" class="name" x="250" y="568">František Alexander Elstner</text>
 	<circle id="seat-65" cx="190" cy="526" r="13"/>
-	<text class="num" x="190" y="526">65</text>
+	<text id="label-seat-65" class="num" x="190" y="526">65</text>
 	<circle id="seat-66" cx="230" cy="526" r="13"/>
-	<text class="num" x="230" y="526">66</text>
+	<text id="label-seat-66" class="num" x="230" y="526">66</text>
 	<circle id="seat-67" cx="270" cy="526" r="13"/>
-	<text class="num" x="270" y="526">67</text>
+	<text id="label-seat-67" class="num" x="270" y="526">67</text>
 	<circle id="seat-68" cx="310" cy="526" r="13"/>
-	<text class="num" x="310" y="526">68</text>
+	<text id="label-seat-68" class="num" x="310" y="526">68</text>
 	<circle id="seat-69" cx="190" cy="594" r="13"/>
-	<text class="num" x="190" y="594">69</text>
+	<text id="label-seat-69" class="num" x="190" y="594">69</text>
 	<circle id="seat-70" cx="230" cy="594" r="13"/>
-	<text class="num" x="230" y="594">70</text>
+	<text id="label-seat-70" class="num" x="230" y="594">70</text>
 	<circle id="seat-71" cx="270" cy="594" r="13"/>
-	<text class="num" x="270" y="594">71</text>
+	<text id="label-seat-71" class="num" x="270" y="594">71</text>
 	<circle id="seat-72" cx="310" cy="594" r="13"/>
-	<text class="num" x="310" y="594">72</text>
+	<text id="label-seat-72" class="num" x="310" y="594">72</text>
 </g>
 <g id="table-10">
 	<rect class="table" x="350" y="540" width="160" height="40" rx="4"/>
 	<text class="name" x="430" y="553">Stůl 10</text>
 	<text id="table-10-name" class="name" x="430" y="568">Jiří Navrátil</text>
 	<circle id="seat-73" cx="370" cy="526" r="13"/>
-	<text class="num" x="370" y="526">73</text>
+	<text id="label-seat-73" class="num" x="370" y="526">73</text>
 	<circle id="seat-74" cx="410" cy="526" r="13"/>
-	<text class="num" x="410" y="526">74</text>
+	<text id="label-seat-74" class="num" x="410" y="526">74</text>
 	<circle id="seat-75" cx="450" cy="526" r="13"/>
-	<text class="num" x="450" y="526">75</text>
+	<text id="label-seat-75" class="num" x="450" y="526">75</text>
 	<circle id="seat-76" cx="490" cy="526" r="13"/>
-	<text class="num" x="490" y="526">76</text>
+	<text id="label-seat-76" class="num" x="490" y="526">76</text>
 	<circle id="seat-77" cx="370" cy="594" r="13"/>
-	<text class="num" x="370" y="594">77</text>
+	<text id="label-seat-77" class="num" x="370" y="594">77</text>
 	<circle id="seat-78" cx="410" cy="594" r="13"/>
-	<text class="num" x="410" y="594">78</text>
+	<text id="label-seat-78" class="num" x="410" y="594">78</text>
 	<circle id="seat-79" cx="450" cy="594" r="13"/>
-	<text class="num" x="450" y="594">79</text>
+	<text id="label-seat-79" class="num" x="450" y="594">79</text>
 	<circle id="seat-80" cx="490" cy="594" r="13"/>
-	<text class="num" x="490" y="594">80</text>
+	<text id="label-seat-80" class="num" x="490" y="594">80</text>
 </g>
 <g id="table-11">
 	<rect class="table" x="530" y="540" width="160" height="40" rx="4"/>
 	<text class="name" x="610" y="553">Stůl 11</text>
 	<text id="table-11-name" class="name" x="610" y="568">Jan Hořejší</text>
 	<circle id="seat-81" cx="550" cy="526" r="13"/>
-	<text class="num" x="550" y="526">81</text>
+	<text id="label-seat-81" class="num" x="550" y="526">81</text>
 	<circle id="seat-82" cx="590" cy="526" r="13"/>
-	<text class="num" x="590" y="526">82</text>
+	<text id="label-seat-82" class="num" x="590" y="526">82</text>
 	<circle id="seat-83" cx="630" cy="526" r="13"/>
-	<text class="num" x="630" y="526">83</text>
+	<text id="label-seat-83" class="num" x="630" y="526">83</text>
 	<circle id="seat-84" cx="670" cy="526" r="13"/>
-	<text class="num" x="670" y="526">84</text>
+	<text id="label-seat-84" class="num" x="670" y="526">84</text>
 	<circle id="seat-85" cx="550" cy="594" r="13"/>
-	<text class="num" x="550" y="594">85</text>
+	<text id="label-seat-85" class="num" x="550" y="594">85</text>
 	<circle id="seat-86" cx="590" cy="594" r="13"/>
-	<text class="num" x="590" y="594">86</text>
+	<text id="label-seat-86" class="num" x="590" y="594">86</text>
 	<circle id="seat-87" cx="630" cy="594" r="13"/>
-	<text class="num" x="630" y="594">87</text>
+	<text id="label-seat-87" class="num" x="630" y="594">87</text>
 	<circle id="seat-88" cx="670" cy="594" r="13"/>
-	<text class="num" x="670" y="594">88</text>
+	<text id="label-seat-88" class="num" x="670" y="594">88</text>
 </g>
 <g id="table-12">
 	<rect class="table" x="710" y="540" width="160" height="40" rx="4"/>
 	<text class="name" x="790" y="553">Stůl 12</text>
 	<text id="table-12-name" class="name" x="790" y="568">Emílie Milčicová</text>
 	<circle id="seat-89" cx="730" cy="526" r="13"/>
-	<text class="num" x="730" y="526">89</text>
+	<text id="label-seat-89" class="num" x="730" y="526">89</text>
 	<circle id="seat-90" cx="770" cy="526" r="13"/>
-	<text class="num" x="770" y="526">90</text>
+	<text id="label-seat-90" class="num" x="770" y="526">90</text>
 	<circle id="seat-91" cx="810" cy="526" r="13"/>
-	<text class="num" x="810" y="526">91</text>
+	<text id="label-seat-91" class="num" x="810" y="526">91</text>
 	<circle id="seat-92" cx="850" cy="526" r="13"/>
-	<text class="num" x="850" y="526">92</text>
+	<text id="label-seat-92" class="num" x="850" y="526">92</text>
 	<circle id="seat-93" cx="730" cy="594" r="13"/>
-	<text class="num" x="730" y="594">93</text>
+	<text id="label-seat-93" class="num" x="730" y="594">93</text>
 	<circle id="seat-94" cx="770" cy="594" r="13"/>
-	<text class="num" x="770" y="594">94</text>
+	<text id="label-seat-94" class="num" x="770" y="594">94</text>
 	<circle id="seat-95" cx="810" cy="594" r="13"/>
-	<text class="num" x="810" y="594">95</text>
+	<text id="label-seat-95" class="num" x="810" y="594">95</text>
 	<circle id="seat-96" cx="850" cy="594" r="13"/>
-	<text class="num" x="850" y="594">96</text>
+	<text id="label-seat-96" class="num" x="850" y="594">96</text>
 </g>
 </svg>

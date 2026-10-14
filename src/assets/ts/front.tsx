@@ -4,6 +4,7 @@
 import { render } from 'preact';
 import { initCopyButtons } from './copy';
 import { initPrintButtons } from './print';
+import { initScrollLinks } from './scroll';
 import { createApi } from './seat-picker/api';
 import { App } from './seat-picker/components/App';
 import { createStore } from './seat-picker/store';
@@ -24,3 +25,4 @@ if (container && dataElement?.textContent) {
 
 initCopyButtons();
 initPrintButtons();
+initScrollLinks();

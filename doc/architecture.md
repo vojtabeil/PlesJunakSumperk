@@ -42,7 +42,7 @@
 | `app/Presentation/Cron/` | `GET /cron/payments?key=` for a scheduler; 404 while `cron.key` is empty. |
 | `app/Presentation/Dev/` | `/dev/status`, `/dev/bank` (debug mode only, left out of the release). |
 | `app/Presentation/Error/` | Error pages. |
-| `assets/ts/` | TypeScript: `front.tsx` entry, `seat-picker/` (types, pure logic, API client, signals store, components; the map inlines the SVG plan); `check.tsx` entry, `check/` (entrance check: QR scanner via `qr-scanner`, API client, result card). |
+| `assets/ts/` | TypeScript: `front.tsx` entry, `seat-picker/` (types, pure logic, API client, signals store, components; the map inlines the SVG plan: views of the whole hall / a table / a free map in `HallMap`, `viewbox.ts`); `check.tsx` entry, `check/` (entrance check: QR scanner via `qr-scanner`, API client, result card). |
 | `assets/scss/` | SCSS partials; `front.scss`, `admin.scss` and `check.scss` are the entries. |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
 | `config/` | `common.neon`, `services.neon` (interfaces -> implementations), `local.neon` (git-ignored, from `local.neon.example`), `test.neon` (PHPUnit database). |

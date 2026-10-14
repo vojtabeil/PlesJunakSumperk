@@ -131,6 +131,7 @@ the CorelDRAW MCP server (`c:\Git\coreldraw-mcp`).
 | Chair | `seat-87` | Seat no. 87 (the number is the identity and the label of the seat). |
 | Group of a table (table, its chairs, labels) | `table-12` | Table no. 12; seats inside the group belong to it. |
 | Text with the table name (optional) | `table-12-name` | Name of the table (scout personality). |
+| Text with the seat number (optional) | `label-seat-87` | Number drawn on the seat; the seat picker enlarges it and colours it by the state. |
 | Anything else | any | Decoration only. |
 
 Seats are numbered across the hall (1-270 in the 2025 drawing). The seat id is that number; the label stays

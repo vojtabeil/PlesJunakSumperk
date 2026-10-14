@@ -5,11 +5,10 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-alt);
-
-  @media (min-width: $breakpoint-tablet + 1) {
-    position: sticky;
-    top: 1rem;
-  }
+  // Below the map; on wide screens not wider than a comfortable form.
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
 }
 
 .muted {
@@ -204,13 +203,6 @@ input[aria-invalid='true'] {
 
 .cancel-choice {
   margin-top: 1rem;
-}
-
-// Space for the bottom bar on phones.
-@include below($breakpoint-tablet) {
-  #reservation {
-    margin-bottom: 4.5rem;
-  }
 }
 
 .done .totals {
