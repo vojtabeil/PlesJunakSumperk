@@ -97,7 +97,7 @@
 					<td data-label="Rezervace">
 						{if $seat['reservation_id']}
 							<a n:href="Reservation:detail $seat['reservation_id']">č. {$seat['reservation_id']} {$seat['name']}</a>
-							{include '../channelBadge.latte', channel: $seat['channel']}
+							{include '../Accessory/channelBadge.latte', channel: $seat['channel']}
 						{else}–{/if}
 					</td>
 					<td data-label="Poslední změna">

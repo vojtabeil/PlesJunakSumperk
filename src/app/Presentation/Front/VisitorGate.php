@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Presentation\Front;
 
-use App\Model\Reservation\SiteAccess;
-use App\Model\Reservation\SiteMode;
+use App\Model\Site\SiteAccess;
+use App\Model\Site\SiteMode;
 use Nette\Http\IRequest;
 use Nette\Http\Response;
 use Nette\Security\User;

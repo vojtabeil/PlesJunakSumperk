@@ -6,7 +6,7 @@ namespace App\Presentation\Front\Home;
 
 use App\Model\Reservation\ReservationService;
 use App\Model\Reservation\ReservationSession;
-use App\Model\Reservation\SiteMode;
+use App\Model\Site\SiteMode;
 use App\Presentation\Front\BasePresenter;
 use App\Presentation\Front\VisitorGate;
 use Nette\Utils\Json;

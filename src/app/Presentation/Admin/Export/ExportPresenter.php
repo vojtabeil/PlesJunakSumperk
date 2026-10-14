@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Export;
 
-use App\Model\Reservation\GuestListCsv;
+use App\Model\Export\GuestListCsv;
 use App\Model\Reservation\ReservationAdmin;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\Responses\TextResponse;

@@ -9,7 +9,7 @@ use App\Model\Payment\PaymentChange;
 use App\Model\Payment\QrPayment;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
-use App\Model\Reservation\Settings;
+use App\Model\Settings\Settings;
 use Nette\Application\LinkGenerator;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use RuntimeException;

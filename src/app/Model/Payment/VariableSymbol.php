@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Payment;
 
-use App\Model\Reservation\Settings;
+use App\Model\Settings\Settings;
 
 
 /**

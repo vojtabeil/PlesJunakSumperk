@@ -10,7 +10,7 @@ use App\Model\Log\EventLogRepository;
 use App\Model\Payment\PaymentMatcher;
 use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationAdmin;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 use DateTimeImmutable;
 
 

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Model\Reservation;
 
+use App\Model\Export\GuestListCsv;
 use App\Model\Payment\VariableSymbol;
-use App\Model\Reservation\GuestListCsv;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationError;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 
 
 final class ReservationAdminTest extends DatabaseTestCase

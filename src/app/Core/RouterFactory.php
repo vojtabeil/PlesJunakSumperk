@@ -15,7 +15,7 @@ final class RouterFactory
 		$router->withModule('Admin')
 			->addRoute('admin/<presenter=Dashboard>/<action=default>[/<id \d+>]');
 		$router->addRoute('api/<op>', 'Front:Api:default');
-		$router->addRoute('cron/payments', 'Front:Cron:payments');
+		$router->addRoute('cron/payments', 'Cron:payments');
 		$router->addRoute('rezervace/<id \d+>/<token [0-9a-f]{32}>', 'Front:Reservation:default');
 		$router->addRoute('tester/<token [0-9a-f]{32}>', 'Front:Access:tester');
 		$router->addRoute('vip/<token [0-9a-f]{32}>', 'Front:Access:vip');

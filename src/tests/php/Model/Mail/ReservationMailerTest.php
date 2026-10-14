@@ -7,8 +7,8 @@ namespace App\Tests\Model\Mail;
 use App\Model\Mail\MailMessage;
 use App\Model\Mail\MailSender;
 use App\Model\Mail\ReservationMailer;
-use App\Tests\DatabaseTestCase;
-use App\Tests\RecordingMailSender;
+use App\Tests\Support\DatabaseTestCase;
+use App\Tests\Support\RecordingMailSender;
 use RuntimeException;
 use Tracy\ILogger;
 

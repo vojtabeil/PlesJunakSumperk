@@ -7,7 +7,7 @@ namespace App\Tests\Presentation;
 use App\Core\SetupGuard;
 use App\Model\Admin\AdminUsers;
 use App\Presentation\Admin\BasePresenter as AdminBasePresenter;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 use Nette\Application\Application;
 use Nette\Application\BadRequestException;
 use Nette\Application\IPresenterFactory;
@@ -33,7 +33,7 @@ final class PresenterAccessTest extends DatabaseTestCase
 		'App\Presentation\Front\Home\HomePresenter',    // reservation page for visitors
 		'App\Presentation\Front\Reservation\ReservationPresenter', // "Moje rezervace", protected by the secret token
 		'App\Presentation\Front\Api\ApiPresenter',      // JSON API of the seat picker
-		'App\Presentation\Front\Cron\CronPresenter',    // protected by the cron key instead of a login
+		'App\Presentation\Cron\CronPresenter',    // protected by the cron key instead of a login
 		'App\Presentation\Front\Access\AccessPresenter', // tester and VIP links, protected by their secret tokens
 		'App\Presentation\Error\Error4xx\Error4xxPresenter',
 		'App\Presentation\Error\Error5xx\Error5xxPresenter',

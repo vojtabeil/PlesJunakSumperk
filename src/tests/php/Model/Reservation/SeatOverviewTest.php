@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Model\Reservation;
 
+use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\SeatOverview;
-use App\Model\Payment\VariableSymbol;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 
 
 final class SeatOverviewTest extends DatabaseTestCase

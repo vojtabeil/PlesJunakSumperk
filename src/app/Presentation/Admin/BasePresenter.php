@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin;
 
+use App\Model\Admin\Authenticator;
 use App\Model\Log\Actor;
 use App\Model\Log\EventLogRepository;
-use App\Model\Admin\Authenticator;
 use App\Presentation\Accessory\FormFactory;
 use Nette\Application\UI\Presenter;
 

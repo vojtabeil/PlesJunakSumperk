@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Presentation\Admin\Payment;
 
 use App\Model\Mail\ReservationMailer;
-use App\Model\Payment\BankTransactionSource;
+use App\Model\Payment\Bank\BankTransactionSource;
 use App\Model\Payment\PaymentChange;
 use App\Model\Payment\PaymentError;
 use App\Model\Payment\PaymentImporter;
 use App\Model\Payment\PaymentMatcher;
 use App\Model\Payment\PaymentRepository;
+use App\Presentation\Admin\Accessory\ImportPaymentsForm;
 use App\Presentation\Admin\BasePresenter;
-use App\Presentation\Admin\ImportPaymentsForm;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Form;
 use Nette\Application\UI\Multiplier;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Front;
 
-use App\Model\Reservation\SiteMode;
+use App\Model\Site\SiteMode;
 use Nette\Application\UI\Control;
 use Nette\Application\UI\Presenter;
 use Nette\Bridges\ApplicationLatte\Template;

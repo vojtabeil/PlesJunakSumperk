@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Model\Payment;
 
 use App\Model\Payment\QrPayment;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 use InvalidArgumentException;
 
 

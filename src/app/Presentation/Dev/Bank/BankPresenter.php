@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Presentation\Dev\Bank;
 
-use App\Model\Payment\BankTransactionSource;
-use App\Model\Payment\Mock\MockBank;
-use App\Model\Payment\Mock\MockBankSource;
+use App\Model\Payment\Bank\BankTransactionSource;
+use App\Model\Payment\Bank\Mock\MockBank;
+use App\Model\Payment\Bank\Mock\MockBankSource;
 use App\Model\Payment\VariableSymbol;
 use App\Model\Reservation\ReservationAdmin;
 use App\Presentation\Accessory\FormFactory;

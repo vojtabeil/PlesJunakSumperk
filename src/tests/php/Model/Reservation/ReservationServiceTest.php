@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Model\Reservation;
 
 use App\Model\Reservation\ReservationError;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 
 
 final class ReservationServiceTest extends DatabaseTestCase

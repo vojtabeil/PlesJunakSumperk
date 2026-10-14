@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Presentation\Admin\Site;
 
 use App\Model\Reservation\ReservationAdmin;
-use App\Model\Reservation\Settings;
-use App\Model\Reservation\SiteAccess;
-use App\Model\Reservation\SiteMode;
+use App\Model\Settings\Settings;
+use App\Model\Site\SiteAccess;
+use App\Model\Site\SiteMode;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\UI\Form;
 use Nette\Application\UI\Multiplier;

@@ -22,7 +22,7 @@ final class SetupGuard
 	private const Allowed = ['Admin:Setup', 'Error:Error4xx'];
 
 	/** Presenters for machines (JSON API, cron) answer 503 instead of a redirect. */
-	private const Json = ['Front:Api', 'Front:Cron'];
+	private const Json = ['Front:Api', 'Cron'];
 
 
 	public function __construct(

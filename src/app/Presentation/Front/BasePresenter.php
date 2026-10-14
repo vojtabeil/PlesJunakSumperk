@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Presentation\Front;
 
 use App\Model\Log\Actor;
-use App\Model\Reservation\Settings;
-use App\Model\Reservation\SiteMode;
+use App\Model\Settings\Settings;
+use App\Model\Site\SiteMode;
 use Nette\Application\UI\Presenter;
 
 

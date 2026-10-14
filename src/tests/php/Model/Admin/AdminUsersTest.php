@@ -7,7 +7,7 @@ namespace App\Tests\Model\Admin;
 use App\Model\Admin\AdminError;
 use App\Model\Admin\AdminUsers;
 use App\Model\Admin\Authenticator;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 use Nette\Security\Passwords;
 use Nette\Security\SimpleIdentity;
 

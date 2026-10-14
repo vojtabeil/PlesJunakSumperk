@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Presentation;
 
-use App\Model\Reservation\SiteAccess;
+use App\Model\Site\SiteAccess;
 use App\Presentation\Front\VisitorGate;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 use Nette\Http\Request;
 use Nette\Http\Response;
 use Nette\Http\UrlScript;

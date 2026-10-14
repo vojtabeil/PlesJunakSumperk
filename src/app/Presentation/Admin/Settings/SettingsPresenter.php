@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Settings;
 
-use App\Model\Reservation\Settings;
+use App\Model\Settings\Settings;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\UI\Form;
 

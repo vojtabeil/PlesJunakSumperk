@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace App\Tests\Model\Payment;
 
+use App\Core\Http\HttpResponse;
 use App\Model\Mail\ReservationMailer;
-use App\Model\Payment\BankTransaction;
-use App\Model\Payment\BankTransactionSource;
-use App\Model\Payment\Mock\MockBank;
-use App\Model\Payment\Mock\MockBankSource;
+use App\Model\Payment\Bank\BankTransaction;
+use App\Model\Payment\Bank\BankTransactionSource;
+use App\Model\Payment\Bank\Fio\FioApiSource;
+use App\Model\Payment\Bank\Mock\MockBank;
+use App\Model\Payment\Bank\Mock\MockBankSource;
 use App\Model\Payment\PaymentError;
 use App\Model\Payment\PaymentImporter;
 use App\Model\Payment\PaymentMatcher;
 use App\Model\Payment\QrPayment;
 use App\Model\Payment\VariableSymbol;
-use App\Tests\DatabaseTestCase;
-use App\Model\Http\HttpResponse;
-use App\Model\Payment\Fio\FioApiSource;
-use App\Tests\FakeHttpClient;
-use App\Tests\FrozenClock;
-use App\Tests\RecordingMailSender;
+use App\Tests\Support\DatabaseTestCase;
+use App\Tests\Support\FakeHttpClient;
+use App\Tests\Support\FrozenClock;
+use App\Tests\Support\RecordingMailSender;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use Tracy\ILogger;
 

@@ -8,7 +8,7 @@ use App\Model\Admin\AdminError;
 use App\Model\Admin\AdminUsers;
 use App\Model\Admin\Authenticator;
 use App\Model\Admin\SetupConfig;
-use App\Presentation\Admin\AccountFields;
+use App\Presentation\Admin\Accessory\AccountFields;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\UI\Form;
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Model\Payment;
 
 use App\Model\Payment\PaymentRepository;
-use App\Tests\DatabaseTestCase;
+use App\Tests\Support\DatabaseTestCase;
 
 
 final class PaymentRepositoryTest extends DatabaseTestCase

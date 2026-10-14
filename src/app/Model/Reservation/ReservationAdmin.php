@@ -6,6 +6,7 @@ namespace App\Model\Reservation;
 
 use App\Model\Log\EventLog;
 use App\Model\Payment\VariableSymbol;
+use App\Model\Settings\Settings;
 use PDO;
 use Throwable;
 

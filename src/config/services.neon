@@ -9,14 +9,14 @@ services:
 		setup:
 			- '$onPresenter[]' = [@App\Core\SetupGuard, onPresenter]
 
-	database: App\Model\Database\ConnectionFactory::create(%database%)
+	database: App\Core\Database\ConnectionFactory::create(%database%)
 
-	- App\Model\Reservation\Settings
+	- App\Model\Settings\Settings
 	- App\Model\Reservation\ReservationService
 	- App\Model\Reservation\ReservationSession
 	- App\Model\Reservation\ReservationAdmin
 	- App\Model\Reservation\SeatOverview
-	- App\Model\Reservation\SiteAccess
+	- App\Model\Site\SiteAccess
 
 	- App\Model\Admin\AdminUsers
 	- App\Model\Admin\Authenticator
@@ -27,15 +27,15 @@ services:
 	- App\Model\Log\EventLog
 	- App\Model\Log\EventLogRepository
 
-	- App\Model\Clock\SystemClock
+	- App\Core\Clock\SystemClock
 
-	- App\Model\Http\CurlHttpClient
+	- App\Core\Http\CurlHttpClient
 
 	# Bank movements: mock bank locally, Fio API in production (parameter bank.driver).
 	bankSource:
-		type: App\Model\Payment\BankTransactionSource
-		create: App\Model\Payment\BankSourceFactory::create(%bank%)
-	- App\Model\Payment\Mock\MockBank
+		type: App\Model\Payment\Bank\BankTransactionSource
+		create: App\Model\Payment\Bank\BankSourceFactory::create(%bank%)
+	- App\Model\Payment\Bank\Mock\MockBank
 	- App\Model\Payment\PaymentMatcher
 	- App\Model\Payment\PaymentImporter
 	- App\Model\Payment\PaymentRepository
@@ -46,7 +46,7 @@ services:
 	- App\Presentation\Front\VisitorGate
 
 	# Presenter with a scalar argument has to be configured explicitly.
-	- App\Presentation\Front\Cron\CronPresenter(%cron%)
+	- App\Presentation\Cron\CronPresenter(%cron%)
 
 	mailSender:
 		type: App\Model\Mail\MailSender

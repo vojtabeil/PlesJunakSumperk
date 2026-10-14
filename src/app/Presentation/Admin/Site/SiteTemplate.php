@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Site;
 
-use App\Model\Reservation\SiteMode;
+use App\Model\Site\SiteMode;
 use App\Presentation\Admin\BaseTemplate;
 
 

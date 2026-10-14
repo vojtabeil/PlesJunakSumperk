@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Model\Payment;
 
-use App\Model\Clock\Clock;
+use App\Core\Clock\Clock;
 use App\Model\Log\Actor;
 use App\Model\Log\EventLog;
 use App\Model\Mail\ReservationMailer;
-use App\Model\Reservation\Settings;
+use App\Model\Payment\Bank\BankTransaction;
+use App\Model\Payment\Bank\BankTransactionSource;
+use App\Model\Payment\Bank\RewindableSource;
+use App\Model\Settings\Settings;
 use DateTimeImmutable;
 use Nette\Utils\Json;
 use PDO;
