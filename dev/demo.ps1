@@ -81,7 +81,51 @@ if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $outDir '*') -DestinationPath $zip
 Write-Ok $zip
 
+Write-Step 'Trying the ZIP in a subfolder of a plain static web (/ples-test/)'
+$tryRoot = Join-Path $env:TEMP "ples-demo-try-$version"
+$tryDir = Join-Path $tryRoot 'ples-test'
+if (Test-Path $tryRoot) { Remove-Item $tryRoot -Recurse -Force }
+New-Item -ItemType Directory -Force $tryDir | Out-Null
+Expand-Archive -Path $zip -DestinationPath $tryDir
+$port = 8091
+while (Test-PortInUse $port) { $port++ }
+# No router: the built-in server only serves files, like any static hosting.
+$server = Start-Process -FilePath $PhpExe -ArgumentList "-S 127.0.0.1:$port -t `"$tryRoot`"" -WindowStyle Hidden -PassThru
+try {
+    for ($i = 0; $i -lt 20 -and -not (Test-PortInUse $port); $i++) { Start-Sleep -Milliseconds 250 }
+    $base = [Uri]"http://127.0.0.1:$port/ples-test/"
+    $checked = 0
+    $failed = @()
+    foreach ($page in @('', 'moje-rezervace.html')) {
+        $pageUrl = [Uri]::new($base, $page)
+        $html = (Invoke-WebRequest $pageUrl -UseBasicParsing).Content
+        $links = [regex]::Matches($html, '(?:href|src)="([^"#]+)"') | ForEach-Object { $_.Groups[1].Value } |
+            Where-Object { $_ -notmatch '^(https?:|mailto:|tel:|data:)' }
+        foreach ($link in ($links | Sort-Object -Unique)) {
+            $url = [Uri]::new($pageUrl, $link)
+            try {
+                $null = Invoke-WebRequest $url -UseBasicParsing -Method Head
+                $checked++
+            } catch {
+                $failed += "$link (from /ples-test/$page)"
+            }
+        }
+    }
+    $css = [Uri]::new($base, 'build/front.css')
+    foreach ($m in [regex]::Matches((Invoke-WebRequest $css -UseBasicParsing).Content, 'url\([''"]?([^)''"]+)')) {
+        $link = $m.Groups[1].Value
+        if ($link -match '^data:') { continue }
+        try { $null = Invoke-WebRequest ([Uri]::new($css, $link)) -UseBasicParsing -Method Head; $checked++ } catch { $failed += "$link (from front.css)" }
+    }
+    if ($failed) { throw "Not reachable in /ples-test/:`n  $($failed -join "`n  ")" }
+    Write-Ok "All $checked files load from /ples-test/"
+} finally {
+    Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue
+    Remove-Item $tryRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 Write-Host ''
 Write-Host "Folder: $outDir"
 Write-Host "ZIP:    $zip"
-Write-Host 'Upload the content of the ZIP to any folder of a static web (FTP). Open index.html.'
+Write-Host 'Upload the content of the ZIP into any folder of any static web (FTP), e.g. https://example.com/ples-test/.'
+Write-Host 'All links are relative; the folder works with or without the trailing slash in the address.'

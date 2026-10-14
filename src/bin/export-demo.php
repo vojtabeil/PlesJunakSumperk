@@ -139,7 +139,10 @@ function render(Nette\DI\Container $container, string $presenterName, array $par
 	// Links to the home page, then every other root-relative URL becomes relative (any folder of any host).
 	$html = (string) preg_replace('~href="/"~', 'href="index.html"', $html);
 	$html = (string) preg_replace('~(href|src)="/(?!/)~', '$1="', $html);
-	$html = str_replace('<head>', "<head>\n\t<meta name=\"robots\" content=\"noindex, nofollow\">", $html);
+	// Any URL of any host (e.g. https://example.com/ples-test/): a folder opened without the trailing slash
+	// (/ples-test) would resolve the relative links against the parent folder, so add the slash first.
+	$html = str_replace('<head>', "<head>\n\t<script>if (!/(\\/|\\.html)$/.test(location.pathname)) location.replace(location.pathname + '/' + location.search + location.hash);</script>"
+		. "\n\t<meta name=\"robots\" content=\"noindex, nofollow\">", $html);
 	return (string) preg_replace(
 		'~<body([^>]*)>~',
 		'<body$1>' . "\n" . '<div role="note" style="padding:0.45rem 1rem;font:600 0.9rem/1.3 system-ui,sans-serif;text-align:center;color:#1c2b48;background:#f8af15">'
