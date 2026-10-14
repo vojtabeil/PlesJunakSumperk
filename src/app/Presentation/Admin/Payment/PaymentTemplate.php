@@ -27,4 +27,7 @@ final class PaymentTemplate extends BaseTemplate
 	public bool $canRewind;
 
 	public ?\DateTimeImmutable $lastImportAt;
+
+	/** @var array<int, list<array<string, mixed>>> payment id => suggested reservations (PaymentCandidates::suggest) */
+	public array $suggestions;
 }

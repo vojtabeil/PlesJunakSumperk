@@ -108,13 +108,14 @@ final class PaymentImporterTest extends DatabaseTestCase
 		$this->bank->addPayment(35000, null);           // no VS
 		$this->bank->addPayment(35000, '20269999');     // ball prefix, but no such reservation
 		$this->bank->addPayment(35000, '3');            // membership fee etc. - not the ball (no prefix)
-		$this->bank->addPayment(-12000, $this->vs(1));  // outgoing
+		$this->bank->addPayment(-12000, $this->vs(1));  // outgoing: not stored at all
 
 		$result = $this->importer()->import();
 
-		self::assertSame([2, 1], [$result->unmatched, $result->foreign]);
+		self::assertSame([2, 1, 1, 3], [$result->unmatched, $result->foreign, $result->outgoing, $result->stored]);
+		self::assertStringContainsString('Odchozí platby (nenačítají se): 1.', $result->summary());
 		self::assertSame(
-			['no_vs', 'unknown_vs', 'foreign', 'outgoing'],
+			['no_vs', 'unknown_vs', 'foreign'],
 			$this->db->query('SELECT match_status FROM bank_transactions ORDER BY id')->fetchAll(\PDO::FETCH_COLUMN),
 		);
 		self::assertSame([], $this->sender->sent);
@@ -138,6 +139,38 @@ final class PaymentImporterTest extends DatabaseTestCase
 
 		$this->expectException(PaymentError::class);
 		$this->matcher->assign($first, $id);
+	}
+
+
+	public function testIgnoreAndAssignmentCanBeTakenBack(): void
+	{
+		$id = $this->reservation(350);
+		$this->bank->addPayment(20000, null);
+		$this->bank->addPayment(15000, '777');
+		$this->importer()->import();
+		[$first, $second] = array_map('intval', $this->db->query('SELECT id FROM bank_transactions ORDER BY id')->fetchAll(\PDO::FETCH_COLUMN));
+		self::assertSame('foreign', $this->statusOf($second), 'A VS without the ball prefix');
+
+		$this->matcher->ignore($first);
+		$this->matcher->unignore($first);
+		self::assertSame('no_vs', $this->statusOf($first), 'Back among the payments to resolve');
+
+		$this->matcher->assign($first, $id);
+		$this->matcher->assign($second, $id);
+		self::assertSame(['paid', 350], $this->reservationState($id));
+
+		$this->matcher->unassign($second);
+		self::assertSame(['partially_paid', 200], $this->reservationState($id), 'Paid amount and status from the payments left');
+		self::assertSame('unknown_vs', $this->statusOf($second));
+		self::assertNull($this->db->query("SELECT reservation_id FROM bank_transactions WHERE id = $second")->fetchColumn() ?: null);
+
+		$this->matcher->unassign($first);
+		self::assertSame(['confirmed', 0], $this->reservationState($id));
+		self::assertContains('payment.unassigned', $this->loggedActions());
+		self::assertContains('payment.unignored', $this->loggedActions());
+
+		$this->expectException(PaymentError::class);
+		$this->matcher->unignore($first);
 	}
 
 
@@ -165,10 +198,10 @@ final class PaymentImporterTest extends DatabaseTestCase
 
 		$result = $this->importer($fio)->import();
 
-		self::assertSame([4, 4, 1, 2], [$result->fetched, $result->stored, $result->matched, $result->unmatched]);
+		self::assertSame([4, 3, 1, 2, 1], [$result->fetched, $result->stored, $result->matched, $result->unmatched, $result->outgoing]);
 		self::assertSame(['paid', 950], $this->reservationState($id));
 		self::assertSame(
-			['matched', 'no_vs', 'outgoing', 'no_vs'],
+			['matched', 'no_vs', 'no_vs'],
 			$this->db->query("SELECT match_status FROM bank_transactions WHERE source = 'fio' ORDER BY id")->fetchAll(\PDO::FETCH_COLUMN),
 		);
 	}
@@ -309,6 +342,12 @@ final class PaymentImporterTest extends DatabaseTestCase
 	{
 		$row = $this->db->query("SELECT status, paid_amount FROM reservations WHERE id = $id")->fetch();
 		return [(string) $row['status'], (int) $row['paid_amount']];
+	}
+
+
+	private function statusOf(int $transactionId): string
+	{
+		return (string) $this->db->query("SELECT match_status FROM bank_transactions WHERE id = $transactionId")->fetchColumn();
 	}
 
 

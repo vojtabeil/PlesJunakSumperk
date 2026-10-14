@@ -181,7 +181,7 @@ CREATE TABLE event_log_seats (
     CONSTRAINT fk_event_log_seats_event FOREIGN KEY (event_id) REFERENCES event_log (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Incoming and outgoing payments downloaded from the bank (Fio) or the mock bank.
+-- Incoming payments downloaded from the bank (Fio) or the mock bank; outgoing movements are not stored.
 -- Stored before matching, so nothing is lost when matching fails; (source, external_id) is unique.
 CREATE TABLE bank_transactions (
     id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -197,7 +197,7 @@ CREATE TABLE bank_transactions (
     raw             TEXT NULL,
     imported_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reservation_id  INT UNSIGNED NULL,
-    match_status    ENUM('matched', 'underpaid', 'overpaid', 'unknown_vs', 'no_vs', 'foreign', 'outgoing', 'ignored') NOT NULL,
+    match_status    ENUM('matched', 'underpaid', 'overpaid', 'unknown_vs', 'no_vs', 'foreign', 'ignored') NOT NULL,
     UNIQUE KEY uq_bank_transactions_external (source, external_id),
     -- Payments of a reservation (matching sums by status).
     KEY ix_bank_transactions_reservation (reservation_id, match_status),

@@ -20,20 +20,22 @@ final class PaymentRepository
 	}
 
 
+	/** The page opens with the payments to resolve. */
+	public const DefaultFilter = 'problems';
+
 	/** Filters of the Payments page: key => [Czech label, SQL condition]. */
 	public const Filters = [
-		'' => ['Vše', '1 = 1'],
-		'problems' => ['K vyřešení', "match_status IN ('unknown_vs', 'no_vs', 'underpaid', 'overpaid')"],
-		'matched' => ['Spárované s rezervací', 'reservation_id IS NOT NULL'],
-		'foreign' => ['Nesouvisí s plesem', "match_status = 'foreign'"],
-		'other' => ['Odchozí a ignorované', "match_status IN ('outgoing', 'ignored')"],
+		'problems' => ['K vyřízení', "match_status IN ('unknown_vs', 'no_vs', 'underpaid', 'overpaid')"],
+		'matched' => ['Spárované s rezervací', "reservation_id IS NOT NULL AND match_status = 'matched'"],
+		'foreign' => ['Nesouvisí s plesem', "match_status IN ('foreign', 'ignored')"],
+		'all' => ['Vše', '1 = 1'],
 	];
 
 
 	/** @return list<array<string, mixed>> newest first */
-	public function search(string $filter = ''): array
+	public function search(string $filter = self::DefaultFilter): array
 	{
-		$condition = self::Filters[$filter][1] ?? self::Filters[''][1];
+		$condition = self::Filters[$filter][1] ?? self::Filters[self::DefaultFilter][1];
 		return $this->db->query(
 			"SELECT * FROM bank_transactions WHERE $condition ORDER BY booked_on DESC, id DESC LIMIT 500",
 		)->fetchAll();

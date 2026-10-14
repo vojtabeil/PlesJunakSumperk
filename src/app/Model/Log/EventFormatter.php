@@ -45,7 +45,7 @@ final class EventFormatter
 				isset($d['cancelled']) ? "zrušeno rezervací {$d['cancelled']}" : null,
 			],
 			'reservation.paid_manually' => [isset($d['amount']) ? $money($d['amount']) . ' hotově' : null],
-			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.unmatched', 'payment.assigned', 'payment.ignored', 'payment.settled' => [
+			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.unmatched', 'payment.assigned', 'payment.ignored', 'payment.settled', 'payment.unignored', 'payment.unassigned' => [
 				isset($d['amount']) ? $money($d['amount']) : null,
 				isset($d['vs']) && $d['vs'] !== '' ? "VS {$d['vs']}" : 'bez VS',
 				isset($d['payer']) ? (string) $d['payer'] : null,

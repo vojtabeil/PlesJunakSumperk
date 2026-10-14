@@ -53,6 +53,8 @@ final class EventTypes
 		'payment.unmatched' => ['payment', 'Platbu nelze přiřadit'],
 		'payment.assigned' => ['payment', 'Platba přiřazena ručně'],
 		'payment.ignored' => ['payment', 'Platba označena jako nesouvisející'],
+		'payment.unignored' => ['payment', 'Platba vrácena k vyřízení'],
+		'payment.unassigned' => ['payment', 'Zrušeno přiřazení platby k rezervaci'],
 		'payment.settled' => ['payment', 'Nedoplatek / přeplatek vyřízen'],
 		'payments.imported' => ['payment', 'Načtení plateb z banky'],
 		'payments.rewound' => ['payment', 'Nové stažení pohybů od data'],

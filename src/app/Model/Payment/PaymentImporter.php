@@ -19,8 +19,8 @@ use Throwable;
 
 
 /**
- * Downloads new bank movements, stores them, matches them to reservations
- * and tells customers about received payments.
+ * Downloads new bank movements, stores the incoming ones (outgoing payments of the shared scout
+ * account are skipped), matches them to reservations and tells customers about received payments.
  */
 final class PaymentImporter
 {
@@ -46,6 +46,10 @@ final class PaymentImporter
 		$result = new ImportResult(fetched: count($fetched));
 
 		foreach ($fetched as $transaction) {
+			if ($transaction->amountHalers <= 0) {
+				$result->outgoing++;
+				continue;
+			}
 			$this->db->beginTransaction();
 			try {
 				$id = $this->store($transaction);

@@ -47,6 +47,7 @@ services:
 		create: App\Model\Payment\Bank\BankSourceFactory::create(%bank%)
 	- App\Model\Payment\Bank\Mock\MockBank
 	- App\Model\Payment\PaymentMatcher
+	- App\Model\Payment\PaymentCandidates
 	- App\Model\Payment\PaymentImporter
 	- App\Model\Payment\PaymentRepository
 	- App\Model\Payment\QrPayment

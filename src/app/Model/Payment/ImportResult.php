@@ -20,6 +20,8 @@ final class ImportResult
 		public int $unmatched = 0,
 		/** Other payments to the account (different variable symbol). */
 		public int $foreign = 0,
+		/** Outgoing payments of the account: not stored at all. */
+		public int $outgoing = 0,
 	) {
 	}
 
@@ -36,6 +38,9 @@ final class ImportResult
 		}
 		if ($this->foreign > 0) {
 			$text .= " Ostatní platby na účet (nesouvisí s plesem): {$this->foreign}.";
+		}
+		if ($this->outgoing > 0) {
+			$text .= " Odchozí platby (nenačítají se): {$this->outgoing}.";
 		}
 		return $text;
 	}

@@ -426,7 +426,7 @@ function Assert-BuildTools {
 
 # Paths are relative to src/ (callers run from there).
 function Get-BunBuildArgs([switch]$Watch) {
-    $a = @('build', 'assets/ts/front.tsx', 'assets/ts/check.tsx', '--outdir', 'www/build', '--target', 'browser',
+    $a = @('build', 'assets/ts/front.tsx', 'assets/ts/check.tsx', 'assets/ts/admin.ts', '--outdir', 'www/build', '--target', 'browser',
         '--format', 'esm', '--minify', '--sourcemap=linked')
     if ($Watch) { $a += '--watch' }
     return $a

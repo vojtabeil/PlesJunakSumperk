@@ -107,7 +107,8 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
 - Dev-only pages (`/dev/*`) check `Debugger::$productionMode`; `/dev/bank` also requires the mock bank.
   The release build leaves `src/app/Presentation/Dev` out and always runs in production mode (file `VERSION`).
 - The bank account is the scout group's main account: payments whose VS lacks the ball prefix
-  are `foreign` (not a problem, never matched). Keep the VS prefix stable during a sale.
+  are `foreign` (not a problem, never matched); outgoing movements are not stored at all. The Payments page opens
+  with the payments to resolve; assigning (suggestions / search) and "nesouvisí s plesem" can be taken back (`unassign`, `unignore`). Keep the VS prefix stable during a sale.
 - Payments may be imported only manually (no cron on the hosting): keep the dashboard button and
   the "last import" information working.
 - Secrets (Fio token, cron key, setup password, tester and VIP tokens) never appear in exceptions, logs or the event log.

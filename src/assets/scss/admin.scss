@@ -1180,3 +1180,72 @@ h3 {
 .ticket-lists details + details {
   margin-top: 0.75rem;
 }
+
+// --- Payments: resolving a payment in its row -----------------------------------
+
+.resolve-form {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: start;
+  min-width: min(100%, 22rem);
+}
+
+.resolve-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+
+  input {
+    padding: 0.35rem 0.6rem;
+    font: inherit;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+  }
+}
+
+.resolve-results,
+.resolve-suggestions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+
+  &:empty {
+    display: none;
+  }
+}
+
+// One reservation to assign the payment to (suggestion or search hit), assigned in one click.
+.suggestion {
+  padding: 0.3rem 0.65rem;
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--navy);
+  background: var(--navy-soft);
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--navy);
+  }
+}
+
+.undo-details {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
+
+  summary {
+    color: var(--muted);
+    cursor: pointer;
+  }
+}
+
+.button--small {
+  min-height: auto;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.9rem;
+}

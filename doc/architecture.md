@@ -28,7 +28,7 @@
 | `app/Model/Reservation/` | `ReservationService` (all reservation rules), `ReservationAdmin`, `SeatOverview`, `ReservationSession`, `ReservationError`. |
 | `app/Model/Settings/` | `Settings`: event info, prices and limits stored in the `settings` table. |
 | `app/Model/Site/` | `SiteMode` (stages of the site), `SiteAccess` (tester and VIP tokens). |
-| `app/Model/Payment/` | `PaymentImporter` (fetch -> store -> match -> e-mail; manual button or cron), `PaymentMatcher` (partial payments add up), `VariableSymbol` (VS = prefix + id, e.g. 20260003), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
+| `app/Model/Payment/` | `PaymentImporter` (fetch -> store incoming ones, outgoing are skipped -> match -> e-mail; manual button or cron), `PaymentMatcher` (partial payments add up; assign, ignore, settle and their undo), `PaymentCandidates` (suggested reservations of an unmatched payment by amount / payer / message, search by name, e-mail, number or VS), `VariableSymbol` (VS = prefix + id, e.g. 20260003), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
 | `app/Model/Payment/Bank/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, `Fio/FioApiSource` in production, chosen by `bank.driver` in `BankSourceFactory`; both `RewindableSource`), `BankTransaction`. |
 | `app/Model/Mail/` | `MailSender` interface, SMTP implementation, `ReservationMailer`, `CrewMailer` (Z-lístek by e-mail) + Latte e-mail templates. |
 | `app/Model/Log/` | Event log of everything that happens (`EventLog::record`, actor from `Actor`: customer/admin/cron/system), `EventTypes` (Czech labels, categories), `EventLogRepository` (filters by date, seat, type, actor, reservation), `EventFormatter`. |
@@ -43,7 +43,7 @@
 | `app/Presentation/Cron/` | `GET /cron/payments?key=` for a scheduler; 404 while `cron.key` is empty. |
 | `app/Presentation/Dev/` | `/dev/status`, `/dev/bank` (debug mode only, left out of the release). |
 | `app/Presentation/Error/` | Error pages. |
-| `assets/ts/` | TypeScript: `front.tsx` entry, `seat-picker/` (types, pure logic, API client, signals store, components; the map inlines the SVG plan: `HallMap` sleeps until used, zooms to a table on a tap, `viewbox.ts`; `OrderButton` fixed top right while the form is out of sight, `Tickets` (seat and standing ticket) above); `check.tsx` entry, `check/` (entrance check: QR scanner via `qr-scanner`, API client, result card). |
+| `assets/ts/` | TypeScript: `front.tsx` entry, `seat-picker/` (types, pure logic, API client, signals store, components; the map inlines the SVG plan: `HallMap` sleeps until used, zooms to a table on a tap, `viewbox.ts`; `OrderButton` fixed top right while the form is out of sight, `Tickets` (seat and standing ticket) above); `check.tsx` entry, `check/` (entrance check: QR scanner via `qr-scanner`, API client, result card); `admin.ts` entry, `admin/` (reservation search of unmatched payments). |
 | `assets/scss/` | SCSS partials; `front.scss`, `admin.scss` and `check.scss` are the entries. |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
 | `config/` | `common.neon`, `services.neon` (interfaces -> implementations), `local.neon` (git-ignored, from `local.neon.example`), `test.neon` (PHPUnit database). |

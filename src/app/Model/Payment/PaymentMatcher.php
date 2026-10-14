@@ -33,11 +33,6 @@ final class PaymentMatcher
 	public function apply(int $transactionId): ?PaymentChange
 	{
 		$tx = $this->transaction($transactionId);
-		if ((float) $tx['amount'] <= 0) {
-			$this->setStatus($transactionId, 'outgoing');
-			return null;
-		}
-
 		if (ltrim(trim((string) $tx['variable_symbol']), '0') === '') {
 			$this->setStatus($transactionId, 'no_vs');
 			$this->eventLog->record('payment.unmatched', null, $this->describe($tx), automatic: true);
@@ -76,7 +71,6 @@ final class PaymentMatcher
 	}
 
 
-	/** The payment does not belong to the ball (e.g. a donation); keep it out of the problem list. */
 	/**
 	 * Underpaid or overpaid payment that the organizer has dealt with (refunded the difference,
 	 * got the rest in cash...): it stays with its reservation but is no longer a problem.
@@ -92,6 +86,7 @@ final class PaymentMatcher
 	}
 
 
+	/** The payment does not belong to the ball (e.g. a donation); keep it out of the problem list. */
 	public function ignore(int $transactionId): void
 	{
 		$tx = $this->transaction($transactionId);
@@ -100,6 +95,58 @@ final class PaymentMatcher
 		}
 		$this->setStatus($transactionId, 'ignored');
 		$this->eventLog->record('payment.ignored', null, $this->describe($tx));
+	}
+
+
+	/** Takes back "does not belong to the ball" (clicked by mistake): the payment is to be resolved again. */
+	public function unignore(int $transactionId): void
+	{
+		$tx = $this->transaction($transactionId);
+		if ($tx['match_status'] !== 'ignored') {
+			throw new PaymentError('Platba není označená jako nesouvisející s plesem.');
+		}
+		$this->setStatus($transactionId, self::unresolvedStatus($tx));
+		$this->eventLog->record('payment.unignored', null, $this->describe($tx));
+	}
+
+
+	/**
+	 * Takes a payment away from its reservation (assigned to a wrong one): the payment is to be resolved
+	 * again and the reservation's paid amount and status are computed from its remaining payments.
+	 */
+	public function unassign(int $transactionId): void
+	{
+		$tx = $this->transaction($transactionId);
+		if ($tx['reservation_id'] === null) {
+			throw new PaymentError('Platba není přiřazená k žádné rezervaci.');
+		}
+		$reservationId = (int) $tx['reservation_id'];
+		$stmt = $this->db->prepare('SELECT * FROM reservations WHERE id = ? FOR UPDATE');
+		$stmt->execute([$reservationId]);
+		$reservation = $stmt->fetch() ?: throw new PaymentError("Rezervace č. $reservationId neexistuje.");
+
+		$this->db->prepare('UPDATE bank_transactions SET reservation_id = NULL, match_status = ? WHERE id = ?')
+			->execute([self::unresolvedStatus($tx), $transactionId]);
+
+		$stmt = $this->db->prepare(
+			'SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE reservation_id = ? AND match_status IN (' . self::CountedStatuses . ')',
+		);
+		$stmt->execute([$reservationId]);
+		$paid = (int) round((float) $stmt->fetchColumn() * 100);
+		$total = (int) $reservation['total_price'] * 100;
+		$status = (string) $reservation['status'];
+		if (in_array($status, ['confirmed', 'partially_paid', 'paid'], true)) {
+			$status = match (true) {
+				$paid >= $total => 'paid',
+				$paid > 0 => 'partially_paid',
+				default => 'confirmed',
+			};
+		}
+		$this->db->prepare(
+			"UPDATE reservations SET status = ?, paid_amount = ?, paid_at = IF(? = 'paid', paid_at, NULL) WHERE id = ?",
+		)->execute([$status, number_format($paid / 100, 2, '.', ''), $status, $reservationId]);
+
+		$this->eventLog->record('payment.unassigned', $reservationId, $this->describe($tx) + ['paid' => $paid / 100, 'total' => $total / 100]);
 	}
 
 
@@ -188,6 +235,16 @@ final class PaymentMatcher
 		);
 		$stmt->execute([$id]);
 		return $stmt->fetch() ?: null;
+	}
+
+
+	/**
+	 * Status of a payment the organizer has to resolve (no reservation): without a VS, or with an unknown one.
+	 * @param array<string, mixed> $tx
+	 */
+	private static function unresolvedStatus(array $tx): string
+	{
+		return ltrim(trim((string) $tx['variable_symbol']), '0') === '' ? 'no_vs' : 'unknown_vs';
 	}
 
 

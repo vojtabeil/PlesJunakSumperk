@@ -81,7 +81,6 @@ final class TemplateExtension extends Extension
 			'unknown_vs' => 'neznámý VS',
 			'no_vs' => 'bez VS',
 			'foreign' => 'nesouvisí s plesem',
-			'outgoing' => 'odchozí',
 			'ignored' => 'ignorováno',
 			default => $status,
 		};
