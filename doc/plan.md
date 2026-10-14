@@ -120,7 +120,7 @@ the CorelDRAW MCP server (`c:\Git\coreldraw-mcp`).
 - The page inlines the SVG; the seat picker finds shapes by `svg_id`, changes their classes and
   attributes (state, `role="button"`, `tabindex`, `aria-*`) and handles clicks on them.
   Neighbours for arrow keys come from the shapes' positions in the browser (`getBBox()`).
-- The plan is uploaded in the administration ("Plánek sálu"), so next year only a new export is needed.
+- The plan is uploaded in the administration (Nebezpečná zóna -> "Plánek sálu"), so next year only a new export is needed.
 - The hall layout and the sale are two tables: the layout is changed only by a plan upload,
   the sale only by reservations.
 
@@ -138,46 +138,62 @@ Seats are numbered across the hall (1-270 in the 2025 drawing); the label "table
 ### 6.3 Database
 
 ```
-hall_plans    (id, svg, file_name, uploaded_by, uploaded_at, active)
-hall_tables   (id, label, name, svg_id)
+hall_plan     (id = 1, svg, file_name, applied_by, applied_at)   -- at most one row: the only version
+hall_tables   (id, label, name, svg_id, active)
 seats         (id, label, table_id, svg_id, active)
 seat_bookings (seat_id PK -> seats, reservation_id NOT NULL -> reservations ON DELETE CASCADE,
                state ENUM('held', 'reserved'), held_at)
 ```
 
+- There is only one version of the plan (decided 2026-10-14): uploading a new one replaces it for good,
+  so it is a dangerous action. An uploaded file waits for confirmation only as a temporary file in
+  `var/temp` (random name, deleted after confirmation, cancellation or an hour), never as a second version.
 - A booking row exists only for a held or reserved seat; a free seat has none. Holding a seat is an
   `INSERT` (the primary key makes it atomic), an expired hold is deleted.
 - Removed: settings `map_width` / `map_height` (the `viewBox` has the size), `ReservationService::HallAreas`
-  (stage and dance floor are in the drawing), the hand-written `hall.sql`.
+  (stage and dance floor are in the drawing), seat and table coordinates, the hand-written `hall.sql`.
 
-### 6.4 Upload and synchronization (`App\Model\Hall`)
+### 6.4 The plan as a file
 
+- `/plan-salu.svg?v=<hash of the content>` (public, used by the seat picker) and `/admin/nebezpecne/plan.svg`
+  (download, the only backup before a replacement).
+- `Content-Type: image/svg+xml; charset=utf-8`, `X-Content-Type-Options: nosniff`, a CSP without scripts;
+  the public URL is cached for long (the hash changes with the content); 404 while there is no plan.
+
+### 6.5 Dangerous zone and the import (`App\Model\Hall`)
+
+- `/admin/nebezpecne` (`Admin:Danger`): a separate section marked red in the menu with "Plánek sálu",
+  "Smazat testovací rezervace" (moved from Stav webu) and later "Uzavřít ročník". Every action is a POST form
+  with a confirmation checkbox and is logged.
 - `HallPlanParser`: reads the SVG, finds `seat-*` / `table-*` and their nesting, reports errors
-  (duplicate ids, seat outside a table, empty plan) and sanitizes the SVG (no scripts,
+  (duplicate ids, seat outside a table, empty or invalid plan) and sanitizes the SVG (no scripts,
   `foreignObject`, `on*` attributes, external references, inline colours of seats).
-- `HallSync`: diff against the database (new / removed seats and tables, seat moved to another table,
-  renamed table), shown as a preview; applied in a transaction, activates the new `hall_plans` row,
-  event log `hall.import`. Never touches `seat_bookings`.
-- A removed seat without a booking gets `active = 0` (history in the event log stays readable; it is
-  reactivated if it comes back). A removed seat with a booking makes the upload fail with the list of seats.
-- Administration "Plánek sálu": upload -> preview with highlighted seats and the list of changes and
-  errors -> "Použít plánek" (POST, CSRF); list of tables and seats, history of uploads.
+- `HallSync::preview`: errors, changes (new / removed / moved seats and tables, renamed tables) and the
+  **affected reservations**: reservations holding a seat that the new plan does not have, with contact,
+  status, paid amount and the seats. The admin calls them before confirming and changes what is needed by hand.
+  Seats being selected right now are only released (shown as a count).
+- Confirmation: "the current plan is replaced for good" and, with affected reservations, "N reservations
+  will be cancelled (paid X Kč)".
+- `HallSync::apply` (transaction): computes the affected reservations again with locked rows and stops with a
+  new preview when they changed; cancels the affected reservations (like a cancellation in the admin, reason
+  "nový plánek sálu"); inserts / updates tables and seats; removed ones get `active = 0` (history stays readable,
+  reactivated if they come back); replaces the plan; logs `hall.replaced`. Customers get no automatic e-mail.
 - A new installation has no plan: the dashboard asks to upload one and seats cannot be sold until then
-  (standing tickets can).
-- `bin/import-hall.php` uses the same code; `init-db` imports a small demo plan (`src/database/demo-hall.svg`).
+  (standing tickets can). `bin/import-hall.php` uses the same code; `init-db` imports a demo plan
+  (`src/database/demo-hall.svg`).
 
-### 6.5 Steps
+### 6.6 Steps
 
-1. Split `seats` into `seats` (layout) and `seat_bookings` (sale) without changing behaviour; all tests pass. **Done.**
+1. Split `seats` into `seats` (layout) and `seat_bookings` (sale) without changing behaviour. **Done.**
 2. Parser + sanitization + tests (small fixture SVG).
-3. Seat labels: the seat number instead of "table/seat" (TS `splitSeatLabel`, filter `seatLabel`,
-   `SeatOverview`, e-mails, reservation detail, search, log filter).
-4. Synchronization + `hall_plans` + event log.
-5. Administration "Plánek sálu" + `bin/import-hall.php` + demo plan.
-6. Real drawing: object ids and table groups set through the CorelDRAW MCP, SVG export, first upload.
-7. `HallMap` on the inlined SVG.
-8. Clean-up (`HallAreas`, `map_*`, `hall.sql`), release checks, `doc/architecture.md`, `AGENTS.md`.
-
+3. Schema, `HallSync` (preview, affected reservations, apply) + tests, `bin/import-hall.php`, demo plan in `init-db`.
+4. Dangerous zone: "Plánek sálu" (download, upload, preview, confirmation) + moved deletion of test reservations.
+5. URLs with the SVG file + headers + tests.
+6. Seat labels: the seat number instead of "table/seat".
+7. Seat picker on the SVG from the URL; remove `HallAreas`, `map_*`, coordinates, `hall.sql`.
+8. Real drawing: object ids and table groups set through the CorelDRAW MCP, SVG export, first upload
+   (needs the MCP server connected).
+9. Release checks, `doc/architecture.md`, `AGENTS.md`.
 ## 7. Tickets and the entrance check (decided 2026-10-14)
 
 Replaces the legacy `check/` (QR with `/check/<seat>/<e-mail>`, guessable; undo allowed to one hard-coded admin).
