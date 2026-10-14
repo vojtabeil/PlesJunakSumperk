@@ -48,11 +48,6 @@ export function zoomAround(view: Box, factor: number, pointX: number, pointY: nu
   return keepInside(zoomed, hall);
 }
 
-/** Moves the view by a distance in plan units; it never leaves the hall completely. */
-export function panBy(view: Box, dx: number, dy: number, hall: Box): Box {
-  return keepInside({ ...view, x: view.x + dx, y: view.y + dy }, hall);
-}
-
 /** The centre of the view stays within the hall, so the plan cannot get lost off the screen. */
 export function keepInside(view: Box, hall: Box): Box {
   const centerX = Math.min(hall.x + hall.width, Math.max(hall.x, view.x + view.width / 2));
@@ -78,4 +73,44 @@ export function toViewBox(view: Box): string {
 /** Whether the view shows noticeably less than the whole hall (zoomed in). */
 export function isZoomed(view: Box, hall: Box): boolean {
   return view.width < hall.width * 0.95 && view.height < hall.height * 0.95;
+}
+
+/** Result of panWithin: the moved view and the part of the move (plan units) the hall had no room for. */
+export interface Pan {
+  view: Box;
+  restX: number;
+  restY: number;
+}
+
+/**
+ * Moves the view by dx, dy (plan units) only as far as the edges of the hall reach the edges of the
+ * element showing it (width x height px, viewBox "meet" shows more along one axis). A hall smaller than
+ * the element along an axis stays centred on it. The rest of the move is returned, e.g. for the page.
+ */
+export function panWithin(view: Box, dx: number, dy: number, hall: Box, width: number, height: number): Pan {
+  const scale = unitsPerPixel(view, width, height);
+  const centerX = view.x + view.width / 2;
+  const centerY = view.y + view.height / 2;
+  const x = clampAxis(centerX, dx, width * scale, hall.x, hall.width);
+  const y = clampAxis(centerY, dy, height * scale, hall.y, hall.height);
+  return {
+    view: { ...view, x: x.center - view.width / 2, y: y.center - view.height / 2 },
+    restX: x.rest,
+    restY: y.rest,
+  };
+}
+
+/** The view kept within the hall's edges (see panWithin). */
+export function clampView(view: Box, hall: Box, width: number, height: number): Box {
+  return panWithin(view, 0, 0, hall, width, height).view;
+}
+
+/** One axis of panWithin: the new centre and the rest of the move in its direction. */
+function clampAxis(center: number, move: number, visible: number, start: number, size: number): { center: number; rest: number } {
+  const lowest = visible >= size ? start + size / 2 : start + visible / 2;
+  const highest = visible >= size ? lowest : start + size - visible / 2;
+  const next = Math.min(highest, Math.max(lowest, center + move));
+  const moved = next - Math.min(highest, Math.max(lowest, center));
+  const rest = move - moved;
+  return { center: next, rest: Math.sign(rest) === Math.sign(move) ? rest : 0 };
 }

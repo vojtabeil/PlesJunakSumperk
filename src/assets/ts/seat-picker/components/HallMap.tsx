@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { nearestSeat, seatDescription, seatStatus, type MapPoint } from '../logic';
 import type { ApiState, Direction, HallLayout, Prices } from '../types';
-import { between, isZoomed, panBy, pad, toViewBox, union, unitsPerPixel, zoomAround, type Box } from '../viewbox';
+import { between, clampView, isZoomed, pad, panWithin, toViewBox, union, unitsPerPixel, zoomAround, type Box } from '../viewbox';
 
 interface Props {
   layout: HallLayout;
@@ -22,6 +22,15 @@ const AnimationMs = 250;
 const ZoomStep = 1.6;
 /** The map falls asleep once less than this share of it is on the screen. */
 const SleepVisibility = 0.3;
+/** A finger dragging the map this far (px) past its edge hands the gesture over to the page. */
+const HandOffPx = 50;
+/** How much the map follows the finger past its edge before the hand-off (rubber band). */
+const Stretch = 0.4;
+/** Momentum after a swipe: speed kept per 16 ms frame, and the speed (px/ms) where it stops. */
+const Friction = 0.94;
+const StopSpeed = 0.02;
+/** A finger resting this long (ms) before it lifts leaves no momentum. */
+const RestMs = 80;
 
 /**
  * Hall plan: the SVG drawing (HallLayout.svg) inlined into the page. Seats are its shapes (found by
@@ -31,6 +40,8 @@ const SleepVisibility = 0.3;
  * swipes scroll the page and the map moves with it. A click or tap (which also does its action), two fingers,
  * a double click, the middle button or a control wakes it: then the wheel zooms and dragging pans.
  * It falls asleep again on Escape, a click outside, scrolling it off the screen or the order button.
+ * A finger dragging the awake map past its edge stretches it a little and then scrolls the page instead
+ * (the map then falls asleep); swipes keep their momentum.
  * Ctrl + wheel (and a touchpad pinch) zooms always. Zoom and position are kept while asleep.
  *
  * A tap on a table (or on a seat too small to hit) zooms to that table, a tap on a seat big enough chooses it.
@@ -204,11 +215,14 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
     }
   };
 
+  /** A view kept within the hall's edges on this screen. */
+  const fit = (element: SVGSVGElement, box: Box, hallBox: Box) => clampView(box, hallBox, element.clientWidth, element.clientHeight);
+
   const zoomBy = (factor: number) => {
     if (svg && view.current && hall.current) {
       const v = view.current;
       table.current = null;
-      animateTo(zoomAround(v, factor, v.x + v.width / 2, v.y + v.height / 2, hall.current));
+      animateTo(fit(svg, zoomAround(v, factor, v.x + v.width / 2, v.y + v.height / 2, hall.current), hall.current));
     }
   };
 
@@ -225,6 +239,12 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
     }
     const pointers = new Map<number, { x: number; y: number; type: string }>();
     let travelled = 0;
+    /** Finger drag past the map's edge (px, + = the page would scroll down) and whether the page took over. */
+    let overscroll = 0;
+    let handedOff = false;
+    /** Speed of the dragged content (px/ms, + = content moves up/left) for the momentum. */
+    let speed = { x: 0, y: 0, time: 0 };
+    let glide = 0;
 
     const wake = () => {
       if (!current.current.awake) {
@@ -243,6 +263,96 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
       table.current = null;
       show(svg, box);
     };
+
+    /** Keeps getting the pointer's moves outside the map; a pointer that is already gone cannot be captured. */
+    const capture = (pointerId: number) => {
+      try {
+        svg.setPointerCapture(pointerId);
+      } catch {
+        // the gesture goes on without the capture
+      }
+    };
+
+    /** The rubber band: the drawing follows the finger a little past the map's edge. */
+    const stretch = (px: number, release = false) => {
+      const style = holder.current?.style;
+      if (style) {
+        style.transition = release ? 'transform 0.25s ease-out' : '';
+        style.transform = px ? `translateY(${(-px * Stretch).toFixed(1)}px)` : '';
+      }
+    };
+
+    /** Content moved by the finger or the mouse (px); a finger past the edge goes on to the page. */
+    const drag = (moveX: number, moveY: number, touch: boolean) => {
+      if (!view.current || !hall.current) {
+        return;
+      }
+      if (handedOff) {
+        window.scrollBy(0, moveY);
+        return;
+      }
+      let restY = moveY;
+      // Back from past the edge: first undo the stretch.
+      if (overscroll !== 0 && Math.sign(moveY) !== Math.sign(overscroll)) {
+        const back = Math.sign(moveY) * Math.min(Math.abs(moveY), Math.abs(overscroll));
+        overscroll += back;
+        restY -= back;
+        stretch(overscroll);
+      }
+      const scale = unitsPerPixel(view.current, svg.clientWidth, svg.clientHeight);
+      const pan = panWithin(view.current, moveX * scale, restY * scale, hall.current, svg.clientWidth, svg.clientHeight);
+      moved(pan.view);
+      // Rounding leaves tiny rests far from the edge.
+      const pastEdge = Math.abs(pan.restY / scale) < 0.5 ? 0 : pan.restY / scale;
+      if (!touch || pastEdge === 0) {
+        return;
+      }
+      overscroll += pastEdge;
+      if (Math.abs(overscroll) > HandOffPx) {
+        handedOff = true;
+        window.scrollBy(0, overscroll - Math.sign(overscroll) * HandOffPx);
+        overscroll = 0;
+        stretch(0, true);
+      } else {
+        stretch(overscroll);
+      }
+    };
+
+    /** Momentum after a swipe; step returns false once nothing moves any more. */
+    const coast = (step: (x: number, y: number) => boolean) => {
+      let { x, y } = speed;
+      if (performance.now() - speed.time > RestMs || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+      let last = performance.now();
+      const frame = (now: number) => {
+        const dt = Math.min(32, now - last);
+        last = now;
+        const keep = Friction ** (dt / 16);
+        x *= keep;
+        y *= keep;
+        if (Math.hypot(x, y) >= StopSpeed && step(x * dt, y * dt)) {
+          glide = requestAnimationFrame(frame);
+        }
+      };
+      glide = requestAnimationFrame(frame);
+    };
+    const coastMap = () =>
+      coast((x, y) => {
+        if (!view.current || !hall.current) {
+          return false;
+        }
+        const scale = unitsPerPixel(view.current, svg.clientWidth, svg.clientHeight);
+        const pan = panWithin(view.current, x * scale, y * scale, hall.current, svg.clientWidth, svg.clientHeight);
+        moved(pan.view);
+        return Math.abs(pan.restX) < Math.abs(x * scale) || Math.abs(pan.restY) < Math.abs(y * scale);
+      });
+    const coastPage = () =>
+      coast((_, y) => {
+        const before = window.scrollY;
+        window.scrollBy(0, y);
+        return window.scrollY !== before;
+      });
 
     const onClick = (event: MouseEvent) => {
       if (travelled > DragPx) {
@@ -268,7 +378,7 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
         wake();
         const point = clientToPlan(svg, event.clientX, event.clientY);
         table.current = null;
-        animateTo(zoomAround(view.current, 2, point.x, point.y, hall.current));
+        animateTo(fit(svg, zoomAround(view.current, 2, point.x, point.y, hall.current), hall.current));
       }
     };
 
@@ -330,8 +440,12 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
         wake();
         return;
       }
+      cancelAnimationFrame(glide);
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, type: event.pointerType });
       travelled = 0;
+      overscroll = 0;
+      handedOff = false;
+      speed = { x: 0, y: 0, time: 0 };
       if (pointers.size === 2) {
         wake();
       }
@@ -348,9 +462,11 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
         // Asleep, a finger belongs to the page; the mouse may drag the map (it wakes it).
         if (travelled > DragPx && (current.current.awake || last.type === 'mouse')) {
           wake();
-          svg.setPointerCapture(event.pointerId);
-          const scale = unitsPerPixel(view.current, svg.clientWidth, svg.clientHeight);
-          moved(panBy(view.current, -dx * scale, -dy * scale, hall.current));
+          capture(event.pointerId);
+          drag(-dx, -dy, last.type !== 'mouse');
+          const now = performance.now();
+          const dt = Math.max(1, now - (speed.time || now - 16));
+          speed = { x: 0.2 * speed.x + 0.8 * (-dx / dt), y: 0.2 * speed.y + 0.8 * (-dy / dt), time: now };
         }
       } else if (pointers.size === 2) {
         const [a, b] = [...pointers.entries()].map(([pid, p]) => (pid === event.pointerId ? { x: event.clientX, y: event.clientY } : p));
@@ -359,13 +475,31 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
           const factor = Math.hypot(a.x - b.x, a.y - b.y) / Math.max(1, Math.hypot(oldA.x - oldB.x, oldA.y - oldB.y));
           const middle = clientToPlan(svg, (a.x + b.x) / 2, (a.y + b.y) / 2);
           travelled += DragPx + 1;
-          moved(zoomAround(view.current, factor, middle.x, middle.y, hall.current));
+          moved(fit(svg, zoomAround(view.current, factor, middle.x, middle.y, hall.current), hall.current));
         }
       }
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, type: last.type });
     };
     const onPointerUp = (event: PointerEvent) => {
+      const single = pointers.size === 1 && pointers.has(event.pointerId);
       pointers.delete(event.pointerId);
+      if (!single || travelled <= DragPx) {
+        return;
+      }
+      const lifted = event.type === 'pointerup';
+      if (handedOff) {
+        // The page took the gesture over: the map sleeps, the page keeps the swipe's momentum.
+        current.current.onAwake(false);
+        if (lifted) {
+          coastPage();
+        }
+      } else if (overscroll !== 0) {
+        stretch(0, true);
+      } else if (lifted) {
+        coastMap();
+      }
+      overscroll = 0;
+      handedOff = false;
     };
     // Asleep, the wheel scrolls the page; awake (or with Ctrl, which a touchpad pinch sends too) it zooms.
     const onWheel = (event: WheelEvent) => {
@@ -374,8 +508,9 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
       }
       event.preventDefault();
       const point = clientToPlan(svg, event.clientX, event.clientY);
-      const speed = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 0.05 : event.ctrlKey ? 0.01 : 0.002;
-      moved(zoomAround(view.current, Math.exp(-event.deltaY * speed), point.x, point.y, hall.current));
+      const rate = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 0.05 : event.ctrlKey ? 0.01 : 0.002;
+      cancelAnimationFrame(glide);
+      moved(fit(svg, zoomAround(view.current, Math.exp(-event.deltaY * rate), point.x, point.y, hall.current), hall.current));
     };
 
     svg.addEventListener('click', onClick);
