@@ -413,7 +413,7 @@ function Assert-BuildTools {
 
 # Paths are relative to src/ (callers run from there).
 function Get-BunBuildArgs([switch]$Watch) {
-    $a = @('build', 'assets/ts/front.tsx', '--outdir', 'www/build', '--target', 'browser',
+    $a = @('build', 'assets/ts/front.tsx', 'assets/ts/check.tsx', '--outdir', 'www/build', '--target', 'browser',
         '--format', 'esm', '--minify', '--sourcemap=linked')
     if ($Watch) { $a += '--watch' }
     return $a
@@ -526,7 +526,12 @@ require $www . '/index.php';
             @{ Path = '/admin/sign/in'; Status = 200; Forbid = 'tracy-debug' },
             @{ Path = '/cron/payments'; Status = 404 },
             @{ Path = '/tester/00000000000000000000000000000000'; Status = 404 },
-            @{ Path = '/vip/00000000000000000000000000000000'; Status = 404 }
+            @{ Path = '/vip/00000000000000000000000000000000'; Status = 404 },
+            @{ Path = '/vstupenka/A3F09C/00000000000000000000000000000000'; Status = 404 },
+            @{ Path = '/admin/kontrola/A3F09C'; Status = 302; Expect = '/admin/sign/in' },
+            @{ Path = '/admin/kontrola/api/lookup?code=A3F09C'; Status = 401 },
+            @{ Path = '/build/check.js'; Status = 200 },
+            @{ Path = '/kontrola.webmanifest'; Status = 200 }
         )
 
         Invoke-DbSql "UPDATE settings SET value = 'public' WHERE name = 'site_mode'" $ReleaseDbName | Out-Null

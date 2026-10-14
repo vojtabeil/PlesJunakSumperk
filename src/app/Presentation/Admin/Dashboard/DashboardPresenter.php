@@ -11,6 +11,7 @@ use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
 use App\Model\Reservation\SeatOverview;
 use App\Model\Settings\Settings;
+use App\Model\Ticket\TicketCheck;
 use App\Presentation\Admin\Accessory\ImportPaymentsForm;
 use App\Presentation\Admin\Accessory\PieChart;
 use App\Presentation\Admin\BasePresenter;
@@ -43,6 +44,7 @@ final class DashboardPresenter extends BasePresenter
 		private readonly PaymentRepository $payments,
 		private readonly PaymentImporter $importer,
 		private readonly ReservationMailer $mailer,
+		private readonly TicketCheck $ticketCheck,
 	) {
 		parent::__construct();
 	}
@@ -57,6 +59,7 @@ final class DashboardPresenter extends BasePresenter
 
 		$t = $this->template;
 		$t->stats = $stats;
+		$t->entrance = $this->ticketCheck->entranceStats();
 		$t->siteMode = $this->settings->mode();
 		$t->seatCounts = $counts;
 		$t->slices = PieChart::slices($counts);

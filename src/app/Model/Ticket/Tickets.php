@@ -81,13 +81,24 @@ final class Tickets
 
 
 	/**
-	 * The ticket behind a public print link, or null when the code or the token is wrong.
+	 * The ticket behind a public print link with its reservation (reservation_name, reservation_status,
+	 * remaining in CZK), or null when the code or the token is wrong.
 	 * @return array<string, mixed>|null
 	 */
 	public function findForPrint(string $code, string $printToken): ?array
 	{
 		$ticket = $this->findByCode($code);
-		return $ticket !== null && hash_equals((string) $ticket['print_token'], $printToken) ? $ticket : null;
+		if ($ticket === null || !hash_equals((string) $ticket['print_token'], $printToken)) {
+			return null;
+		}
+		$stmt = $this->db->prepare('SELECT name, status, total_price, paid_amount FROM reservations WHERE id = ?');
+		$stmt->execute([$ticket['reservation_id']]);
+		$reservation = $stmt->fetch();
+		return $ticket + [
+			'reservation_name' => (string) $reservation['name'],
+			'reservation_status' => (string) $reservation['status'],
+			'remaining' => max(0, (int) $reservation['total_price'] - (int) round((float) $reservation['paid_amount'])),
+		];
 	}
 
 

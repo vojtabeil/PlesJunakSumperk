@@ -6,6 +6,8 @@ namespace App\Presentation\Front\Reservation;
 
 use App\Model\Payment\QrPayment;
 use App\Model\Reservation\ReservationService;
+use App\Model\Ticket\TicketLinks;
+use App\Model\Ticket\Tickets;
 use App\Presentation\Front\BasePresenter;
 
 
@@ -20,6 +22,8 @@ final class ReservationPresenter extends BasePresenter
 	public function __construct(
 		private readonly ReservationService $reservations,
 		private readonly QrPayment $qrPayment,
+		private readonly Tickets $tickets,
+		private readonly TicketLinks $ticketLinks,
 	) {
 		parent::__construct();
 	}
@@ -40,5 +44,14 @@ final class ReservationPresenter extends BasePresenter
 			? $this->qrPayment->pngDataUri($this->qrPayment->forReservation($reservation, $this->settings->get('event_name', 'Skautský ples')))
 			: null;
 		$t->overdue = $open && $reservation['due_on'] !== null && $reservation['due_on'] < new \DateTimeImmutable('today');
+		// Tickets are given out once the reservation is paid.
+		$t->tickets = $reservation['status'] === 'paid'
+			? array_map(fn(array $ticket): array => [
+				'code' => (string) $ticket['code'],
+				'seat' => $ticket['seat_label'] !== null ? (string) $ticket['seat_label'] : null,
+				'link' => $this->ticketLinks->printUrl((string) $ticket['code'], (string) $ticket['print_token']),
+				'used' => $ticket['used_at'] !== null,
+			], $this->tickets->forReservation($id))
+			: [];
 	}
 }

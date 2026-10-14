@@ -1,0 +1,15 @@
+{* Tickets with QR codes and print links (included by the payment e-mail and the tickets e-mail). *}
+{varType list $tickets}
+<p>Na vstupu ukažte QR kód vstupenky – vytištěný, nebo na mobilu. Každá vstupenka platí pro jeden vstup.</p>
+<table style="border-collapse:collapse;width:100%;margin:8px 0 16px">
+	<tr n:foreach="$tickets as $t">
+		<td style="padding:8px 12px 8px 0;border-top:1px solid #ddd5c6;vertical-align:middle;width:140px">
+			<img src="cid:{$t['cid']}" alt="QR kód vstupenky {$t['code']}" width="130" height="130" style="display:block">
+		</td>
+		<td style="padding:8px 0;border-top:1px solid #ddd5c6;vertical-align:middle">
+			<strong>{if $t['seat'] !== null}{$t['seat']|seatLabel|firstUpper}{else}Bez místenky (na stání){/if}</strong><br>
+			Kód vstupenky: <strong style="font-family:Consolas,monospace;letter-spacing:2px">{$t['code']}</strong><br>
+			<a href="{$t['link']}" style="color:#287234">Vstupenka k vytištění</a>
+		</td>
+	</tr>
+</table>

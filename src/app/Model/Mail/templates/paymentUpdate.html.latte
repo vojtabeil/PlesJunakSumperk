@@ -6,13 +6,14 @@
 {varType int $paid}
 {varType int $remaining}
 {varType bool $complete}
+{varType list $tickets}
 
 {block content}
 <p>Dobrý den,</p>
 {if $complete}
 	<p>platbu za rezervaci č. <strong>{$reservation['id']}</strong> jsme přijali, děkujeme. Vaše lístky jsou zaplacené.</p>
 	<p>Kdy: <strong>{$settings['event_date'] ?? ''}</strong><br>Kde: <strong>{$settings['venue'] ?? ''}</strong></p>
-	<p>Lístky se netisknou – na vstupu vás najdeme na seznamu hostů.</p>
+	{if $tickets}{include '@tickets.html.latte'}{/if}
 {else}
 	<p>k rezervaci č. <strong>{$reservation['id']}</strong> jsme přijali platbu, celkem zatím <strong>{$paid|price}</strong>
 		z <strong>{(int) $reservation['total_price']|price}</strong>.</p>

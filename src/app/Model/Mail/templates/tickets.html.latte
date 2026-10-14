@@ -1,0 +1,12 @@
+{layout '@layout.html.latte'}
+{varType array $reservation}
+{varType array $settings}
+{varType string $link}
+{varType list $tickets}
+
+{block content}
+<p>Dobrý den,</p>
+<p>posíláme vstupenky k rezervaci č. <strong>{$reservation['id']}</strong>.</p>
+<p>Kdy: <strong>{$settings['event_date'] ?? ''}</strong><br>Kde: <strong>{$settings['venue'] ?? ''}</strong></p>
+{include '@tickets.html.latte'}
+{/block}

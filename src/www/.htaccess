@@ -2,6 +2,9 @@
 
 Options -Indexes
 
+# Manifest of the entrance check app (installable on a phone).
+AddType application/manifest+json .webmanifest
+
 <IfModule mod_rewrite.c>
 	RewriteEngine On
 

@@ -14,7 +14,7 @@ final class GuestListCsv
 	/** @param list<array<string, mixed>> $rows from ReservationAdmin::guestList() */
 	public static function build(array $rows): string
 	{
-		$lines = [self::line(['Číslo', 'Jméno', 'E-mail', 'Telefon', 'Místa', 'Počet míst', 'Bez místenky', 'Cena', 'Zaplaceno Kč', 'Stav', 'Zaplaceno dne', 'Poznámka'])];
+		$lines = [self::line(['Číslo', 'Jméno', 'E-mail', 'Telefon', 'Místa', 'Počet míst', 'Bez místenky', 'Cena', 'Zaplaceno Kč', 'Stav', 'Zaplaceno dne', 'Vstup (použité vstupenky)', 'Poznámka'])];
 		foreach ($rows as $row) {
 			$lines[] = self::line([
 				$row['id'],
@@ -28,6 +28,7 @@ final class GuestListCsv
 				(int) $row['paid_amount'],
 				self::StatusLabels[$row['status']] ?? $row['status'],
 				$row['paid_at'] ?? '',
+				$row['used_tickets'],
 				$row['note'] ?? '',
 			]);
 		}

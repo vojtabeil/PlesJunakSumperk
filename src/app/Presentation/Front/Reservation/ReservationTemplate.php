@@ -24,4 +24,7 @@ final class ReservationTemplate extends BaseTemplate
 
 	/** Not paid after the due date. */
 	public bool $overdue;
+
+	/** @var list<array{code: string, seat: ?string, link: string, used: bool}> tickets of a paid reservation */
+	public array $tickets;
 }

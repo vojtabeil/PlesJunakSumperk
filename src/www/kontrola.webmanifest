@@ -1,0 +1,14 @@
+{
+  "name": "Kontrola vstupenek – Skautský ples",
+  "short_name": "Kontrola",
+  "lang": "cs",
+  "start_url": "/admin/kontrola",
+  "scope": "/admin/kontrola",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1d1d1b",
+  "theme_color": "#287234",
+  "icons": [
+    { "src": "/img/icons/organizer.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

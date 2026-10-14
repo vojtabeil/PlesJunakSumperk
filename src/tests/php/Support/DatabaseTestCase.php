@@ -15,6 +15,7 @@ use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
 use App\Model\Settings\Settings;
 use App\Model\Ticket\TicketCheck;
+use App\Model\Ticket\TicketLinks;
 use App\Model\Ticket\Tickets;
 use Nette\Application\LinkGenerator;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
@@ -115,6 +116,8 @@ abstract class DatabaseTestCase extends TestCase
 			$this->service(LinkGenerator::class),
 			$logger,
 			$this->eventLog(),
+			$this->tickets(),
+			new TicketLinks($this->service(LinkGenerator::class)),
 		);
 	}
 

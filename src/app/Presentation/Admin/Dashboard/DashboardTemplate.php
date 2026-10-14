@@ -39,4 +39,7 @@ final class DashboardTemplate extends BaseTemplate
 	public ?\DateTimeImmutable $lastImportAt;
 
 	public bool $importOverdue;
+
+	/** @var array{used: int, total: int} tickets used at the entrance */
+	public array $entrance;
 }

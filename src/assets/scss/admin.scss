@@ -969,3 +969,13 @@ h3 {
     color: var(--text);
   }
 }
+
+// Tickets (reservation detail) and the entrance line of the dashboard.
+.ticket-code {
+  font-family: ui-monospace, Consolas, monospace;
+  letter-spacing: 0.08em;
+}
+
+.entrance-line {
+  margin: 0.25rem 0 0;
+}

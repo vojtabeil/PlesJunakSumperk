@@ -10,6 +10,8 @@ use App\Model\Payment\QrPayment;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
 use App\Model\Settings\Settings;
+use App\Model\Ticket\TicketLinks;
+use App\Model\Ticket\Tickets;
 use Nette\Application\LinkGenerator;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use RuntimeException;
@@ -37,6 +39,8 @@ final class ReservationMailer
 		private readonly LinkGenerator $linkGenerator,
 		private readonly ILogger $logger,
 		private readonly EventLog $eventLog,
+		private readonly Tickets $tickets,
+		private readonly TicketLinks $ticketLinks,
 	) {
 	}
 
@@ -77,15 +81,18 @@ final class ReservationMailer
 	}
 
 
-	/** "Payment received" or "partial payment, please pay the rest". */
+	/** "Payment received" with the tickets, or "partial payment, please pay the rest". */
 	public function sendPaymentUpdate(PaymentChange $change): bool
 	{
 		try {
 			$reservation = $this->load($change->reservationId);
+			$complete = $change->newStatus === 'paid';
+			[$tickets, $images] = $complete ? $this->ticketViews($change->reservationId) : [[], []];
 			$params = $this->params($reservation) + [
 				'paid' => intdiv($change->paidHalers, 100),
 				'remaining' => intdiv(max(0, $change->totalHalers - $change->paidHalers), 100),
-				'complete' => $change->newStatus === 'paid',
+				'complete' => $complete,
+				'tickets' => $tickets,
 			];
 			$this->sender->send(new MailMessage(
 				to: $reservation['email'],
@@ -97,8 +104,12 @@ final class ReservationMailer
 				),
 				html: $this->render('paymentUpdate.html.latte', $params),
 				text: $this->render('paymentUpdate.txt.latte', $params),
+				inlineImages: $images,
 			));
 			$this->eventLog->record('email.payment_sent', $change->reservationId, ['to' => $reservation['email']], automatic: true);
+			if ($tickets) {
+				$this->eventLog->record('email.tickets_sent', $change->reservationId, ['to' => $reservation['email']], automatic: true);
+			}
 			return true;
 		} catch (Throwable $e) {
 			$this->logger->log("Payment e-mail for reservation $change->reservationId failed: {$e->getMessage()}", ILogger::WARNING);
@@ -138,6 +149,36 @@ final class ReservationMailer
 	}
 
 
+	/**
+	 * The tickets of a paid reservation (QR codes and print links). Sent by hand from the administration:
+	 * after marking a reservation paid in cash, or again on request.
+	 */
+	public function sendTickets(int $reservationId): bool
+	{
+		try {
+			$reservation = $this->load($reservationId);
+			if ($reservation['status'] !== 'paid') {
+				throw new RuntimeException('Vstupenky se posílají až po zaplacení rezervace.');
+			}
+			[$tickets, $images] = $this->ticketViews($reservationId);
+			$params = $this->params($reservation) + ['tickets' => $tickets];
+			$this->sender->send(new MailMessage(
+				to: $reservation['email'],
+				subject: sprintf('Vstupenky – rezervace č. %d – %s', $reservationId, $this->eventName()),
+				html: $this->render('tickets.html.latte', $params),
+				text: $this->render('tickets.txt.latte', $params),
+				inlineImages: $images,
+			));
+			$this->eventLog->record('email.tickets_sent', $reservationId, ['to' => $reservation['email']], automatic: true);
+			return true;
+		} catch (Throwable $e) {
+			$this->logger->log("Tickets e-mail for reservation $reservationId failed: {$e->getMessage()}", ILogger::WARNING);
+			$this->logFailure('email.tickets_failed', $reservationId, $e);
+			return false;
+		}
+	}
+
+
 	/** URL of the page "Moje rezervace". */
 	public function reservationLink(int $id, string $token): string
 	{
@@ -160,6 +201,28 @@ final class ReservationMailer
 	{
 		return $this->reservations->findFinished($reservationId)
 			?? throw new RuntimeException("Reservation $reservationId not found.");
+	}
+
+
+	/**
+	 * Tickets for the e-mail templates and their QR codes as inline images (content id => PNG).
+	 * @return array{list<array{code: string, seat: ?string, link: string, cid: string}>, array<string, string>}
+	 */
+	private function ticketViews(int $reservationId): array
+	{
+		$views = $images = [];
+		foreach ($this->tickets->forReservation($reservationId) as $ticket) {
+			$code = (string) $ticket['code'];
+			$cid = "ticket-$code";
+			$views[] = [
+				'code' => $code,
+				'seat' => $ticket['seat_label'] !== null ? (string) $ticket['seat_label'] : null,
+				'link' => $this->ticketLinks->printUrl($code, (string) $ticket['print_token']),
+				'cid' => $cid,
+			];
+			$images[$cid] = $this->ticketLinks->png($code);
+		}
+		return [$views, $images];
 	}
 
 

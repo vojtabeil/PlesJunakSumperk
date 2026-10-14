@@ -40,6 +40,10 @@
 			Lístky bez místenky: {$stats['standing']} z {$stats['standing_capacity']} ·
 			Zaplaceno {$stats['paid_amount']|price} · čeká na platbu {$stats['unpaid_amount']|price}
 		</p>
+		<p n:if="$entrance['total']" class="entrance-line">
+			Na plese: <strong>{$entrance['used']}</strong> z {$entrance['total']} vstupenek ·
+			<a n:href="Check:default">Kontrola vstupenek</a>
+		</p>
 	</section>
 
 	{* What needs attention *}

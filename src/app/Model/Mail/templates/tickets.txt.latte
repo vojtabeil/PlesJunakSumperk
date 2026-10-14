@@ -1,0 +1,14 @@
+{contentType text}
+{varType array $reservation}
+{varType array $settings}
+{varType string $link}
+{varType list $tickets}
+Dobrý den,
+
+posíláme vstupenky k rezervaci č. {$reservation['id']}.
+
+Kdy: {$settings['event_date'] ?? ''}
+Kde: {$settings['venue'] ?? ''}
+
+{include '@tickets.txt.latte'}
+{include '@footer.txt.latte'}

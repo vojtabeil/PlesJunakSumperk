@@ -58,7 +58,22 @@
 		<dt>Cena</dt><dd>{(int) $r['total_price']|price}</dd>
 		<dt>Zaplaceno</dt><dd>{(int) $r['paid_amount']|price}</dd>
 	</dl>
-	<p class="prices">Lístky se netisknou – na vstupu vás najdeme na seznamu hostů. Tuto stránku si můžete uložit, odkaz je i v e-mailu.</p>
+	{if $tickets}
+		<h3>Vstupenky</h3>
+		<p>Na vstupu ukažte QR kód vstupenky – vytištěný, nebo na mobilu. Vstupenky jsme poslali i e-mailem.</p>
+		<ul class="ticket-list">
+			<li n:foreach="$tickets as $ticket">
+				<span n:class="$ticket['used'] ? 'ticket-used'">
+					{if $ticket['seat'] !== null}{$ticket['seat']|seatLabel|firstUpper}{else}Bez místenky (na stání){/if}
+					· <span class="ticket-list-code">{$ticket['code']}</span>
+					{if $ticket['used']}(použita){/if}
+				</span>
+				<a href="{$ticket['link']}">Vstupenka k vytištění</a>
+			</li>
+		</ul>
+	{elseif $r['status'] !== 'cancelled'}
+		<p class="prices">Vstupenky s QR kódy pošleme e-mailem, jakmile dorazí platba. Tuto stránku si můžete uložit, odkaz je i v e-mailu.</p>
+	{/if}
 
 	<p><a class="button" n:href="Home:default">Na úvodní stránku</a></p>
 </section>

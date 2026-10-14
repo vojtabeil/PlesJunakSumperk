@@ -7,6 +7,7 @@ namespace App\Tests\Model\Mail;
 use App\Model\Mail\MailMessage;
 use App\Model\Mail\MailSender;
 use App\Model\Mail\ReservationMailer;
+use App\Model\Payment\PaymentChange;
 use App\Tests\Support\DatabaseTestCase;
 use App\Tests\Support\RecordingMailSender;
 use RuntimeException;
@@ -81,6 +82,52 @@ final class ReservationMailerTest extends DatabaseTestCase
 		self::assertStringContainsString("600\u{A0}Kč", $sender->sent[0]->text);
 		self::assertSame([], $admin->toRemind(), 'Reminded now: not again before another payment period');
 		self::assertContains('email.reminder_sent', $this->loggedActions());
+	}
+
+
+	public function testTicketsAreSentOnlyForAPaidReservation(): void
+	{
+		$id = $this->confirmedReservation();
+		$sender = new RecordingMailSender;
+		self::assertFalse($this->mailerFor($sender)->sendTickets($id), 'Unpaid: no tickets yet');
+		self::assertSame([], $sender->sent);
+		self::assertContains('email.tickets_failed', $this->loggedActions());
+
+		$this->reservationAdmin()->markPaid($id);
+		$sender = new RecordingMailSender;
+		self::assertTrue($this->mailerFor($sender)->sendTickets($id));
+
+		$message = $sender->sent[0];
+		self::assertSame("Vstupenky – rezervace č. $id – Testovací ples", $message->subject);
+		$tickets = $this->tickets()->forReservation($id);
+		self::assertCount(2, $tickets);
+		foreach ($tickets as $ticket) {
+			$code = $ticket['code'];
+			self::assertStringContainsString("cid:ticket-$code", $message->html);
+			self::assertStringStartsWith("\x89PNG", $message->inlineImages["ticket-$code"] ?? '');
+			self::assertStringContainsString("/vstupenka/$code/{$ticket['print_token']}", $message->text);
+		}
+		self::assertStringContainsString('Stůl 1, místo 1', $message->text);
+		self::assertStringContainsString('Bez místenky (na stání)', $message->text);
+		self::assertContains('email.tickets_sent', $this->loggedActions());
+	}
+
+
+	public function testFullPaymentEmailCarriesTheTickets(): void
+	{
+		$id = $this->confirmedReservation();
+		$sender = new RecordingMailSender;
+		$mailer = $this->mailerFor($sender);
+
+		$this->db->exec("UPDATE reservations SET status = 'partially_paid', paid_amount = 300 WHERE id = $id");
+		self::assertTrue($mailer->sendPaymentUpdate(new PaymentChange($id, 'confirmed', 'partially_paid', 30000, 60000)));
+		self::assertSame([], $sender->sent[0]->inlineImages, 'A partial payment has no tickets');
+
+		$this->db->exec("UPDATE reservations SET status = 'paid', paid_amount = 600 WHERE id = $id");
+		self::assertTrue($mailer->sendPaymentUpdate(new PaymentChange($id, 'partially_paid', 'paid', 60000, 60000)));
+		self::assertCount(2, $sender->sent[1]->inlineImages);
+		self::assertStringContainsString('/vstupenka/', $sender->sent[1]->html);
+		self::assertContains('email.tickets_sent', $this->loggedActions());
 	}
 
 

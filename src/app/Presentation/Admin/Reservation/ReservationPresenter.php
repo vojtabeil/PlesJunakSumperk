@@ -9,6 +9,8 @@ use App\Model\Payment\PaymentRepository;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationError;
 use App\Model\Reservation\ReservationService;
+use App\Model\Ticket\TicketLinks;
+use App\Model\Ticket\Tickets;
 use App\Presentation\Accessory\TemplateExtension;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\Attributes\Persistent;
@@ -37,6 +39,8 @@ final class ReservationPresenter extends BasePresenter
 		private readonly ReservationMailer $mailer,
 		private readonly PaymentRepository $payments,
 		private readonly ReservationService $reservations,
+		private readonly Tickets $tickets,
+		private readonly TicketLinks $ticketLinks,
 	) {
 		parent::__construct();
 	}
@@ -65,6 +69,9 @@ final class ReservationPresenter extends BasePresenter
 		$this->template->dueOn = $this->reservation['confirmed_at'] !== null
 			? $this->reservations->dueDate(new \DateTimeImmutable((string) $this->reservation['confirmed_at']))
 			: null;
+		$this->template->tickets = array_map(fn(array $ticket): array => $ticket + [
+			'print_link' => $this->ticketLinks->printUrl((string) $ticket['code'], (string) $ticket['print_token']),
+		], $this->tickets->forReservation((int) $this->reservation['id']));
 	}
 
 
@@ -93,7 +100,9 @@ final class ReservationPresenter extends BasePresenter
 	{
 		return $this->createSimpleForm('Označit jako zaplacené (hotově)', function (int $id): string {
 			$this->reservationAdmin->markPaid($id);
-			return 'Rezervace je označená jako zaplacená.';
+			return $this->mailer->sendTickets($id)
+				? 'Rezervace je označená jako zaplacená a hostovi odešly vstupenky.'
+				: 'Rezervace je označená jako zaplacená, ale vstupenky se nepodařilo odeslat (viz Historie).';
 		});
 	}
 
@@ -124,6 +133,17 @@ final class ReservationPresenter extends BasePresenter
 				throw new ReservationError('E-mail se nepodařilo odeslat, chyba je uložená u rezervace.');
 			}
 			return 'Potvrzovací e-mail byl odeslán.';
+		});
+	}
+
+
+	protected function createComponentSendTicketsForm(): Form
+	{
+		return $this->createSimpleForm('Poslat vstupenky znovu', function (int $id): string {
+			if (!$this->mailer->sendTickets($id)) {
+				throw new ReservationError('Vstupenky se nepodařilo odeslat (viz Historie).');
+			}
+			return 'Vstupenky byly odeslány.';
 		});
 	}
 

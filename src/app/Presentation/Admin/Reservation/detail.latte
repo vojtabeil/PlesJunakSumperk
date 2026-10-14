@@ -63,6 +63,7 @@
 		<div class="actions">
 			{if $open}{control markPaidForm}{/if}
 			{if $open && $r['email_sent_at']}{control remindForm}{/if}
+			{if $r['status'] === 'paid' && $tickets}{control sendTicketsForm}{/if}
 			{if $r['status'] !== 'draft' && $r['status'] !== 'cancelled'}{control resendForm}{/if}
 			{if $r['status'] !== 'cancelled'}
 				<div class="danger-zone">{control cancelForm}</div>
@@ -71,6 +72,25 @@
 		{control noteForm}
 	</section>
 </div>
+
+<section class="card" n:if="$tickets">
+	<div class="page-head">
+		<h2>Vstupenky</h2>
+		<a n:href="Check:default">kontrola vstupenek</a>
+	</div>
+	<p n:if="$r['status'] !== 'paid'" class="muted">Host dostane vstupenky e-mailem, až bude rezervace zaplacená.</p>
+	<ul class="activity">
+		<li n:foreach="$tickets as $ticket">
+			<strong class="ticket-code">{$ticket['code']}</strong>
+			{if $ticket['seat_label'] !== null}{$ticket['seat_label']|seatLabel}{else}bez místenky{/if}
+			–
+			{if $ticket['used_at']}
+				<strong>vstup {$ticket['used_at']|date:'j. n. Y H:i'}</strong>{if $ticket['used_by_name']} ({$ticket['used_by_name']}){/if}
+			{else}nepoužita{/if}
+			· <a href="{$ticket['print_link']}" target="_blank">k vytištění</a>
+		</li>
+	</ul>
+</section>
 
 <section class="card">
 	<h2>Platby z banky</h2>

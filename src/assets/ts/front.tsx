@@ -1,8 +1,9 @@
 // Entry point of the public pages: mounts the seat picker island into #seat-picker and
-// enables the "kopírovat" buttons of the payment details.
+// enables the "kopírovat" buttons of the payment details and the "Vytisknout" buttons of tickets.
 
 import { render } from 'preact';
 import { initCopyButtons } from './copy';
+import { initPrintButtons } from './print';
 import { createApi } from './seat-picker/api';
 import { App } from './seat-picker/components/App';
 import { createStore } from './seat-picker/store';
@@ -22,3 +23,4 @@ if (container && dataElement?.textContent) {
 }
 
 initCopyButtons();
+initPrintButtons();

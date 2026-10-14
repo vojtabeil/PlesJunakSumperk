@@ -27,4 +27,7 @@ final class ReservationTemplate extends BaseTemplate
 	public ?string $customerLink;
 
 	public ?\DateTimeImmutable $dueOn;
+
+	/** @var list<array<string, mixed>> tickets (Tickets::forReservation) with print_link */
+	public array $tickets;
 }

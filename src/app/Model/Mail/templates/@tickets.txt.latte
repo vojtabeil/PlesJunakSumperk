@@ -1,0 +1,9 @@
+{contentType text}
+{varType list $tickets}
+Na vstupu ukažte QR kód vstupenky – vytištěný, nebo na mobilu. Každá vstupenka platí pro jeden vstup.
+
+{foreach $tickets as $t}
+{if $t['seat'] !== null}{$t['seat']|seatLabel|firstUpper}{else}Bez místenky (na stání){/if} – kód {$t['code']}
+Vstupenka k vytištění: {$t['link']}
+
+{/foreach}
