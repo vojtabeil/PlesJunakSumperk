@@ -14,13 +14,14 @@ INSERT INTO settings (name, value) VALUES
     ('page_after', '<h2>Děkujeme, že jste přišli!</h2>\n<p>Ples skončil a my děkujeme všem hostům, kapele i pomocníkům. Těšíme se na vás zase příští rok.</p>'),
     ('event_name', 'Šumperský skautský ples'),
     ('event_intro', 'Šumperští skauti si vás dovolují pozvat do víru tance a zábavy. Chybět nebude ani tradičně vynikající občerstvení, klasická i skautská tombola a bohatý program.'),
-    ('event_day', ''),
+    -- Date of the ball (YYYY-MM-DD) and its start (HH:MM, empty = not shown).
+    ('event_day', '2027-02-06'),
     ('event_time', ''),
-    ('venue', 'Kulturní dům, Nový Malín'),
-    ('venue_url', 'https://maps.app.goo.gl/aJU2PTvT3JSvg51V9'),
+    ('venue', 'Kulturní dům Rapotín'),
+    ('venue_url', 'https://mapy.com/s/bemakumuna'),
     ('band', 'Lucky Band'),
     ('band_url', 'https://www.luckyband.cz/'),
-    ('organizer', ''),
+    ('organizer', 'Lukáš Rozsíval'),
     ('bank_account', '2501895120/2010'),
     -- Days to pay after the reservation (shown to visitors, in the QR code, overdue in the admin).
     ('payment_days', '2'),
@@ -28,7 +29,8 @@ INSERT INTO settings (name, value) VALUES
     ('contact_phone', ''),
     ('payment_vs_prefix', '2026'),
     ('max_ticket', '10'),
-    ('hold_seconds', '300'),
+    -- How long the seats a visitor chose stay held for them (15 minutes).
+    ('hold_seconds', '900'),
     ('price_seat', '350'),
     ('price_standing', '250'),
     ('standing_capacity', '50'),

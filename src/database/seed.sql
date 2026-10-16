@@ -1,12 +1,8 @@
 -- Test data for local development (loaded after defaults.sql and the hall plan hall-plan.svg; seats are
 -- looked up by their labels, e.g. A1/1). Never load into production.
--- Event info comes from the recovered 2024 landing page; prices and capacities are made up.
+-- Event info (date, venue, organizer, band) is the real one from defaults.sql; prices and capacities are made up.
 
 UPDATE settings SET value = 'public' WHERE name = 'site_mode';
--- The ball a month from the day the data is loaded (the countdown in the administration shows days left).
-UPDATE settings SET value = DATE_FORMAT(CURDATE() + INTERVAL 30 DAY, '%Y-%m-%d') WHERE name = 'event_day';
-UPDATE settings SET value = '19:00' WHERE name = 'event_time';
-UPDATE settings SET value = 'Tomáš Slavický' WHERE name = 'organizer';
 UPDATE settings SET value = 'ples@example.com' WHERE name = 'contact_email';
 
 INSERT INTO reservations (id, email, name, standing_tickets, status, total_price, confirmed_at) VALUES
