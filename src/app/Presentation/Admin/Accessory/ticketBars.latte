@@ -1,0 +1,52 @@
+{* The three kinds of tickets as stacked bars, darker = further along (TicketBars), on the dashboard and the Statistiky page.
+   The legend of the seats filters the table of all seats on the dashboard.
+   Parameters: $bars, $entrance, $seatsUnavailable, $seatFilter, $headingId *}
+{parameters array $bars, array $entrance, int $seatsUnavailable, ?string $seatFilter = null, string $headingId = 'tickets-title'}
+{var $partLabels = [
+	'paid' => 'Zaplaceno', 'partial' => 'Částečně zaplaceno', 'unpaid' => 'Rezervováno, nezaplaceno', 'held' => 'Právě se vybírá',
+	'picked_up' => 'Vyzvednuto', 'waiting' => 'K vyzvednutí', 'free' => 'Volné', 'unavailable' => 'Mimo prodej',
+]}
+<div class="tickets-head">
+	<h2 id="{$headingId}">Lístky</h2>
+	<p class="tickets-total">
+		<strong>{array_sum(array_column($bars, 'sold'))}</strong> lístků celkem ·
+		na plese <strong>{$entrance['used']}</strong> z {$entrance['total']}
+	</p>
+</div>
+
+<div n:foreach="$bars as $kind => $bar" class="ticket-bar-row">
+	<div class="ticket-bar-head">
+		<h3>{if $kind === 'crew'}<a n:href="Crew:default">{$bar['label']}</a>{else}{$bar['label']}{/if}</h3>
+		<span>
+			<strong>{$bar['sold']}</strong>{if $kind === 'crew'} vydáno{else} z {$bar['total']}{/if}
+			<span class="muted">· na plese {$entrance['kinds'][$kind]['used']}</span>
+		</span>
+	</div>
+	<div class="ticket-bar" role="img"
+		aria-label="{$bar['label']}: {foreach $bar['parts'] as $p}{$partLabels[$p['key']]} {$p['value']}, {/foreach}{if $kind !== 'crew'}volné {$bar['free']}{/if}">
+		{foreach $bar['parts'] as $p}
+			<span n:if="$p['value']" class="ticket-bar-part ticket-bar-part--{$p['key']}" style="width: {$p['percent']|noescape}%"
+				title="{$partLabels[$p['key']]}: {$p['value']}"></span>
+		{/foreach}
+	</div>
+	<ul class="ticket-bar-legend">
+		{foreach $bar['parts'] as $p}
+			<li n:if="$p['value']">
+				<a n:tag-if="$kind === 'seat'" n:href="Dashboard:default#seat-table, seats: $p['key']" n:class="$kind === 'seat' && $seatFilter === $p['key'] ? 'is-current'">
+					<span class="swatch ticket-bar-part--{$p['key']}"></span>{$partLabels[$p['key']]} <strong>{$p['value']}</strong>
+				</a>
+			</li>
+		{/foreach}
+		<li n:if="$kind !== 'crew'">
+			<a n:tag-if="$kind === 'seat'" n:href="Dashboard:default#seat-table, seats: free" n:class="$kind === 'seat' && $seatFilter === 'free' ? 'is-current'">
+				<span class="swatch ticket-bar-part--free"></span>{$partLabels['free']} <strong>{$bar['free']}</strong>
+			</a>
+		</li>
+		<li n:if="$kind === 'seat' && $seatsUnavailable">
+			<a n:href="Dashboard:default#seat-table, seats: unavailable" n:class="$seatFilter === 'unavailable' ? 'is-current'" title="Stoly vyřazené z prodeje (Stoly v prodeji)">
+				<span class="swatch ticket-bar-part--unavailable"></span>{$partLabels['unavailable']} <strong>{$seatsUnavailable}</strong>
+			</a>
+			<a n:href="Tables:default" class="muted">změnit</a>
+		</li>
+	</ul>
+</div>

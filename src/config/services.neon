@@ -52,10 +52,13 @@ services:
 	- App\Model\Payment\PaymentCandidates
 	- App\Model\Payment\PaymentImporter
 	- App\Model\Payment\PaymentRepository
+	- App\Model\Payment\Refunds
+	- App\Model\Stats\SalesStats
 	- App\Model\Payment\QrPayment
 	- App\Model\Payment\VariableSymbol
 
 	- App\Presentation\Accessory\FormFactory
+	- App\Presentation\Admin\Accessory\TicketBars
 	- App\Presentation\Admin\Accessory\AdminApps(debugMode: %debugMode%, mailpitUrl: %mailpit%)
 	- App\Presentation\Front\VisitorGate
 

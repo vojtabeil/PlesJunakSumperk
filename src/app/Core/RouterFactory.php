@@ -22,6 +22,8 @@ final class RouterFactory
 		// Z-lístky (free passes of the crew).
 		$router->addRoute('admin/z-listky[/<action add|edit|print>][/<id \d+>]', 'Admin:Crew:default');
 		$router->addRoute('admin/stoly', 'Admin:Tables:default');
+		$router->addRoute('admin/statistiky/csv/<block [a-z]+>', 'Admin:Statistics:csv');
+		$router->addRoute('admin/statistiky', 'Admin:Statistics:default');
 		$router->withModule('Admin')
 			->addRoute('admin/<presenter=Dashboard>/<action=default>[/<id \d+>]');
 		$router->addRoute('api/<op>', 'Front:Api:default');

@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace App\Presentation\Admin\Reservation;
 
 use App\Model\Mail\ReservationMailer;
+use App\Model\Payment\PaymentError;
 use App\Model\Payment\PaymentRepository;
+use App\Model\Payment\Refunds;
 use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationError;
 use App\Model\Reservation\ReservationService;
+use App\Model\Settings\Settings;
 use App\Model\Ticket\TicketLinks;
 use App\Model\Ticket\Tickets;
 use App\Presentation\Accessory\TemplateExtension;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\Attributes\Persistent;
+use Nette\Application\UI\Multiplier;
 use Nette\Application\UI\Form;
 
 
@@ -50,6 +54,8 @@ final class ReservationPresenter extends BasePresenter
 		private readonly ReservationService $reservations,
 		private readonly Tickets $tickets,
 		private readonly TicketLinks $ticketLinks,
+		private readonly Refunds $refunds,
+		private readonly Settings $settings,
 	) {
 		parent::__construct();
 	}
@@ -86,6 +92,15 @@ final class ReservationPresenter extends BasePresenter
 		$this->template->dueOn = $this->reservation['confirmed_at'] !== null
 			? $this->reservations->dueDate(new \DateTimeImmutable((string) $this->reservation['confirmed_at']))
 			: null;
+		$today = new \DateTimeImmutable('today');
+		$open = in_array($this->reservation['status'], ['confirmed', 'partially_paid'], true);
+		$dueOn = $this->template->dueOn;
+		$this->template->overdueDays = $open && $dueOn !== null && $dueOn < $today ? (int) $dueOn->diff($today)->days : null;
+		$id = (int) $this->reservation['id'];
+		$this->template->refunds = $this->refunds->forReservation($id);
+		$this->template->refundDue = $this->refunds->due($id);
+		$this->template->refundAccounts = array_values(array_unique(array_filter(array_column($this->template->payments, 'counter_account'))));
+		$this->template->eventName = $this->settings->get('event_name');
 		$this->template->tickets = array_map(fn(array $ticket): array => $ticket + [
 			'print_link' => $this->ticketLinks->printUrl((string) $ticket['code'], (string) $ticket['print_token']),
 		], $this->tickets->forReservation((int) $this->reservation['id']));
@@ -147,11 +162,14 @@ final class ReservationPresenter extends BasePresenter
 			$this->reservationAdmin->cancel($id);
 			return 'Rezervace je zrušená a místa jsou opět volná.';
 		}, confirmLabel: sprintf(
-			'Opravdu zrušit rezervaci č. %d – %s, lístků: %d%s. Zrušení nejde vrátit, zákazníkovi nepřijde e-mail.',
+			'Opravdu zrušit rezervaci č. %d – %s, lístků: %d%s. Zrušení nejde vrátit, zákazníkovi nepřijde e-mail.%s',
 			$r['id'],
 			$r['name'] ?? $r['email'] ?? '',
 			$tickets,
 			$seats ? " (uvolní se $seats " . ($seats === 1 ? 'místo' : ($seats < 5 ? 'místa' : 'míst')) . ')' : '',
+			(int) $r['paid_amount'] > 0
+				? ' Zaplaceno ' . number_format((int) $r['paid_amount'], 0, ',', "\u{A0}") . "\u{A0}Kč – po zrušení se objeví v části Vrácení peněz."
+				: '',
 		));
 	}
 
@@ -204,6 +222,64 @@ final class ReservationPresenter extends BasePresenter
 			$this->redirect('this');
 		};
 		return $form;
+	}
+
+
+	/** Writes money returned to the customer (Refunds): amount, date, how, note. */
+	protected function createComponentRefundForm(): Form
+	{
+		$due = $this->refunds->due((int) $this->reservation['id']);
+		$form = $this->formFactory->create();
+		$form->addInteger('amount', 'Vrácená částka (Kč)')
+			->setRequired('Zadejte částku.')
+			->addRule($form::Range, 'Zadejte částku od %d do %d Kč.', [1, (int) ceil($due / 100)])
+			->setDefaultValue((int) ceil($due / 100));
+		$form->addDate('refunded_on', 'Datum vrácení')
+			->setRequired('Zadejte datum.')
+			->setDefaultValue(new \DateTimeImmutable('today'));
+		$form->addRadioList('method', 'Jak', Refunds::Methods)->setDefaultValue('bank')->setRequired();
+		$form->addText('note', 'Poznámka')
+			->setMaxLength(255)
+			->setHtmlAttribute('placeholder', 'např. číslo účtu nebo „vráceno u vstupu“');
+		$form->addSubmit('save', 'Zapsat vrácení');
+		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
+			try {
+				$this->refunds->record(
+					(int) $this->reservation['id'],
+					min((int) $data->amount * 100, $this->refunds->due((int) $this->reservation['id'])),
+					\DateTimeImmutable::createFromInterface($data->refunded_on),
+					(string) $data->method,
+					(string) $data->note,
+				);
+				$this->flashMessage('Vrácení je zapsané.', 'success');
+			} catch (PaymentError $e) {
+				$this->flashMessage($e->getMessage(), 'error');
+			}
+			$this->redirect('this');
+		};
+		return $form;
+	}
+
+
+	/**
+	 * "smazat zápis" next to each refund: one small POST form per refund.
+	 * @return Multiplier<Form>
+	 */
+	protected function createComponentDeleteRefund(): Multiplier
+	{
+		return new Multiplier(function (string $refundId): Form {
+			$form = $this->formFactory->create();
+			$form->addSubmit('delete', 'smazat zápis');
+			$form->onSuccess[] = function () use ($refundId): void {
+				$ids = array_column($this->refunds->forReservation((int) $this->reservation['id']), 'id');
+				if (in_array((int) $refundId, $ids, true)) {
+					$this->refunds->delete((int) $refundId);
+					$this->flashMessage('Zápis o vrácení je smazaný.', 'success');
+				}
+				$this->redirect('this');
+			};
+			return $form;
+		});
 	}
 
 

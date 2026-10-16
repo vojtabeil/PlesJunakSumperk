@@ -50,11 +50,21 @@ final class EventFormatter
 				!empty($d['released']) ? "uvolněno vybíraných míst {$d['released']}" : null,
 			],
 			'reservation.paid_manually' => [isset($d['amount']) ? $money($d['amount']) . ' hotově' : null],
-			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.unmatched', 'payment.assigned', 'payment.ignored', 'payment.settled', 'payment.unignored', 'payment.unassigned' => [
+			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.after_cancel', 'payment.unmatched', 'payment.assigned', 'payment.ignored', 'payment.settled', 'payment.unignored', 'payment.unassigned' => [
 				isset($d['amount']) ? $money($d['amount']) : null,
 				isset($d['vs']) && $d['vs'] !== '' ? "VS {$d['vs']}" : 'bez VS',
 				isset($d['payer']) ? (string) $d['payer'] : null,
 				isset($d['paid'], $d['total']) ? 'zaplaceno ' . $money($d['paid']) . ' z ' . $money($d['total']) : null,
+			],
+			'refund.recorded', 'refund.deleted' => [
+				isset($d['amount']) ? $money($d['amount']) : null,
+				match ($d['method'] ?? null) {
+					'bank' => 'převodem',
+					'cash' => 'hotově',
+					default => null,
+				},
+				isset($d['date']) ? date('j. n. Y', (int) strtotime((string) $d['date'])) : null,
+				isset($d['note']) ? (string) $d['note'] : null,
 			],
 			'payments.imported' => [isset($d['summary']) ? (string) $d['summary'] : null],
 			'payments.rewound' => [isset($d['since']) ? "od {$d['since']}" : null],

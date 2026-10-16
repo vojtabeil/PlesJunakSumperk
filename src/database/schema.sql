@@ -215,6 +215,23 @@ CREATE TABLE bank_transactions (
     CONSTRAINT fk_bank_transactions_reservation FOREIGN KEY (reservation_id) REFERENCES reservations (id)
 ) ENGINE=InnoDB;
 
+-- Money returned to a customer (cancelled reservation, overpayment), written by hand in the reservation detail
+-- (outgoing bank movements are not imported). Still to return = paid (all of it when cancelled, else above the
+-- price) minus these (Refunds::due).
+CREATE TABLE refunds (
+    id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    reservation_id INT UNSIGNED NOT NULL,
+    amount         DECIMAL(12, 2) NOT NULL,
+    refunded_on    DATE NOT NULL,
+    method         ENUM('bank', 'cash') NOT NULL,
+    note           VARCHAR(255) NULL,
+    created_by     INT UNSIGNED NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY ix_refunds_reservation (reservation_id),
+    CONSTRAINT fk_refunds_reservation FOREIGN KEY (reservation_id) REFERENCES reservations (id) ON DELETE CASCADE,
+    CONSTRAINT fk_refunds_admin FOREIGN KEY (created_by) REFERENCES admin_users (id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 -- Fake bank for local testing (/dev/bank); read by MockBankSource like the Fio API.
 CREATE TABLE mock_bank_transactions (
     id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

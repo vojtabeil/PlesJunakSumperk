@@ -31,6 +31,20 @@ final class ReservationTemplate extends BaseTemplate
 
 	public ?\DateTimeImmutable $dueOn;
 
+	/** Days after the due date of an unpaid reservation; null when not overdue. */
+	public ?int $overdueDays;
+
+	/** @var list<array{id: int, amount: int, refunded_on: string, method: string, note: ?string, created_by: ?string}> */
+	public array $refunds;
+
+	/** Hellers still to return (Refunds::due). */
+	public int $refundDue;
+
+	/** @var list<string> accounts the customer paid from (for a refund by transfer) */
+	public array $refundAccounts;
+
+	public string $eventName;
+
 	/** @var list<array<string, mixed>> tickets (Tickets::forReservation) with print_link */
 	public array $tickets;
 }

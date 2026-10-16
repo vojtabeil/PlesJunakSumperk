@@ -264,6 +264,12 @@ h2 {
     background: var(--error);
   }
 
+  // Unpaid after the due date (reservation detail and list).
+  &--overdue {
+    color: var(--error);
+    background: rgba(179, 38, 30, 0.12);
+  }
+
   a {
     color: inherit;
   }
@@ -1473,4 +1479,97 @@ $apps-rail-from: 1340px;
   @media (min-width: $apps-rail-from) {
     display: none;
   }
+}
+
+// Reservation detail: call / write to the customer, money to return.
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.refund-card {
+  border-left: 6px solid var(--orange);
+}
+
+
+.activity .inline-form {
+  display: inline-flex;
+  margin-left: 0.4rem;
+}
+
+// --- Charts (Accessory/barChart.latte) and the Statistiky page -------------------
+.bar-chart {
+  margin: 0.5rem 0;
+
+  svg {
+    display: block;
+    width: 100%;
+  }
+}
+
+.bar-chart-axis {
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.bar-chart-hit {
+  fill: transparent;
+}
+
+g:hover > .bar-chart-hit {
+  fill: var(--navy-soft);
+}
+
+.bar-chart-part--seat {
+  fill: #2d61a0;
+  background: #2d61a0;
+}
+
+.bar-chart-part--standing {
+  fill: #86afd8;
+  background: #86afd8;
+}
+
+.bar-chart-line {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.bar-chart-labels {
+  display: grid;
+  font-size: 0.75rem;
+  color: var(--muted);
+
+  span {
+    overflow: visible;
+    white-space: nowrap;
+  }
+}
+
+.bar-chart-max {
+  font-size: 0.8rem;
+}
+
+.swatch--line {
+  height: 3px;
+  background: var(--orange);
+}
+
+.sales-spark {
+  margin-top: 0.75rem;
+}
+
+.stats-block-head {
+  float: right;
+  margin-left: 1rem;
+}
+
+.ticket-bar--small {
+  min-width: 6rem;
+  height: 0.6rem;
 }

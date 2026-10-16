@@ -1,0 +1,163 @@
+{templateType App\Presentation\Admin\Statistics\StatisticsTemplate}
+
+{block title}Statistiky{/block}
+
+{block content}
+<div class="page-head">
+	<h1>Statistiky</h1>
+	<span class="muted">bez testovacích rezervací · částky v Kč</span>
+</div>
+
+{define csvLink, string $block}
+	<a class="button button--small" n:href="csv $block" download>Stáhnout CSV</a>
+{/define}
+
+{* 1. Tickets, as on the dashboard *}
+<section class="card tickets-card" aria-labelledby="stats-tickets-title">
+	<div class="stats-block-head">{include csvLink, block: listky}</div>
+	{include '../Accessory/ticketBars.latte', bars: $bars, entrance: $entrance, seatsUnavailable: $seatsUnavailable, headingId: 'stats-tickets-title'}
+</section>
+
+{* 2. Sales by day *}
+<section class="card" aria-labelledby="stats-daily-title">
+	<div class="page-head">
+		<h2 id="stats-daily-title">Prodej po dnech</h2>
+		{include csvLink, block: prodej}
+	</div>
+	{if $days}
+		{include '../Accessory/barChart.latte', chart: $dailyChart, height: 180, description: 'Prodané lístky po dnech, místa a stání; čára = celkem prodáno'}
+		<ul class="ticket-bar-legend">
+			<li><span class="swatch bar-chart-part--seat"></span>na místo</li>
+			<li><span class="swatch bar-chart-part--standing"></span>na stání</li>
+			<li><span class="swatch swatch--line"></span>celkem prodáno</li>
+		</ul>
+		<details class="seat-details">
+			<summary>Tabulka po dnech ({count($days)})</summary>
+			<div class="table-scroll">
+				<table class="data-table data-table--cards">
+					<thead>
+						<tr>
+							<th scope="col">Den</th><th scope="col" class="num">Rezervace</th><th scope="col" class="num">Na místo</th>
+							<th scope="col" class="num">Na stání</th><th scope="col" class="num">Hodnota</th><th scope="col" class="num">Zrušeno</th>
+							<th scope="col" class="num">Přijato převodem</th><th scope="col" class="num">Přijato hotově</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr n:foreach="array_reverse($days) as $day">
+							<td data-label="Den">{$day['date']|date:'j. n. Y'}</td>
+							<td data-label="Rezervace" class="num">{$day['reservations']}</td>
+							<td data-label="Na místo" class="num">{$day['seats']}</td>
+							<td data-label="Na stání" class="num">{$day['standing']}</td>
+							<td data-label="Hodnota" class="num">{$day['value']|hellers}</td>
+							<td data-label="Zrušeno" class="num">{$day['cancelled'] ?: '–'}</td>
+							<td data-label="Převodem" class="num">{$day['paid_bank']|hellers}</td>
+							<td data-label="Hotově" class="num">{$day['paid_cash']|hellers}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</details>
+		<p class="muted">Den = kdy rezervace vznikla. Počítají se platné rezervace; zrušené jsou ve sloupci Zrušeno u dne, kdy vznikly.
+			Přijaté platby podle dne připsání na účet (hotově podle dne označení v administraci).</p>
+	{else}
+		<p class="empty"><strong>Zatím žádný prodej.</strong></p>
+	{/if}
+</section>
+
+{* 3. Money *}
+{var $m = $revenue}
+<section class="card" aria-labelledby="stats-money-title">
+	<div class="page-head">
+		<h2 id="stats-money-title">Tržby</h2>
+		{include csvLink, block: trzby}
+	</div>
+	<div class="stats">
+		<div class="stat"><span class="stat-value">{$m['ordered']|hellers}</span><span class="stat-label">objednáno ({$m['reservations']} rezervací, {$m['tickets']} lístků)</span></div>
+		<div class="stat"><span class="stat-value">{$m['paid']|hellers}</span><span class="stat-label">zaplaceno</span></div>
+		<div class="stat"><span class="stat-value">{$m['unpaid']|hellers}</span><span class="stat-label">čeká na platbu</span></div>
+		<div n:class="stat, $m['overdue'] ? stat--problem"><span class="stat-value">{$m['overdue']|hellers}</span><span class="stat-label">z toho po splatnosti</span></div>
+		<div class="stat"><span class="stat-value">{$m['net']|hellers}</span><span class="stat-label">čistá tržba (přijato − vráceno)</span></div>
+	</div>
+	<dl class="details">
+		<dt>Zaplaceno převodem</dt><dd>{$m['paid_bank']|hellers}</dd>
+		<dt>Zaplaceno hotově</dt><dd>{$m['paid_cash']|hellers}</dd>
+		<dt>Přijato celkem</dt><dd>{$m['received']|hellers} <span class="muted">(i od zrušených rezervací a přeplatky)</span></dd>
+		<dt>Přeplatky</dt><dd>{$m['overpaid']|hellers}</dd>
+		<dt>Vráceno</dt><dd>{$m['refunded']|hellers}</dd>
+		<dt>K vrácení</dt><dd>{if $m['to_refund']}<a n:href="Reservation:default, problem: refund">{$m['to_refund']|hellers}</a>{else}0 Kč{/if}</dd>
+		<dt>Průměr</dt><dd>{$m['per_reservation']|hellers} na rezervaci · {$m['per_ticket']|hellers} na lístek</dd>
+	</dl>
+	<div class="table-scroll">
+		<table class="data-table">
+			<thead><tr><th scope="col">Prodej</th><th scope="col" class="num">Rezervace</th><th scope="col" class="num">Lístky</th><th scope="col" class="num">Objednáno</th><th scope="col" class="num">Zaplaceno</th></tr></thead>
+			<tbody>
+				<tr n:foreach="$channels as $channel => $c">
+					<td>{$channel === 'vip' ? 'VIP odkaz' : 'veřejný'}</td>
+					<td class="num">{$c['reservations']}</td><td class="num">{$c['tickets']}</td>
+					<td class="num">{$c['ordered']|hellers}</td><td class="num">{$c['paid']|hellers}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+{* 4. Occupancy *}
+<section class="card" aria-labelledby="stats-tables-title">
+	<div class="page-head">
+		<h2 id="stats-tables-title">Obsazenost</h2>
+		<span>{include csvLink, block: stoly} <a class="button button--small" n:href="csv mista" download>CSV po místech</a></span>
+	</div>
+	<div class="table-scroll">
+		<table class="data-table">
+			<thead>
+				<tr><th scope="col">Část sálu</th><th scope="col" class="num">Míst</th><th scope="col" class="num">Prodáno</th><th scope="col" class="num">Zaplaceno</th>
+					<th scope="col" class="num">Volné</th><th scope="col" class="num">Mimo prodej</th><th scope="col" class="num">Obsazeno</th></tr>
+			</thead>
+			<tbody>
+				<tr n:foreach="$areas as $area => $a">
+					<th scope="row">{$area}</th>
+					<td class="num">{$a['seats']}</td><td class="num">{$a['sold']}</td><td class="num">{$a['paid']}</td>
+					<td class="num">{$a['free']}</td><td class="num">{$a['unavailable'] ?: '–'}</td>
+					<td class="num">{if $a['seats'] - $a['unavailable'] > 0}{round($a['sold'] / ($a['seats'] - $a['unavailable']) * 100)} %{else}–{/if}</td>
+				</tr>
+				<tr>
+					<th scope="row">Na stání</th>
+					<td class="num">{$standing['capacity']}</td><td class="num">{$standing['paid'] + $standing['partial'] + $standing['unpaid']}</td>
+					<td class="num">{$standing['paid']}</td><td class="num">{max(0, $standing['capacity'] - $standing['paid'] - $standing['partial'] - $standing['unpaid'])}</td>
+					<td class="num">–</td>
+					<td class="num">{if $standing['capacity'] > 0}{round(($standing['paid'] + $standing['partial'] + $standing['unpaid']) / $standing['capacity'] * 100)} %{else}–{/if}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<details class="seat-details">
+		<summary>Po stolech ({count($tables)})</summary>
+		<div class="table-scroll">
+			<table class="data-table data-table--cards">
+				<thead>
+					<tr><th scope="col">Stůl</th><th scope="col" class="num">Míst</th><th scope="col" class="num">Prodáno</th><th scope="col" class="num">Zaplaceno</th>
+						<th scope="col" class="num">Volné</th><th scope="col">Obsazenost</th></tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$tables as $table">
+						<td data-label="Stůl"><strong>{$table['table']}</strong> <span class="muted">{$table['area']}</span>
+							<span n:if="!$table['available']" class="badge badge--seat-unavailable">mimo prodej</span></td>
+						<td data-label="Míst" class="num">{$table['seats']}</td>
+						<td data-label="Prodáno" class="num">{$table['sold']}</td>
+						<td data-label="Zaplaceno" class="num">{$table['paid']}</td>
+						<td data-label="Volné" class="num">{$table['free']}</td>
+						<td data-label="Obsazenost">
+							<div class="ticket-bar ticket-bar--small" role="img" aria-label="prodáno {$table['sold']} z {$table['seats']}">
+								<span n:if="$table['paid']" class="ticket-bar-part ticket-bar-part--paid" style="width: {round($table['paid'] / max(1, $table['seats']) * 100, 2)|noescape}%"></span>
+								<span n:if="$table['sold'] - $table['paid']" class="ticket-bar-part ticket-bar-part--unpaid" style="width: {round(($table['sold'] - $table['paid']) / max(1, $table['seats']) * 100, 2)|noescape}%"></span>
+								<span n:if="$table['held']" class="ticket-bar-part ticket-bar-part--held" style="width: {round($table['held'] / max(1, $table['seats']) * 100, 2)|noescape}%"></span>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</details>
+</section>
+{/block}

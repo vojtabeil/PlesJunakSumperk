@@ -44,7 +44,7 @@ abstract class DatabaseTestCase extends TestCase
 	{
 		$this->db = $this->service(PDO::class);
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 0');
-		foreach (['hall_plan', 'tickets', 'crew_members', 'seat_bookings', 'seats', 'hall_tables', 'bank_transactions', 'mock_bank_transactions', 'reservations', 'settings', 'event_log_seats', 'event_log', 'admin_users'] as $table) {
+		foreach (['hall_plan', 'refunds', 'tickets', 'crew_members', 'seat_bookings', 'seats', 'hall_tables', 'bank_transactions', 'mock_bank_transactions', 'reservations', 'settings', 'event_log_seats', 'event_log', 'admin_users'] as $table) {
 			$this->db->exec("TRUNCATE TABLE $table");
 		}
 		$this->db->exec('SET FOREIGN_KEY_CHECKS = 1');

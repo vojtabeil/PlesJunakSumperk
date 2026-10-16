@@ -38,6 +38,9 @@ final class DashboardTemplate extends BaseTemplate
 
 	public bool $importOverdue;
 
+	/** Hellers still to return to customers (Refunds::summary). */
+	public int $refundTotal;
+
 	/** @var array{used: int, total: int, kinds: array<string, array{used: int, total: int}>} tickets used at the entrance */
 	public array $entrance;
 
@@ -52,6 +55,12 @@ final class DashboardTemplate extends BaseTemplate
 
 	/** @var list<array<string, mixed>> the newest reservations (ReservationAdmin::search) */
 	public array $latestReservations;
+
+	/** @var array<string, mixed> sales of the last 14 days (BarChart::build) */
+	public array $recentChart;
+
+	/** Tickets sold in the last 7 days. */
+	public int $recentWeek;
 
 	/** A hall plan is uploaded (without it seats cannot be sold). */
 	public bool $hasPlan;

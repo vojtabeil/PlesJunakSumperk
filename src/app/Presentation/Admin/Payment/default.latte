@@ -53,9 +53,11 @@
 					<td data-label="Rezervace">
 						{if $p['reservation_id']}
 							<a n:href="Reservation:detail $p['reservation_id']">č. {$p['reservation_id']}</a>
+							{* Overpaid: the money goes back (written in the reservation detail, Refunds), or is kept as a gift. *}
+							<a n:if="$p['match_status'] === 'overpaid'" n:href="Reservation:detail#refund-title $p['reservation_id']">vrátit peníze</a>
 							<form n:if="in_array($p['match_status'], ['underpaid', 'overpaid'], true)" n:name="'settle-' . $p['id']" class="inline-form"
-								title="Rozdíl je vyřešený (vrácený přeplatek, doplatek hotově…)">
-								<button n:name="settle" class="link-button">vyřízeno</button>
+								title="{$p['match_status'] === 'overpaid' ? 'Přeplatek se nevrací (dar)' : 'Rozdíl je vyřešený (doplatek hotově…)'}">
+								<button n:name="settle" class="link-button">{$p['match_status'] === 'overpaid' ? 'ponechat (dar)' : 'vyřízeno'}</button>
 							</form>
 							<details class="undo-details">
 								<summary>zrušit přiřazení</summary>

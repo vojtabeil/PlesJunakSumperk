@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Model\Reservation;
 
 use App\Model\Log\EventLog;
+use App\Model\Payment\Refunds;
 use App\Model\Payment\VariableSymbol;
 use App\Model\Settings\Settings;
 use PDO;
@@ -91,6 +92,7 @@ final class ReservationAdmin
 	public const Problems = [
 		'email' => 'Neodeslaný potvrzovací e-mail',
 		'overdue' => 'Nezaplacené po splatnosti',
+		'refund' => 'K vrácení peněz',
 	];
 
 
@@ -153,7 +155,8 @@ final class ReservationAdmin
 		}
 
 		$stmt = $this->db->prepare(
-			'SELECT r.*, GROUP_CONCAT(s.label ORDER BY s.sort_order, s.id SEPARATOR \', \') AS seat_labels, COUNT(s.id) AS seat_count
+			'SELECT r.*, GROUP_CONCAT(s.label ORDER BY s.sort_order, s.id SEPARATOR \', \') AS seat_labels, COUNT(s.id) AS seat_count,
+				' . $this->overdueDaysSql() . ' AS overdue_days
 			FROM reservations r
 			LEFT JOIN seat_bookings b ON b.reservation_id = r.id
 			LEFT JOIN seats s ON s.id = b.seat_id
@@ -239,6 +242,15 @@ final class ReservationAdmin
 	}
 
 
+	/** SQL: days after the due date of an unpaid reservation r (NULL when paid, cancelled or not overdue). */
+	private function overdueDaysSql(): string
+	{
+		$days = $this->settings->int('payment_days', 2);
+		return "CASE WHEN r.status IN ('confirmed', 'partially_paid') AND DATE(r.confirmed_at) + INTERVAL $days DAY < CURDATE()
+			THEN DATEDIFF(CURDATE(), DATE(r.confirmed_at) + INTERVAL $days DAY) END";
+	}
+
+
 	private function problemCondition(string $problem): string
 	{
 		$days = $this->settings->int('payment_days', 2);
@@ -246,6 +258,8 @@ final class ReservationAdmin
 			'email' => "r.status IN ('confirmed', 'partially_paid', 'paid') AND r.email_sent_at IS NULL",
 			// Overdue = the due date (day of the reservation + payment_days) has passed.
 			'overdue' => "r.status IN ('confirmed', 'partially_paid') AND DATE(r.confirmed_at) + INTERVAL $days DAY < CURDATE()",
+			// Money to return: a cancelled reservation that was paid, or an overpaid one (Refunds).
+			'refund' => '(' . Refunds::DueSql . ') > 0',
 			default => throw new \InvalidArgumentException("Unknown problem '$problem'."),
 		};
 	}

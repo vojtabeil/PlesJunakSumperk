@@ -111,7 +111,12 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
 - The bank account is the scout group's main account: payments whose VS lacks the ball prefix
   are `foreign` (not a problem, never matched); outgoing movements are not stored at all. The Payments page opens
   with the payments to resolve; assigning (suggestions / search) and "nesouvisí s plesem" can be taken back (`unassign`, `unignore`). Keep the VS prefix stable during a sale.
-- Payments may be imported only manually (no cron on the hosting): keep the dashboard button and
+- Refunds (`Refunds`, table `refunds`, written by hand in the reservation detail): a cancelled reservation owes all it
+  paid, a valid one what it paid above its price (`Refunds::DueSql`); a bank payment for a cancelled reservation is
+  matched to it as overpaid (`payment.after_cancel`, no e-mail). Full refund resolves its overpaid payments.
+- Statistiky (`Admin:Statistics`, `SalesStats`): no test reservations; a day of sale = the day the reservation was made
+  (valid ones only, cancelled shown on their day); every block has its CSV (`Csv`: UTF-8 BOM, semicolons, quoted,
+  formula-safe). Charts are server-side SVG (`Accessory/BarChart` + `barChart.latte`), no chart library.- Payments may be imported only manually (no cron on the hosting): keep the dashboard button and
   the "last import" information working.
 - Secrets (Fio token, cron key, setup password, tester and VIP tokens) never appear in exceptions, logs or the event log.
 - Event log: every reservation, payment, e-mail and admin action is logged **in the model**

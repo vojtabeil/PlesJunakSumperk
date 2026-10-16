@@ -11,6 +11,7 @@
 	<h1>Rezervace č. {$r['id']} <span class="muted">{$r['name']}</span></h1>
 	<p class="status-line">
 		<span class="badge badge--{$r['status']}">{$r['status']|statusLabel}</span>
+		<span n:if="$overdueDays" class="badge badge--overdue">po splatnosti {$overdueDays} {$overdueDays === 1 ? 'den' : ($overdueDays < 5 ? 'dny' : 'dní')}</span>
 		{include '../Accessory/channelBadge.latte', channel: $r['channel']}
 	</p>
 </div>
@@ -24,7 +25,7 @@
 		{if $r['reminded_at']}Připomínka odeslána {$r['reminded_at']|date:'j. n. Y H:i'}.{/if}
 		Platba z banky se spáruje sama; zaplatil-li host hotově, označte rezervaci jako zaplacenou.
 	{elseif $r['status'] === 'cancelled'}
-		Rezervace je zrušená, její místa jsou volná.
+		Rezervace je zrušená, její místa jsou volná.{if $refundDue} Zákazníkovi je potřeba vrátit <strong>{$refundDue|hellers}</strong> (níže Vrácení peněz).{/if}
 	{else}
 		Host rezervaci ještě nedokončil (vybírá místa).
 	{/if}
@@ -39,7 +40,7 @@
 		<dl class="details">
 			<dt>Jméno</dt><dd>{$r['name'] ?? '–'}</dd>
 			<dt>E-mail</dt><dd><a href="mailto:{$r['email']}">{$r['email']}</a> · <a n:href="Customer:default, q: $r['email']">všechny rezervace</a></dd>
-			<dt>Telefon</dt><dd>{$r['phone'] ?? '–'}</dd>
+			<dt>Telefon</dt><dd>{if $r['phone']}<a href="tel:{str_replace(' ', '', $r['phone'])}">{$r['phone']}</a>{else}–{/if}</dd>
 			<dt>Místa</dt>
 			<dd>
 				{foreach $r['seats'] as $label}
@@ -51,6 +52,9 @@
 			<dt>Zaplaceno</dt><dd>{(int) $r['paid_amount']|price}</dd>
 			<dt>Variabilní symbol</dt><dd>{$r['variable_symbol']}</dd>
 			<dt>Potvrzeno</dt><dd>{if $r['confirmed_at']}{$r['confirmed_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
+			<dt n:if="$dueOn && $open">Splatnost</dt>
+			<dd n:if="$dueOn && $open">{$dueOn|date:'j. n. Y'}{if $overdueDays} <strong class="error-text">po splatnosti</strong>{/if}</dd>
+			<dt>Připomínka platby</dt><dd>{if $r['reminded_at']}odeslána {$r['reminded_at']|date:'j. n. Y H:i'}{else}–{/if}</dd>
 			<dt>Stránka zákazníka</dt>
 			<dd>{if $customerLink}<a href="{$customerLink}" target="_blank">Moje rezervace</a> <span class="muted">(stejný odkaz má zákazník v e-mailu)</span>{else}–{/if}</dd>
 			<dt>Potvrzovací e-mail</dt>
@@ -60,6 +64,10 @@
 
 	<section class="card actions-card">
 		<h2>Co můžete udělat</h2>
+		<p class="contact-actions">
+			<a n:if="$r['phone']" class="button" href="tel:{str_replace(' ', '', $r['phone'])}">Zavolat</a>
+			<a n:if="$r['email']" class="button" href="mailto:{$r['email']}?subject={rawurlencode('Rezervace č. ' . $r['id'] . ' – ' . $eventName)}">Napsat e-mail</a>
+		</p>
 		<div class="actions">
 			{if $open}{control markPaidForm}{/if}
 			{if $open && $r['email_sent_at']}{control remindForm}{/if}
@@ -72,6 +80,29 @@
 		{control noteForm}
 	</section>
 </div>
+
+<section class="card refund-card" n:if="$refundDue || $refunds" aria-labelledby="refund-title">
+	<div class="page-head">
+		<h2 id="refund-title">Vrácení peněz</h2>
+		<p class="status-line">{if $refundDue}<strong class="error-text">K vrácení {$refundDue|hellers}</strong>{else}<span class="badge badge--paid">vše vráceno</span>{/if}</p>
+	</div>
+	<p n:if="$refundDue" class="muted">
+		{if $r['status'] === 'cancelled'}Rezervace je zrušená: vrací se vše zaplacené.{else}Zaplaceno víc, než je cena rezervace: vrací se přeplatek.{/if}
+		{if $refundAccounts}Platil z účtu {implode(', ', $refundAccounts)}.{/if}
+		Peníze pošlete z účtu střediska (nebo vraťte hotově) a pak vrácení zapište.
+	</p>
+	<ul class="activity" n:if="$refunds">
+		<li n:foreach="$refunds as $refund">
+			<time>{$refund['refunded_on']|date:'j. n. Y'}</time>
+			<strong>{$refund['amount']|hellers}</strong> {\App\Model\Payment\Refunds::Methods[$refund['method']] ?? $refund['method']}
+			{if $refund['note']} – {$refund['note']}{/if}
+			<span class="muted">({$refund['created_by'] ?? 'neznámý'})</span>
+			{var $deleteForm = 'deleteRefund-' . $refund['id']}
+			<form n:name="$deleteForm" class="inline-form"><button n:name="delete" class="link-button">smazat zápis</button></form>
+		</li>
+	</ul>
+	{if $refundDue}{control refundForm}{/if}
+</section>
 
 <section class="card" n:if="$tickets">
 	<div class="page-head">

@@ -1,0 +1,19 @@
+{* Stacked column chart from BarChart::build: the columns as SVG stretched to the width (tooltips per column), the
+   labels as HTML under it (text in a stretched SVG would be distorted). Parameters: $chart, $height (CSS px),
+   $description (for screen readers; the numbers are also in a table or text next to it) *}
+{parameters array $chart, int $height, string $description}
+<figure class="bar-chart">
+	<svg viewBox="0 0 {$chart['width']} 100" preserveAspectRatio="none" style="height: {$height|noescape}px" role="img" aria-label="{$description}">
+		<line x1="0" y1="100" x2="{$chart['width']}" y2="100" class="bar-chart-axis"/>
+		<g n:foreach="$chart['bars'] as $bar">
+			<title>{$bar['title']}</title>
+			<rect x="{$bar['x']}" y="0" width="7" height="100" class="bar-chart-hit"/>
+			<rect n:foreach="$bar['parts'] as $part" x="{$bar['x']}" y="{$part['y']}" width="7" height="{$part['h']}" class="bar-chart-part bar-chart-part--{$part['key']}"/>
+		</g>
+		<polyline n:if="$chart['line']" points="{$chart['line']}" class="bar-chart-line"/>
+	</svg>
+	<div class="bar-chart-labels" style="grid-template-columns: repeat({$chart['columns']}, 1fr)" aria-hidden="true">
+		<span n:foreach="$chart['bars'] as $bar">{$bar['label']}</span>
+	</div>
+	<figcaption class="bar-chart-max muted">nejvíc {$chart['max']} za den{if $chart['line']} · čára: celkem {$chart['lineMax']}{/if}</figcaption>
+</figure>

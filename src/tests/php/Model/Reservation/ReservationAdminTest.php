@@ -157,7 +157,7 @@ final class ReservationAdminTest extends DatabaseTestCase
 		$this->db->prepare('UPDATE reservations SET email_sent_at = NOW(), confirmed_at = NOW() - INTERVAL 8 DAY WHERE id = ?')->execute([$unsent]);
 		$late = $this->confirmed('carol@example.com', [103]);
 
-		self::assertSame(['email' => 1, 'overdue' => 1], $this->admin->problemCounts());
+		self::assertSame(['email' => 1, 'overdue' => 1, 'refund' => 0], $this->admin->problemCounts());
 		self::assertSame([$late], array_column($this->admin->search(null, '', 'email'), 'id'));
 		self::assertSame([$unsent], array_column($this->admin->search(null, '', 'overdue'), 'id'));
 		self::assertCount(3, $this->admin->search(null, '', 'unknown'), 'Unknown problem is ignored');

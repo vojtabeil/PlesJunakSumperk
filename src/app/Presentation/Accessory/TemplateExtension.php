@@ -23,6 +23,7 @@ final class TemplateExtension extends Extension
 	{
 		return [
 			'price' => self::formatPrice(...),
+			'hellers' => self::formatHellers(...),
 			'seatLabel' => self::formatSeatLabel(...),
 			'statusLabel' => self::formatStatus(...),
 			'matchLabel' => self::formatMatchStatus(...),
@@ -46,6 +47,13 @@ final class TemplateExtension extends Extension
 	public static function formatPrice(int $amount): string
 	{
 		return number_format($amount, 0, ',', "\u{A0}") . "\u{A0}Kč";
+	}
+
+
+	/** Hellers as CZK: 95000 -> "950 Kč", 95050 -> "950,50 Kč". */
+	public static function formatHellers(int $hellers): string
+	{
+		return number_format($hellers / 100, $hellers % 100 === 0 ? 0 : 2, ',', "\u{A0}") . "\u{A0}Kč";
 	}
 
 

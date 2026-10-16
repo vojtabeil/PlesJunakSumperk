@@ -58,6 +58,9 @@ final class EventTypes
 		'payment.unignored' => ['payment', 'Platba vrácena k vyřízení'],
 		'payment.unassigned' => ['payment', 'Zrušeno přiřazení platby k rezervaci'],
 		'payment.settled' => ['payment', 'Nedoplatek / přeplatek vyřízen'],
+		'payment.after_cancel' => ['payment', 'Platba na zrušenou rezervaci (k vrácení)'],
+		'refund.recorded' => ['payment', 'Peníze vráceny'],
+		'refund.deleted' => ['payment', 'Smazán zápis o vrácení peněz'],
 		'payments.imported' => ['payment', 'Načtení plateb z banky'],
 		'payments.rewound' => ['payment', 'Nové stažení pohybů od data'],
 

@@ -46,6 +46,10 @@ final class PaymentMatcher
 		}
 		$reservation = $this->lockReservation($reservationId);
 		if ($reservation === null) {
+			$cancelled = $this->lockCancelled($reservationId);
+			if ($cancelled !== null) {
+				return $this->assignToCancelled($transactionId, $cancelled, automatic: true);
+			}
 			$this->setStatus($transactionId, 'unknown_vs');
 			$this->eventLog->record('payment.unmatched', null, $this->describe($tx), automatic: true);
 			return null;
@@ -64,8 +68,13 @@ final class PaymentMatcher
 		if (in_array($tx['match_status'], ['matched', 'underpaid', 'overpaid'], true)) {
 			throw new PaymentError('Platba už je přiřazená k rezervaci č. ' . $tx['reservation_id'] . '.');
 		}
-		$reservation = $this->lockReservation($reservationId)
-			?? throw new PaymentError("Rezervace č. $reservationId neexistuje nebo není potvrzená.");
+		$reservation = $this->lockReservation($reservationId);
+		if ($reservation === null) {
+			$cancelled = $this->lockCancelled($reservationId)
+				?? throw new PaymentError("Rezervace č. $reservationId neexistuje nebo není potvrzená.");
+			$this->eventLog->record('payment.assigned', $reservationId, $this->describe($tx));
+			return $this->assignToCancelled($transactionId, $cancelled, automatic: false);
+		}
 		$this->eventLog->record('payment.assigned', $reservationId, $this->describe($tx));
 		return $this->assignTo($transactionId, $reservation);
 	}
@@ -135,6 +144,10 @@ final class PaymentMatcher
 		$paid = (int) round((float) $stmt->fetchColumn() * 100);
 		$total = (int) $reservation['total_price'] * 100;
 		$status = (string) $reservation['status'];
+		if ($status === 'cancelled') {
+			// Only this payment goes away; what was paid before (also in cash) stays to be returned.
+			$paid = max(0, (int) round(((float) $reservation['paid_amount'] - (float) $tx['amount']) * 100));
+		}
 		if (in_array($status, ['confirmed', 'partially_paid', 'paid'], true)) {
 			$status = match (true) {
 				$paid >= $total => 'paid',
@@ -199,6 +212,34 @@ final class PaymentMatcher
 			automatic: true,
 		);
 		return new PaymentChange($reservationId, (string) $reservation['status'], $newStatus, $paid, $total);
+	}
+
+
+	/**
+	 * A payment for a cancelled reservation belongs to it but buys nothing: it is overpaid (to be returned, see
+	 * Refunds) and the reservation stays cancelled. The customer gets no e-mail (not notable).
+	 * @param array<string, mixed> $reservation
+	 */
+	private function assignToCancelled(int $transactionId, array $reservation, bool $automatic): PaymentChange
+	{
+		$reservationId = (int) $reservation['id'];
+		$this->db->prepare("UPDATE bank_transactions SET reservation_id = ?, match_status = 'overpaid' WHERE id = ?")
+			->execute([$reservationId, $transactionId]);
+		$tx = $this->transaction($transactionId);
+		$paid = (int) round(((float) $reservation['paid_amount'] + (float) $tx['amount']) * 100);
+		$this->db->prepare('UPDATE reservations SET paid_amount = ? WHERE id = ?')
+			->execute([number_format($paid / 100, 2, '.', ''), $reservationId]);
+		$this->eventLog->record('payment.after_cancel', $reservationId, $this->describe($tx), automatic: $automatic);
+		return new PaymentChange($reservationId, 'cancelled', 'cancelled', $paid, (int) $reservation['total_price'] * 100);
+	}
+
+
+	/** @return array<string, mixed>|null */
+	private function lockCancelled(int $id): ?array
+	{
+		$stmt = $this->db->prepare("SELECT * FROM reservations WHERE id = ? AND status = 'cancelled' FOR UPDATE");
+		$stmt->execute([$id]);
+		return $stmt->fetch() ?: null;
 	}
 
 
