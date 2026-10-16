@@ -176,6 +176,8 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
 - POST requests to `/api/*` require the `X-CSRF-Token` header (token printed into the page).
 - JSON printed into a `<script>` must use `Json::encode(..., htmlSafe: true)`.
 - Event info, prices and limits are rows in the `settings` table, not code.
+  The date of the ball is `event_day` (YYYY-MM-DD) + `event_time` (HH:MM); `Settings::all()` adds `event_date`, its text
+  ("7. 2. 2026 od 19:00") for the templates, and the dashboard shows the days left (`EventDate::countdown`).
 - Greenfield project: the database schema is `src/database/schema.sql`, edited directly (no migrations).
   After a change run `dev\init-db.cmd` and `dev\init-db.cmd -Test`.
 - PHPUnit tests that touch the DB extend `App\Tests\Support\DatabaseTestCase` (fresh fixture per test,

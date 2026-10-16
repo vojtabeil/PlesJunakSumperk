@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Dashboard;
 
+use App\Core\Clock\Clock;
 use App\Model\Crew\CrewMembers;
 use App\Model\Hall\HallSync;
 use App\Model\Mail\ReservationMailer;
@@ -54,6 +55,7 @@ final class DashboardPresenter extends BasePresenter
 		private readonly HallSync $hallSync,
 		private readonly CrewMembers $crew,
 		private readonly Tickets $tickets,
+		private readonly Clock $clock,
 	) {
 		parent::__construct();
 	}
@@ -89,7 +91,7 @@ final class DashboardPresenter extends BasePresenter
 		];
 		$t->latestReservations = $this->reservationAdmin->search(limit: self::LatestReservations);
 		$t->hasPlan = $this->hallSync->plan() !== null;
-		$t->siteMode = $this->settings->mode();
+		$t->eventCountdown = $this->settings->eventDate()?->countdown($this->clock->now());
 		$t->ticketLists = [
 			'seat' => $this->tickets->listing('seat'),
 			'standing' => $this->tickets->listing('standing'),

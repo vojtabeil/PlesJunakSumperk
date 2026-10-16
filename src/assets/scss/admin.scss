@@ -73,6 +73,17 @@ h2 {
   text-decoration: none;
 }
 
+// Days to the ball, top right of the dashboard.
+.event-countdown {
+  padding: 0.15rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--navy-dark);
+  text-decoration: none;
+  background: var(--yellow);
+  border-radius: 999px;
+}
 
 .admin-nav {
   display: flex;

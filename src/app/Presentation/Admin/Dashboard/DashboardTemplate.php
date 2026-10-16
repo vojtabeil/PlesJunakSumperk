@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Presentation\Admin\Dashboard;
 
-use App\Model\Site\SiteMode;
 use App\Presentation\Admin\BaseTemplate;
 
 
@@ -13,7 +12,8 @@ final class DashboardTemplate extends BaseTemplate
 	/** @var array<string, int> */
 	public array $stats;
 
-	public SiteMode $siteMode;
+	/** "Do plesu zbývá 12 dní" (EventDate::countdown); null while the date of the ball is not set. */
+	public ?string $eventCountdown;
 
 
 	public int $seatTotal;

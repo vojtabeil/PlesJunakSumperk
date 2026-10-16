@@ -7,9 +7,10 @@
 
 <div class="page-head">
 	<h1>Přehled</h1>
+	{* Days to the ball (the stage of the site is in Stav webu). *}
 	<p class="status-line">
-		<span n:class="'badge', $siteMode->isSelling() ? 'badge--paid' : 'badge--cancelled'">{$siteMode->label()}</span>
-		<a n:href="Site:default">změnit</a>
+		<span n:if="$eventCountdown" class="event-countdown">{$eventCountdown}</span>
+		<a n:if="!$eventCountdown" n:href="Settings:default" class="event-countdown">Nastavte datum plesu</a>
 	</p>
 </div>
 

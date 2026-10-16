@@ -26,10 +26,26 @@ final class Settings
 	}
 
 
-	/** @return array<string, string> */
+	/**
+	 * Stored values plus event_date: the date of the ball as text (EventDate::text(), '' while not set), used by
+	 * the templates of the site, tickets and e-mails.
+	 * @return array<string, string>
+	 */
 	public function all(): array
 	{
-		return $this->values ??= $this->db->query('SELECT name, value FROM settings')->fetchAll(PDO::FETCH_KEY_PAIR);
+		if ($this->values === null) {
+			$values = $this->db->query('SELECT name, value FROM settings')->fetchAll(PDO::FETCH_KEY_PAIR);
+			$date = EventDate::fromValues($values['event_day'] ?? '', $values['event_time'] ?? '');
+			$this->values = ['event_date' => $date?->text() ?? ''] + $values;
+		}
+		return $this->values;
+	}
+
+
+	/** Date of the ball; null while it is not set. */
+	public function eventDate(): ?EventDate
+	{
+		return EventDate::fromValues($this->get('event_day'), $this->get('event_time'));
 	}
 
 

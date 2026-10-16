@@ -28,7 +28,7 @@
 | `app/Core/Http/` | `HttpClient` interface + `CurlHttpClient` (tests use `tests/php/Support/FakeHttpClient`; no test calls a real service). |
 | `app/Core/Database/` | PDO factory. |
 | `app/Model/Reservation/` | `ReservationService` (all reservation rules), `ReservationAdmin`, `SeatOverview`, `ReservationSession`, `ReservationError`. |
-| `app/Model/Settings/` | `Settings`: event info, prices and limits stored in the `settings` table. |
+| `app/Model/Settings/` | `Settings`: event info, prices and limits stored in the `settings` table; `EventDate` (date of the ball: text, days left). |
 | `app/Model/Site/` | `SiteMode` (stages of the site), `SiteAccess` (tester and VIP tokens). |
 | `app/Model/Payment/` | `PaymentImporter` (fetch -> store incoming ones, outgoing are skipped -> match -> e-mail; manual button or cron), `PaymentMatcher` (partial payments add up; assign, ignore, settle and their undo), `PaymentCandidates` (suggested reservations of an unmatched payment by amount / payer / message, search by name, e-mail, number or VS), `VariableSymbol` (VS = prefix + id, e.g. 20260003), `QrPayment` (IBAN + SPAYD + PNG), `PaymentRepository`. |
 | `app/Model/Payment/Bank/` | `BankTransactionSource` (interface; `Mock/MockBankSource` locally, `Fio/FioApiSource` in production, chosen by `bank.driver` in `BankSourceFactory`; both `RewindableSource`), `BankTransaction`. |

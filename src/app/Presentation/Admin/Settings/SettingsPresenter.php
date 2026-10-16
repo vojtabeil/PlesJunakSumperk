@@ -46,7 +46,10 @@ final class SettingsPresenter extends BasePresenter
 		$form->addGroup('Akce');
 		$form->addText('event_name', 'Název akce')->setRequired('Vyplňte název akce.')->setMaxLength(255);
 		$form->addTextArea('event_intro', 'Úvodní text')->setMaxLength(1000);
-		$form->addText('event_date', 'Kdy (např. „7. 2. 2026 od 19:00“)')->setMaxLength(255);
+		$form->addDate('event_day', 'Datum plesu')
+			->setFormat('Y-m-d')
+			->setOption('description', 'Na webu, vstupenkách a v e-mailech jako „7. 2. 2026 od 19:00“; administrace podle něj ukazuje, kolik dní do plesu zbývá.');
+		$form->addTime('event_time', 'Začátek')->setFormat('H:i');
 		$form->addText('venue', 'Kde')->setMaxLength(255);
 		$this->addUrl($form, 'venue_url', 'Odkaz na mapu');
 		$form->addText('band', 'Kapela')->setMaxLength(255);
