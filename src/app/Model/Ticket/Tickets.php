@@ -40,7 +40,7 @@ final class Tickets
 	public function issue(int $reservationId): void
 	{
 		$stmt = $this->db->prepare(
-			"SELECT seat_id FROM seat_bookings WHERE reservation_id = ? AND state = 'reserved' ORDER BY seat_id",
+			"SELECT b.seat_id FROM seat_bookings b JOIN seats s ON s.id = b.seat_id WHERE b.reservation_id = ? AND b.state = 'reserved' ORDER BY s.sort_order, s.id",
 		);
 		$stmt->execute([$reservationId]);
 		$seats = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
@@ -97,7 +97,7 @@ final class Tickets
 		$sql = match ($kind) {
 			'seat' => 'SELECT t.code, t.used_at, s.label AS seat_label, r.id AS reservation_id, r.name, r.status, r.channel
 				FROM tickets t JOIN reservations r ON r.id = t.reservation_id JOIN seats s ON s.id = t.seat_id
-				WHERE r.status IN (' . ReservationService::FinishedStatuses . ') ORDER BY s.table_id, s.id',
+				WHERE r.status IN (' . ReservationService::FinishedStatuses . ') ORDER BY s.sort_order, s.id',
 			'standing' => 'SELECT t.code, t.used_at, r.id AS reservation_id, r.name, r.status, r.channel
 				FROM tickets t JOIN reservations r ON r.id = t.reservation_id
 				WHERE t.seat_id IS NULL AND r.status IN (' . ReservationService::FinishedStatuses . ') ORDER BY r.id, t.id',

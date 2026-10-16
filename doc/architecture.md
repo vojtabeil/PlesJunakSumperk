@@ -5,10 +5,11 @@
 | Path | Purpose |
 |---|---|
 | `src/` | The application: a self-contained Nette project with its own `composer.json`, `package.json`, `vendor/`, `node_modules/` and `var/`. The release package is built from it. |
-| `doc/` | `plan.md` (decisions, open questions, backlog), `deploy.md` (deployment on Lebeda), this file, `legacy/` (notes on the old site). |
+| `doc/` | `plan.md` (decisions, open questions, backlog), `deploy.md` (deployment on Lebeda), `hall-plan.md` (how the hall plan is drawn), this file, `legacy/` (notes on the old site). |
 | `resource/original/` | Old site as served over HTTP (frontend only), local URL `/original/`. Notes: `doc/legacy/original.md`, `doc/legacy/original-backend.md`. |
 | `resource/original-web/` | Complete FTP backup of the old site incl. PHP sources; credentials and dumps are git-ignored. Notes: `doc/legacy/original-web.md`, comparison with the new site: `doc/legacy/feature-comparison.md`. |
-| `resource/design/` | CorelDRAW drawings (hall plan); `Backup_*.cdr` are git-ignored. |
+| `resource/design/` | CorelDRAW drawings of the hall plan (`hall-plan-2026.cdr` = the current one, `hall-plan-2025.cdr` archive) and `tools/` (Python: organizer's PDF -> SVG -> CorelDRAW, see `doc/hall-plan.md`); `Backup_*.cdr` are git-ignored. |
+| `resource/plan/` | The organizer's plan of the hall (PDF), source of the drawing. |
 | `dev/` | Local environment: PowerShell scripts, `env.cmd` (tool environment), `router.php` (PHP built-in server), wrappers of the portable tools. |
 | `dev/portable/` | Files of the portable version (`dev\portable.cmd`): `run.ps1` (start / stop / reset inside the package), `router.php`, `local.neon` template, the `.cmd` launchers and `CTI-ME.txt`. |
 | `setup.cmd`, `start.cmd`, `stop.cmd`, `check.cmd` | Everyday commands; the rest is in `dev/`. |
@@ -49,7 +50,7 @@
 | `bin/export-demo.php` | Renders the static demo pages (`dev\demo.cmd`): reservation page with the demo API, sample "Moje rezervace", plan SVG; everything in a rolled-back transaction. |
 | `bin/create-admin.php` | Creates an organizer account with a random password; `--sql` prints an INSERT for phpMyAdmin (production). |
 | `config/` | `common.neon`, `services.neon` (interfaces -> implementations), `local.neon` (git-ignored, from `local.neon.example`), `test.neon` (PHPUnit database). |
-| `database/` | `schema.sql` (hall plan in `hall_plan`, layout in `hall_tables` / `seats`, the sale in `seat_bookings`, tickets in `tickets`) + `defaults.sql` (also the production installation), `demo-hall.svg` (local demo plan), `seed.sql` (local test data only). |
+| `database/` | `schema.sql` (hall plan in `hall_plan`, layout in `hall_tables` / `seats`, the sale in `seat_bookings`, tickets in `tickets`) + `defaults.sql` (also the production installation), `hall-plan.svg` (the hall plan exported from `resource/design/hall-plan-2026.cdr`, imported by `init-db`), `seed.sql` (local test data only). |
 | `tests/php/` | PHPUnit against `ples_test`; mirrors `app/`; helpers in `Support/`, recorded responses in `fixtures/`. |
 | `tests/ts/` | `bun test` of the seat picker. |
 | `www/` | Document root: `index.php`, `.htaccess`, `img/` (incl. `skaut-logo.svg` from skaut.cz), `fonts/skaut/` (scout fonts SKAUT Bold and TheMix from cdn.skauting.cz, free for scout websites; `assets/scss/_fonts.scss`), `kontrola.webmanifest` (installable check app), `build/` (generated, git-ignored). |

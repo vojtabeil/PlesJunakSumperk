@@ -9,12 +9,12 @@ namespace App\Model\Hall;
 final class HallChanges
 {
 	/**
-	 * @param list<int> $newSeats seat numbers added (or back in the plan)
-	 * @param list<int> $removedSeats seat numbers no longer in the plan
-	 * @param array<int, array{from: ?int, to: int}> $movedSeats seat number => table numbers
-	 * @param list<int> $newTables
-	 * @param list<int> $removedTables
-	 * @param array<int, array{from: ?string, to: ?string}> $renamedTables table number => names
+	 * @param list<string> $newSeats seat labels added (or back in the plan)
+	 * @param list<string> $removedSeats seat labels no longer in the plan
+	 * @param list<int> $removedSeatIds their ids in the database
+	 * @param list<string> $newTables table labels
+	 * @param list<string> $removedTables
+	 * @param array<string, array{from: ?string, to: ?string}> $renamedTables table label => names
 	 * @param list<array{id: int, name: ?string, email: ?string, phone: ?string, status: string, channel: string,
 	 *     paid: int, seats: list<string>}> $affected reservations that lose a seat and will be cancelled
 	 * @param int $heldSeats removed seats somebody is selecting right now (only released)
@@ -22,7 +22,7 @@ final class HallChanges
 	public function __construct(
 		public readonly array $newSeats,
 		public readonly array $removedSeats,
-		public readonly array $movedSeats,
+		public readonly array $removedSeatIds,
 		public readonly array $newTables,
 		public readonly array $removedTables,
 		public readonly array $renamedTables,
@@ -52,7 +52,6 @@ final class HallChanges
 		return array_filter([
 			'new_seats' => count($this->newSeats),
 			'removed_seats' => count($this->removedSeats),
-			'moved_seats' => count($this->movedSeats),
 			'new_tables' => count($this->newTables),
 			'removed_tables' => count($this->removedTables),
 			'renamed_tables' => count($this->renamedTables),

@@ -28,7 +28,8 @@ use Tracy\ILogger;
 
 /**
  * Base for tests against the test database (ples_test, created by `dev\init-db.cmd -Test`).
- * Every test starts with a small fixture: 2 tables x 4 seats and default settings.
+ * Every test starts with a small fixture: tables A1 and A2 with seats A1/1-A1/4 (ids 101-104) and A2/1-A2/4
+ * (ids 201-204), and default settings.
  */
 abstract class DatabaseTestCase extends TestCase
 {
@@ -61,11 +62,11 @@ abstract class DatabaseTestCase extends TestCase
 			'payment_days' => '2',
 			'contact_email' => 'dotazy@example.com',
 		]);
-		$this->db->exec("INSERT INTO hall_tables (id, label, svg_id) VALUES (1, '1', 'table-1'), (2, '2', 'table-2')");
+		$this->db->exec("INSERT INTO hall_tables (id, label, svg_id, sort_order) VALUES (1, 'A1', 'table-A1', 1), (2, 'A2', 'table-A2', 2)");
 		$this->db->exec(
-			"INSERT INTO seats (id, label, table_id, svg_id) VALUES
-			(101, '1/1', 1, 'seat-101'), (102, '1/2', 1, 'seat-102'), (103, '1/3', 1, 'seat-103'), (104, '1/4', 1, 'seat-104'),
-			(201, '2/1', 2, 'seat-201'), (202, '2/2', 2, 'seat-202'), (203, '2/3', 2, 'seat-203'), (204, '2/4', 2, 'seat-204')",
+			"INSERT INTO seats (id, label, table_id, svg_id, sort_order) VALUES
+			(101, 'A1/1', 1, 'seat-A1-1', 11), (102, 'A1/2', 1, 'seat-A1-2', 12), (103, 'A1/3', 1, 'seat-A1-3', 13), (104, 'A1/4', 1, 'seat-A1-4', 14),
+			(201, 'A2/1', 2, 'seat-A2-1', 21), (202, 'A2/2', 2, 'seat-A2-2', 22), (203, 'A2/3', 2, 'seat-A2-3', 23), (204, 'A2/4', 2, 'seat-A2-4', 24)",
 		);
 	}
 

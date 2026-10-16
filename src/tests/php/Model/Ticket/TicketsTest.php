@@ -19,7 +19,7 @@ final class TicketsTest extends DatabaseTestCase
 			static fn(array $t): ?int => $t['seat_id'] === null ? null : (int) $t['seat_id'],
 			$tickets,
 		), 'Seats first, then standing tickets');
-		self::assertSame(['1/1', '1/2', null, null], array_column($tickets, 'seat_label'));
+		self::assertSame(['A1/1', 'A1/2', null, null], array_column($tickets, 'seat_label'));
 
 		$codes = array_column($tickets, 'code');
 		self::assertCount(4, array_unique($codes));

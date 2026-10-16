@@ -27,7 +27,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 		$message = $sender->sent[0];
 		self::assertSame('jana@example.com', $message->to);
 		self::assertSame("Potvrzení rezervace č. $id – Testovací ples", $message->subject);
-		self::assertStringContainsString('stůl 1, místo 1', $message->text);
+		self::assertStringContainsString('stůl A1, místo 1', $message->text);
 		self::assertStringContainsString("600\u{A0}Kč", $message->text);
 		self::assertStringContainsString('Jana Nováková', $message->html);
 		self::assertStringContainsString('Variabilní symbol: ' . sprintf('2026%04d', $id), $message->text);
@@ -107,7 +107,7 @@ final class ReservationMailerTest extends DatabaseTestCase
 			self::assertStringStartsWith("\x89PNG", $message->inlineImages["ticket-$code"] ?? '');
 			self::assertStringContainsString("/vstupenka/$code/{$ticket['print_token']}", $message->text);
 		}
-		self::assertStringContainsString('Stůl 1, místo 1', $message->text);
+		self::assertStringContainsString('Stůl A1, místo 1', $message->text);
 		self::assertStringContainsString('Bez místenky (na stání)', $message->text);
 		self::assertContains('email.tickets_sent', $this->loggedActions());
 	}

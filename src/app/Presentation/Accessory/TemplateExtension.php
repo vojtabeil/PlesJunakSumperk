@@ -49,7 +49,7 @@ final class TemplateExtension extends Extension
 	}
 
 
-	/** "3/5" -> "stůl 3, místo 5" */
+	/** "A1/5" -> "stůl A1, místo 5" */
 	public static function formatSeatLabel(string $label): string
 	{
 		[$table, $seat] = array_pad(explode('/', $label, 2), 2, '');

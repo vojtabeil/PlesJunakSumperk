@@ -8,7 +8,7 @@ export interface HallTable {
 }
 export interface HallSeat {
   id: number;
-  /** "<table>/<seat>", e.g. "3/25" */
+  /** "<table>/<seat>", e.g. "A1/5" */
   label: string;
   table_id: number | null;
   /** Id of the seat's shape in the SVG plan. */

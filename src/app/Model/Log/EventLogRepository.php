@@ -34,7 +34,7 @@ final class EventLogRepository
 		$offset = (max(1, $page) - 1) * self::PageSize;
 		$stmt = $this->db->prepare(
 			"SELECT e.*, u.name AS admin_name, r.name AS reservation_name,
-				(SELECT GROUP_CONCAT(s.label ORDER BY s.id SEPARATOR ', ')
+				(SELECT GROUP_CONCAT(s.label ORDER BY s.sort_order, s.id SEPARATOR ', ')
 					FROM event_log_seats es JOIN seats s ON s.id = es.seat_id WHERE es.event_id = e.id) AS seat_labels
 			FROM event_log e
 			LEFT JOIN admin_users u ON u.id = e.admin_user_id

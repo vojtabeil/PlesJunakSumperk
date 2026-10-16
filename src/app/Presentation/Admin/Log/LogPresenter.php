@@ -32,7 +32,7 @@ final class LogPresenter extends BasePresenter
 	#[Persistent]
 	public string $actorType = '';
 
-	/** Seat label, e.g. "3/5". */
+	/** Seat label, e.g. "A1/5". */
 	#[Persistent]
 	public string $seat = '';
 
@@ -84,7 +84,7 @@ final class LogPresenter extends BasePresenter
 			return null;
 		}
 		$stmt = $this->db->prepare('SELECT id FROM seats WHERE label = ?');
-		$stmt->execute([preg_replace('~\s+~', '', $this->seat)]); // "3 / 5" = "3/5"
+		$stmt->execute([preg_replace('~\s+~', '', $this->seat)]); // "A1 / 5" = "A1/5"
 		$id = $stmt->fetchColumn();
 		return $id === false ? null : (int) $id;
 	}

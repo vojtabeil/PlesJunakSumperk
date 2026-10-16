@@ -128,15 +128,17 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
   Reservations store their `channel` (test/vip/public); test ones are left out of the guest list
   and can be deleted. "Moje rezervace" (payment details) works in every stage.
 - Database data files: `src/database/schema.sql` + `defaults.sql` are also the production installation
-  (it starts without a hall plan); `demo-hall.svg` is the local demo plan imported by `init-db`
-  (`bin/import-hall.php`), `seed.sql` local test data only.
-- Hall plan: one SVG in `hall_plan` (only one version), uploaded in Nebezpečná zóna (`Admin:Danger`).
-  Seats are shapes `id="seat-<number>"` inside groups `id="table-<number>"`; the database keeps no
-  coordinates, only `svg_id`, and seat ids are the numbers from the drawing (label `<table>/<seat>`).
+  (it starts without a hall plan); `hall-plan.svg` is the hall plan (KKC Rapotín) imported by `init-db` and the
+  portable version (`bin/import-hall.php`), `seed.sql` local test data only.
+- Hall plan: one SVG in `hall_plan` (only one version), uploaded in Nebezpečná zóna (`Admin:Danger`). How the drawing is
+  made (organizer's PDF -> generator -> CorelDRAW -> SVG) and its conventions: `doc/hall-plan.md`.
+  Tables are groups `id="table-A1"`, seats inside them `id="seat-A1-5"` numbered from 1 at every table (label `A1/5`);
+  the database keeps no coordinates, only `svg_id`. Tables and seats are matched by label across uploads (ids stay),
+  `sort_order` is the hall order (natural sort of the labels) - order seats by it, never by id.
   `HallPlanParser` sanitizes the upload (allowlist of SVG elements, no scripts or external references);
   `HallSync::apply` cancels reservations of removed seats only when they match what the admin confirmed in
   the preview; removed seats and tables become `active = 0`. The seat picker loads `/plan-salu.svg` and
-  styles the shapes (`.seat--free/mine/taken`, numbers `label-seat-N`). The map fills the screen (both kinds of tickets in
+  styles the shapes (`.seat--free/mine/taken`, numbers `label-seat-A1-5`). The map fills the screen (both kinds of tickets in
   a bar above it, `Tickets`; the order button is fixed in the top right corner of the screen while the form is out of sight) and works on the SVG `viewBox` (`seat-picker/viewbox.ts`). It sleeps
   until used (wheel and swipes scroll the page); a click/tap (which also acts), two fingers, double click or the middle
   button wake it, then the wheel zooms and dragging pans (only until the hall's edge reaches the screen's edge, `panWithin`); a finger

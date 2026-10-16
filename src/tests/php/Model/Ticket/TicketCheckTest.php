@@ -25,7 +25,7 @@ final class TicketCheckTest extends DatabaseTestCase
 
 		$result = $this->ticketCheck()->lookup(strtolower($code));
 		self::assertSame('ok', $result['status']);
-		self::assertSame('1/1', $result['ticket']['seat']);
+		self::assertSame('A1/1', $result['ticket']['seat']);
 		self::assertSame('Test Host', $result['reservation']['name']);
 		self::assertCount(2, $result['tickets']);
 

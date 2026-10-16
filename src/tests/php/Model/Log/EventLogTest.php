@@ -44,7 +44,7 @@ final class EventLogTest extends DatabaseTestCase
 			array_column($bySeat, 'action'),
 			'The cancelled reservation still shows up for the seat it held',
 		);
-		self::assertSame('1/1, 1/2', $bySeat[0]['seat_labels']);
+		self::assertSame('A1/1, A1/2', $bySeat[0]['seat_labels']);
 		self::assertSame([], $repository->search(new EventFilter(seatId: 201))['events']);
 	}
 

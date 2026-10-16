@@ -150,7 +150,7 @@ final class ReservationAdmin
 		}
 
 		$stmt = $this->db->prepare(
-			'SELECT r.*, GROUP_CONCAT(s.label ORDER BY s.id SEPARATOR \', \') AS seat_labels, COUNT(s.id) AS seat_count
+			'SELECT r.*, GROUP_CONCAT(s.label ORDER BY s.sort_order, s.id SEPARATOR \', \') AS seat_labels, COUNT(s.id) AS seat_count
 			FROM reservations r
 			LEFT JOIN seat_bookings b ON b.reservation_id = r.id
 			LEFT JOIN seats s ON s.id = b.seat_id
@@ -258,7 +258,7 @@ final class ReservationAdmin
 			return null;
 		}
 		$seats = $this->db->prepare(
-			'SELECT s.label FROM seat_bookings b JOIN seats s ON s.id = b.seat_id WHERE b.reservation_id = ? ORDER BY s.id',
+			'SELECT s.label FROM seat_bookings b JOIN seats s ON s.id = b.seat_id WHERE b.reservation_id = ? ORDER BY s.sort_order, s.id',
 		);
 		$seats->execute([$id]);
 		$reservation['seats'] = $seats->fetchAll(PDO::FETCH_COLUMN);
@@ -372,7 +372,7 @@ final class ReservationAdmin
 	{
 		return $this->db->query(
 			"SELECT r.id, r.name, r.email, r.phone, r.status, r.standing_tickets, r.total_price, r.paid_amount, r.paid_at, r.note,
-				GROUP_CONCAT(s.label ORDER BY s.id SEPARATOR ', ') AS seat_labels, COUNT(s.id) AS seat_count,
+				GROUP_CONCAT(s.label ORDER BY s.sort_order, s.id SEPARATOR ', ') AS seat_labels, COUNT(s.id) AS seat_count,
 				(SELECT COUNT(*) FROM tickets t WHERE t.reservation_id = r.id AND t.used_at IS NOT NULL) AS used_tickets
 			FROM reservations r
 			LEFT JOIN seat_bookings b ON b.reservation_id = r.id

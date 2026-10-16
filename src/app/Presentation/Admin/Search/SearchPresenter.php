@@ -11,7 +11,7 @@ use PDO;
 
 
 /**
- * Search box in the admin header: seat "3/5", reservation number, variable symbol,
+ * Search box in the admin header: seat "A1/5", reservation number, variable symbol,
  * name or e-mail. A single match opens it directly.
  */
 final class SearchPresenter extends BasePresenter
@@ -32,8 +32,8 @@ final class SearchPresenter extends BasePresenter
 			$this->redirect('Dashboard:default');
 		}
 
-		if (preg_match('~^\d{1,3}\s*/\s*\d{1,3}$~', $q)) {
-			$label = (string) preg_replace('~\s+~', '', $q);
+		if (preg_match('~^[A-Za-z]{0,3}\d{1,3}\s*/\s*\d{1,3}$~', $q)) {
+			$label = strtoupper((string) preg_replace('~\s+~', '', $q));
 			$stmt = $this->db->prepare(
 				'SELECT b.reservation_id, b.state FROM seats s LEFT JOIN seat_bookings b ON b.seat_id = s.id WHERE s.label = ?',
 			);

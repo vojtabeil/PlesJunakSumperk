@@ -80,17 +80,17 @@ final class HallSync
 			foreach ($affected as $reservationId) {
 				$this->reservationAdmin->cancelInTransaction($reservationId, self::CancelReason);
 			}
-			if ($changes->removedSeats) {
+			if ($changes->removedSeatIds) {
 				// Seats being selected right now are only released.
-				$this->db->prepare('DELETE FROM seat_bookings WHERE seat_id IN (' . self::placeholders($changes->removedSeats) . ')')
-					->execute($changes->removedSeats);
+				$this->db->prepare('DELETE FROM seat_bookings WHERE seat_id IN (' . self::placeholders($changes->removedSeatIds) . ')')
+					->execute($changes->removedSeatIds);
 			}
 			$this->storeLayout($plan);
 			$this->db->prepare(
 				'REPLACE INTO hall_plan (id, svg, file_name, applied_by, applied_at) VALUES (1, ?, ?, ?, NOW())',
 			)->execute([$plan->svg, mb_substr($fileName, 0, 255), $this->actor->adminId()]);
 
-			$this->eventLog->record('hall.replaced', null, ['file' => $fileName] + $changes->counts(), $changes->removedSeats);
+			$this->eventLog->record('hall.replaced', null, ['file' => $fileName] + $changes->counts(), $changes->removedSeatIds);
 			$this->db->commit();
 			return $changes;
 		} catch (Throwable $e) {
@@ -102,48 +102,45 @@ final class HallSync
 
 	private function changes(HallPlan $plan, bool $lock): HallChanges
 	{
-		$seats = [];
-		foreach ($this->db->query('SELECT id, table_id, active FROM seats' . ($lock ? ' FOR UPDATE' : ''))->fetchAll() as $row) {
-			$seats[(int) $row['id']] = ['table' => $row['table_id'] !== null ? (int) $row['table_id'] : null, 'active' => (bool) $row['active']];
+		// Tables and seats are matched by their labels ("A1", "A1/5"), the ids stay.
+		$seatIds = [];
+		foreach ($this->db->query('SELECT id, label FROM seats WHERE active = 1' . ($lock ? ' FOR UPDATE' : ''))->fetchAll() as $row) {
+			$seatIds[(string) $row['label']] = (int) $row['id'];
 		}
-		$tables = [];
-		foreach ($this->db->query('SELECT id, name, active FROM hall_tables')->fetchAll() as $row) {
-			$tables[(int) $row['id']] = ['name' => $row['name'], 'active' => (bool) $row['active']];
+		$tableNames = [];
+		foreach ($this->db->query('SELECT label, name FROM hall_tables WHERE active = 1')->fetchAll() as $row) {
+			$tableNames[(string) $row['label']] = $row['name'] !== null ? (string) $row['name'] : null;
 		}
-		$activeSeats = array_keys(array_filter($seats, static fn(array $s): bool => $s['active']));
-		$activeTables = array_keys(array_filter($tables, static fn(array $t): bool => $t['active']));
+		$planSeats = array_map('strval', array_keys($plan->seats));
+		$planTables = array_map('strval', array_keys($plan->tables));
 
-		$moved = $renamed = [];
-		foreach ($plan->seats as $number => $seat) {
-			if (isset($seats[$number]) && $seats[$number]['active'] && $seats[$number]['table'] !== $seat['table']) {
-				$moved[$number] = ['from' => $seats[$number]['table'], 'to' => $seat['table']];
+		$renamed = [];
+		foreach ($plan->tables as $label => $table) {
+			if (array_key_exists($label, $tableNames) && $tableNames[$label] !== $table['name']) {
+				$renamed[(string) $label] = ['from' => $tableNames[$label], 'to' => $table['name']];
 			}
 		}
-		foreach ($plan->tables as $number => $table) {
-			if (isset($tables[$number]) && $tables[$number]['active'] && $tables[$number]['name'] !== $table['name']) {
-				$renamed[$number] = ['from' => $tables[$number]['name'], 'to' => $table['name']];
-			}
-		}
-		$removedSeats = array_values(array_diff($activeSeats, array_keys($plan->seats)));
-		[$affected, $held] = $this->affected($removedSeats);
+		// Labels of an older plan may be numeric ("12/87"), so PHP turns some keys into integers.
+		$removedSeats = array_values(array_diff(array_map('strval', array_keys($seatIds)), $planSeats));
+		$removedSeatIds = array_map(static fn(string $label): int => $seatIds[$label], $removedSeats);
+		[$affected, $held] = $this->affected($removedSeatIds);
 
 		return new HallChanges(
-			newSeats: array_values(array_diff(array_keys($plan->seats), $activeSeats)),
+			newSeats: array_values(array_diff($planSeats, array_map('strval', array_keys($seatIds)))),
 			removedSeats: $removedSeats,
-			movedSeats: $moved,
-			newTables: array_values(array_diff(array_keys($plan->tables), $activeTables)),
-			removedTables: array_values(array_diff($activeTables, array_keys($plan->tables))),
+			removedSeatIds: $removedSeatIds,
+			newTables: array_values(array_diff($planTables, array_map('strval', array_keys($tableNames)))),
+			removedTables: array_values(array_diff(array_map('strval', array_keys($tableNames)), $planTables)),
 			renamedTables: $renamed,
 			affected: $affected,
 			heldSeats: $held,
 		);
 	}
 
-
 	/**
 	 * Finished reservations holding a removed seat (they will be cancelled), and the number of removed
 	 * seats held by drafts (only released).
-	 * @param list<int> $removedSeats
+	 * @param list<int> $removedSeats ids
 	 * @return array{list<array{id: int, name: ?string, email: ?string, phone: ?string, status: string, channel: string, paid: int, seats: list<string>}>, int}
 	 */
 	private function affected(array $removedSeats): array
@@ -157,7 +154,7 @@ final class HallSync
 			JOIN reservations r ON r.id = b.reservation_id
 			JOIN seats s ON s.id = b.seat_id
 			WHERE b.seat_id IN (' . self::placeholders($removedSeats) . ')
-			ORDER BY r.id, s.id',
+			ORDER BY r.id, s.sort_order, s.id',
 		);
 		$stmt->execute($removedSeats);
 
@@ -185,28 +182,36 @@ final class HallSync
 	}
 
 
-	/** Tables and seats of the plan become active (inserted or updated), the others inactive. */
+	/**
+	 * Tables and seats of the plan become active (inserted, or updated when the label exists), the others
+	 * inactive; sort_order = the order of the plan (natural sort of the labels).
+	 */
 	private function storeLayout(HallPlan $plan): void
 	{
 		$this->db->exec('UPDATE hall_tables SET active = 0');
 		$table = $this->db->prepare(
-			'INSERT INTO hall_tables (id, label, name, svg_id, active) VALUES (?, ?, ?, ?, 1)
-			ON DUPLICATE KEY UPDATE label = VALUES(label), name = VALUES(name), svg_id = VALUES(svg_id), active = 1',
+			'INSERT INTO hall_tables (label, name, svg_id, sort_order, active) VALUES (?, ?, ?, ?, 1)
+			ON DUPLICATE KEY UPDATE name = VALUES(name), svg_id = VALUES(svg_id), sort_order = VALUES(sort_order), active = 1',
 		);
-		foreach ($plan->tables as $number => $t) {
-			$table->execute([$number, (string) $number, $t['name'], $t['svg_id']]);
+		$order = 0;
+		foreach ($plan->tables as $label => $t) {
+			$table->execute([(string) $label, $t['name'], $t['svg_id'], ++$order]);
+		}
+		$tableIds = [];
+		foreach ($this->db->query('SELECT id, label FROM hall_tables')->fetchAll() as $row) {
+			$tableIds[(string) $row['label']] = (int) $row['id'];
 		}
 
 		$this->db->exec('UPDATE seats SET active = 0');
 		$seat = $this->db->prepare(
-			'INSERT INTO seats (id, label, table_id, svg_id, active) VALUES (?, ?, ?, ?, 1)
-			ON DUPLICATE KEY UPDATE label = VALUES(label), table_id = VALUES(table_id), svg_id = VALUES(svg_id), active = 1',
+			'INSERT INTO seats (label, table_id, svg_id, sort_order, active) VALUES (?, ?, ?, ?, 1)
+			ON DUPLICATE KEY UPDATE table_id = VALUES(table_id), svg_id = VALUES(svg_id), sort_order = VALUES(sort_order), active = 1',
 		);
-		foreach ($plan->seats as $number => $s) {
-			$seat->execute([$number, $s['table'] . '/' . $number, $s['table'], $s['svg_id']]);
+		$order = 0;
+		foreach ($plan->seats as $label => $s) {
+			$seat->execute([(string) $label, $tableIds[$s['table']], $s['svg_id'], ++$order]);
 		}
 	}
-
 
 	/** @param list<int> $values */
 	private static function placeholders(array $values): string

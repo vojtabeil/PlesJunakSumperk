@@ -42,12 +42,12 @@ final class SeatOverviewTest extends DatabaseTestCase
 		self::assertSame(['free' => 4, 'held' => 1, 'unpaid' => 1, 'partial' => 0, 'paid' => 2], $overview->counts());
 
 		$held = $overview->seats('held');
-		self::assertSame(['2/2'], array_column($held, 'label'));
+		self::assertSame(['A2/2'], array_column($held, 'label'));
 		self::assertNull($held[0]['reservation_id'], 'A draft is not shown as a reservation');
 
-		self::assertSame(['1/1', '1/2'], array_column($overview->seats(null, 'alice'), 'label'));
-		self::assertSame(['2/1'], array_column($overview->seats(null, '2/1'), 'label'));
-		self::assertSame(['1/1'], array_column($overview->seats(null, ' 1 / 1 '), 'label'), 'A seat label matches exactly');
+		self::assertSame(['A1/1', 'A1/2'], array_column($overview->seats(null, 'alice'), 'label'));
+		self::assertSame(['A2/1'], array_column($overview->seats(null, 'A2/1'), 'label'));
+		self::assertSame(['A1/1'], array_column($overview->seats(null, ' a1 / 1 '), 'label'), 'A seat label matches exactly');
 		self::assertSame($paid, $overview->seats('paid')[0]['reservation_id']);
 	}
 }

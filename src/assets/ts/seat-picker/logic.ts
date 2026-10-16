@@ -12,13 +12,13 @@ export function formatPrice(amount: number): string {
   return priceFormat.format(amount);
 }
 
-/** "3/5" -> { table: "3", seat: "5" } */
+/** "A1/5" -> { table: "A1", seat: "5" } */
 export function splitSeatLabel(label: string): { table: string; seat: string } {
   const [table = '', seat = ''] = label.split('/', 2);
   return { table, seat };
 }
 
-/** "3/5" -> "Stůl 3 · místo 5" */
+/** "A1/5" -> "Stůl A1 · místo 5" */
 export function formatSeat(label: string): string {
   const { table, seat } = splitSeatLabel(label);
   return seat ? `Stůl ${table} · místo ${seat}` : label;
@@ -112,9 +112,12 @@ export function nearestSeat(from: MapPoint, seats: MapPoint[], direction: Direct
 
 const StatusText: Record<SeatStatus, string> = { free: 'volné', mine: 'vybrané', taken: 'obsazené' };
 
-/** What a screen reader says about a seat: "Stůl 3 (Jaroslav Foglar), místo 25, volné, 350 Kč". */
+/**
+ * What a screen reader says about a seat: "Stůl A3 (Jaroslav Foglar), místo 5, volné, 350 Kč"; a name that only
+ * repeats the label (the caption "A3" drawn on the desk) is left out.
+ */
 export function seatDescription(seat: HallSeat, table: HallTable | undefined, status: SeatStatus, price: number): string {
   const { table: number, seat: place } = splitSeatLabel(seat.label);
-  const tableText = `Stůl ${number}${table?.name ? ` (${table.name})` : ''}`;
+  const tableText = `Stůl ${number}${table?.name && table.name !== number ? ` (${table.name})` : ''}`;
   return `${tableText}, místo ${place}, ${StatusText[status]}${status === 'taken' ? '' : `, ${formatPrice(price)}`}`;
 }

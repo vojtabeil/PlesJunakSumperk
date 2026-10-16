@@ -43,6 +43,8 @@ export function createDemoApi(
   now: () => number = Date.now,
 ): ApiCall {
   const labels = new Map(seats.map((seat) => [seat.id, seat.label]));
+  // The layout lists the seats in hall order (A1/1, A1/2, ..., A2/1); ids say nothing about it.
+  const order = new Map(seats.map((seat, index) => [seat.id, index]));
   const taken = new Set(config.taken);
   let memory: Draft | null = null;
 
@@ -86,7 +88,7 @@ export function createDemoApi(
       ? {
           email: draft.email,
           standing: draft.standing,
-          seats: [...draft.seats].sort((a, b) => a - b).map((id) => ({ id, label: labels.get(id) ?? String(id) })),
+          seats: [...draft.seats].sort((a, b) => (order.get(a) ?? a) - (order.get(b) ?? b)).map((id) => ({ id, label: labels.get(id) ?? String(id) })),
           expires_in: draft.seats.length > 0 ? Math.max(0, secondsLeft(draft)) : null,
         }
       : null;

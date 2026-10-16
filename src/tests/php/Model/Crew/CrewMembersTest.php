@@ -146,7 +146,7 @@ final class CrewMembersTest extends DatabaseTestCase
 		$this->crew()->import("Petr; Kuchyně
 Jana; Bar");
 
-		self::assertSame(['1/1', '1/2'], array_column($this->tickets()->listing('seat'), 'seat_label'));
+		self::assertSame(['A1/1', 'A1/2'], array_column($this->tickets()->listing('seat'), 'seat_label'));
 		self::assertSame(['Test Host', 'Test Host'], array_column($this->tickets()->listing('standing'), 'name'));
 		self::assertSame(['Jana', 'Petr'], array_column($this->tickets()->listing('crew'), 'name'), 'By role, then name');
 	}

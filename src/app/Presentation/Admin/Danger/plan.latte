@@ -24,8 +24,9 @@
 
 		<section class="card danger-card" aria-labelledby="upload-title">
 			<h2 id="upload-title">Nahrát nový plánek</h2>
-			<p>Výkres musí mít židle pojmenované <code>seat-&lt;číslo&gt;</code> uvnitř skupin stolů <code>table-&lt;číslo&gt;</code>
-				(jméno stolu volitelně v textu <code>table-&lt;číslo&gt;-name</code>). Po nahrání se nic nemění:
+			<p>Výkres musí mít stoly jako skupiny <code>table-&lt;stůl&gt;</code> (např. <code>table-A1</code>) a v nich židle
+				<code>seat-&lt;stůl&gt;-&lt;číslo&gt;</code> číslované u každého stolu od 1 (např. <code>seat-A1-5</code> = místo A1/5);
+				jméno stolu volitelně v textu <code>table-&lt;stůl&gt;-name</code>. Postup je v <code>doc/hall-plan.md</code>. Po nahrání se nic nemění:
 				uvidíte, co se změní a které rezervace by se zrušily, a teprve pak plánek potvrdíte.</p>
 			{control uploadForm}
 		</section>
@@ -45,8 +46,6 @@
 			<dl n:if="$c" class="details">
 				<dt>Nová místa</dt><dd>{if $c->newSeats}{implode(', ', $c->newSeats)}{else}–{/if}</dd>
 				<dt>Odebraná místa</dt><dd>{if $c->removedSeats}{implode(', ', $c->removedSeats)}{else}–{/if}</dd>
-				<dt>Místa u jiného stolu</dt>
-				<dd>{foreach $c->movedSeats as $seat => $move}{$seat} (stůl {$move['from'] ?? '?'} → {$move['to']}){sep}, {/sep}{else}–{/foreach}</dd>
 				<dt>Nové stoly</dt><dd>{if $c->newTables}{implode(', ', $c->newTables)}{else}–{/if}</dd>
 				<dt>Odebrané stoly</dt><dd>{if $c->removedTables}{implode(', ', $c->removedTables)}{else}–{/if}</dd>
 				<dt>Přejmenované stoly</dt>

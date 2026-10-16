@@ -43,11 +43,11 @@ final class SeatOverview
 			LEFT JOIN seat_bookings b ON b.seat_id = s.id
 			LEFT JOIN reservations r ON r.id = b.reservation_id
 			WHERE s.active = 1
-			ORDER BY s.table_id, s.id',
+			ORDER BY s.sort_order, s.id',
 		)->fetchAll();
 
 		$query = mb_strtolower(trim($query));
-		$seatLabel = preg_match('~^\d+\s*/\s*\d+$~', $query) ? preg_replace('~\s+~', '', $query) : null;
+		$seatLabel = preg_match('~^[a-z]{0,3}\d+\s*/\s*\d+$~', $query) ? preg_replace('~\s+~', '', $query) : null;
 		$result = [];
 		foreach ($rows as $row) {
 			$seatStatus = self::status($row['state'], $row['status']);
@@ -66,7 +66,7 @@ final class SeatOverview
 			if ($status !== null && $item['status'] !== $status) {
 				continue;
 			}
-			if ($seatLabel !== null ? $item['label'] !== $seatLabel
+			if ($seatLabel !== null ? mb_strtolower($item['label']) !== $seatLabel
 				: $query !== '' && !str_contains(mb_strtolower($item['label'] . ' ' . ($item['name'] ?? '')), $query)
 			) {
 				continue;

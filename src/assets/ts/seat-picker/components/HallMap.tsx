@@ -34,7 +34,7 @@ const RestMs = 80;
 
 /**
  * Hall plan: the SVG drawing (HallLayout.svg) inlined into the page. Seats are its shapes (found by
- * svg_id), tables the groups table-N around them.
+ * svg_id), tables the groups table-A1 around them.
  *
  * The map sleeps until the visitor works with it, like maps embedded in other pages: asleep, the wheel and
  * swipes scroll the page and the map moves with it. A click or tap (which also does its action), two fingers,
@@ -55,7 +55,8 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
   const holder = useRef<HTMLDivElement>(null);
   const hall = useRef<Box | null>(null);
   const view = useRef<Box | null>(null);
-  const table = useRef<number | null>(null);
+  /** Label of the table the map shows ("A1"), null = the hall or a view moved by hand. */
+  const table = useRef<string | null>(null);
   const animation = useRef(0);
   const focusId = useRef<number | null>(null);
   // Event handlers are attached once per plan; they read the current values from here.
@@ -93,14 +94,14 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
     };
   }, [layout.svg]);
 
-  /** Shape of each seat in the drawing (and its number label, if the drawing has label-seat-N). */
+  /** Shape of each seat in the drawing (and its number label label-<svg id>, e.g. label-seat-A1-5, if the drawing has it). */
   const shapes = useMemo(() => {
     const map = new Map<number, { shape: SVGElement; label: SVGElement | null }>();
     for (const seat of layout.seats) {
       const shape = find(svg, seat.svg_id);
       if (shape) {
         shape.dataset['seat'] = String(seat.id);
-        const label = find(svg, `label-seat-${seat.id}`);
+        const label = find(svg, `label-${seat.svg_id}`);
         if (label) {
           label.setAttribute('aria-hidden', 'true');
           // Keep the drawing's own classes (font size, colour); the state class is added to them.
@@ -207,10 +208,10 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
     }
   };
 
-  const showTable = (number: number) => {
-    const box = svg ? tableBox(svg, number) : null;
+  const showTable = (label: string) => {
+    const box = svg ? tableBox(svg, label) : null;
     if (box) {
-      table.current = number;
+      table.current = label;
       animateTo(box);
     }
   };
@@ -365,11 +366,11 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
       wake();
       const target = event.target instanceof Element ? event.target : null;
       const shape = target?.closest<SVGElement>('[data-seat]');
-      const tableNumber = target ? tableOf(target) : null;
+      const tableLabel = target ? tableOf(target) : null;
       if (shape && seatPx(shape) >= DirectSeatPx) {
         toggle(Number(shape.dataset['seat']));
-      } else if (tableNumber !== null && tableNumber !== table.current) {
-        showTable(tableNumber);
+      } else if (tableLabel !== null && tableLabel !== table.current) {
+        showTable(tableLabel);
       }
     };
 
@@ -389,9 +390,9 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
       }
       focusId.current = Number(shape.dataset['seat']);
       // Moving through small seats with the keyboard: show the table of the focused seat.
-      const tableNumber = tableOf(shape);
-      if (seatPx(shape) < DirectSeatPx && tableNumber !== null) {
-        showTable(tableNumber);
+      const tableLabel = tableOf(shape);
+      if (seatPx(shape) < DirectSeatPx && tableLabel !== null) {
+        showTable(tableLabel);
       }
     };
 
@@ -588,20 +589,20 @@ function find(svg: SVGSVGElement | null, id: string): SVGElement | null {
   return svg?.querySelector<SVGElement>(`[id="${CSS.escape(id)}"]`) ?? null;
 }
 
-/** Number of the table an element belongs to: inside a group table-N, or its texts table-N-name / label-table-N. */
-function tableOf(element: Element): number | null {
+/** Label of the table an element belongs to: inside a group table-A1, or its texts table-A1-name / label-table-A1. */
+function tableOf(element: Element): string | null {
   for (let node: Element | null = element; node && !(node instanceof SVGSVGElement); node = node.parentElement) {
-    const match = /^(?:label-)?table-(\d+)(?:-name)?$/.exec(node.id);
+    const match = /^(?:label-)?table-([A-Z]{1,3}\d{1,3})(?:-name)?$/.exec(node.id);
     if (match?.[1]) {
-      return Number(match[1]);
+      return match[1];
     }
   }
   return null;
 }
 
 /** The table with its seats and its name, with a margin, in plan units. */
-function tableBox(svg: SVGSVGElement, number: number): Box | null {
-  const parts = [find(svg, `table-${number}`), find(svg, `table-${number}-name`)]
+function tableBox(svg: SVGSVGElement, label: string): Box | null {
+  const parts = [find(svg, `table-${label}`), find(svg, `table-${label}-name`)]
     .filter((element): element is SVGElement => element !== null)
     .map((element) => elementBox(svg, element));
   const box = union(parts);

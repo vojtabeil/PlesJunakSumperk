@@ -112,7 +112,7 @@ legacy database is out of scope. Each item names the legacy code it replaces.
 
 ## 6. Hall plan from SVG (decided 2026-10-14)
 
-Goal: one source of truth for the hall. The drawing (`resource/design/hall-plan-2025.cdr`, CorelDRAW)
+Goal: one source of truth for the hall. The drawing (`resource/design/hall-plan-2026.cdr`, CorelDRAW; how it is made: `doc/hall-plan.md`)
 is the source; the database only references its shapes. The drawing is edited and exported through
 the CorelDRAW MCP server (`c:\Git\coreldraw-mcp`).
 
@@ -129,17 +129,10 @@ the CorelDRAW MCP server (`c:\Git\coreldraw-mcp`).
 
 ### 6.2 Drawing conventions
 
-| Shape | `id` | Meaning |
-|---|---|---|
-| Chair | `seat-87` | Seat no. 87 (the number is the identity and the label of the seat). |
-| Group of a table (table, its chairs, labels) | `table-12` | Table no. 12; seats inside the group belong to it. |
-| Text with the table name (optional) | `table-12-name` | Name of the table (scout personality). |
-| Text with the seat number (optional) | `label-seat-87` | Number drawn on the seat; the seat picker enlarges it and colours it by the state. |
-| Anything else | any | Decoration only. |
-
-Seats are numbered across the hall (1-270 in the 2025 drawing). The seat id is that number; the label stays
-"<table>/<seat>" (e.g. "12/87", shown as "Stůl 12 · místo 87"), so e-mails, tickets and search need no change.
-
+Changed 2026-10-16 with the new hall (KKC Rapotín): tables are groups `table-A1`, seats `seat-A1-5` numbered from 1
+at every table (label "A1/5", shown as "Stůl A1 · místo 5"); seats and tables are matched by label, their ids are
+independent and `sort_order` keeps the hall order. Full conventions and how the drawing is made: `doc/hall-plan.md`.
+(The 2025 drawing numbered seats 1-270 across the hall and used the number as the seat id.)
 ### 6.3 Database
 
 ```
@@ -185,7 +178,7 @@ seat_bookings (seat_id PK -> seats, reservation_id NOT NULL -> reservations ON D
   reactivated if they come back); replaces the plan; logs `hall.replaced`. Customers get no automatic e-mail.
 - A new installation has no plan: the dashboard asks to upload one and seats cannot be sold until then
   (standing tickets can). `bin/import-hall.php` uses the same code; `init-db` imports a demo plan
-  (`src/database/demo-hall.svg`).
+  (`src/database/hall-plan.svg`).
 
 ### 6.6 Steps
 

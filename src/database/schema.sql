@@ -41,26 +41,31 @@ CREATE TABLE reservations (
     KEY ix_reservations_session (session_id)
 ) ENGINE=InnoDB;
 
--- Tables in the hall: id = number of the table in the plan, svg_id = id of its group in the SVG.
+-- Tables in the hall: label = the table's name in the plan (group table-A1 -> "A1"), its identity across
+-- plan uploads; svg_id = id of its group in the SVG; sort_order = order in the hall (natural sort of labels).
 -- Removed from the plan = active 0 (kept for the history). Shapes and positions are only in the SVG.
 CREATE TABLE hall_tables (
-    id     SMALLINT UNSIGNED NOT NULL PRIMARY KEY,
-    label  VARCHAR(16) NOT NULL,
-    name   VARCHAR(255) NULL,
-    svg_id VARCHAR(64) NULL,
-    active TINYINT(1) NOT NULL DEFAULT 1
+    id         SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    label      VARCHAR(16) NOT NULL,
+    name       VARCHAR(255) NULL,
+    svg_id     VARCHAR(64) NULL,
+    sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    active     TINYINT(1) NOT NULL DEFAULT 1,
+    UNIQUE KEY uq_hall_tables_label (label)
 ) ENGINE=InnoDB;
 
--- Seats of the hall: the layout only, what is sold is in seat_bookings. id = number of the seat in the plan,
--- svg_id = id of its shape in the SVG; label = "<table>/<seat>" (e.g. "12/87"). Removed from the plan = active 0
--- (the event log still refers to it).
+-- Seats of the hall: the layout only, what is sold is in seat_bookings. label = "<table>/<seat>" (e.g. "A1/5",
+-- seats are numbered from 1 at every table; shape seat-A1-5), its identity across plan uploads; svg_id = id of
+-- its shape in the SVG; sort_order = order in the hall. Removed from the plan = active 0 (the event log still
+-- refers to it).
 CREATE TABLE seats (
-    id       INT UNSIGNED NOT NULL PRIMARY KEY,
-    label    VARCHAR(16)  NOT NULL,
-    table_id SMALLINT UNSIGNED NULL,
-    svg_id   VARCHAR(64)  NULL,
-    active   TINYINT(1) NOT NULL DEFAULT 1,
-    -- Seat labels ("3/5") are unique; the admin search and the log filter look seats up by label.
+    id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    label      VARCHAR(16)  NOT NULL,
+    table_id   SMALLINT UNSIGNED NULL,
+    svg_id     VARCHAR(64)  NULL,
+    sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+    active     TINYINT(1) NOT NULL DEFAULT 1,
+    -- Seat labels ("A1/5") are unique; plan uploads, the admin search and the log filter look seats up by label.
     UNIQUE KEY uq_seats_label (label),
     CONSTRAINT fk_seats_table FOREIGN KEY (table_id) REFERENCES hall_tables (id)
 ) ENGINE=InnoDB;

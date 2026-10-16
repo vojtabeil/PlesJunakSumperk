@@ -7,7 +7,7 @@
     unzip anywhere and run Start.cmd (this computer) or Start-LAN.cmd (the local network too).
     It contains the web with the dev tools (debug mode with Tracy on localhost, /dev/bank, /dev/status),
     PHP, MariaDB, Mailpit and Adminer from .tools/ (only the parts the site needs) and the sample data
-    (schema + defaults + demo hall plan + seed.sql: public sale, account admin / admin), loaded on the
+    (schema + defaults + hall plan + seed.sql: public sale, account admin / admin), loaded on the
     first start. The runtime scripts are in dev/portable/ (run.ps1 generates php.ini, my.ini and
     local.neon on every start, so the folder can be moved).
 
@@ -48,7 +48,7 @@ foreach ($file in @('import-hall.php', 'create-admin.php')) {
 
 $sample = Join-Path $outDir 'sample'
 New-Item -ItemType Directory -Force $sample | Out-Null
-foreach ($file in @('schema.sql', 'defaults.sql', 'demo-hall.svg', 'seed.sql')) {
+foreach ($file in @('schema.sql', 'defaults.sql', 'hall-plan.svg', 'seed.sql')) {
     Copy-Item (Join-Path $DbFilesDir $file) (Join-Path $sample $file)
 }
 

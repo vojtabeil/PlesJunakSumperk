@@ -92,11 +92,12 @@ describe('map', () => {
   });
 
   test('describes a seat for screen readers', () => {
-    const seat: HallSeat = { id: 25, label: '3/25', table_id: 3, svg_id: 'seat-25' };
-    expect(seatDescription(seat, { id: 3, label: '3', name: 'Jaroslav Foglar' }, 'free', 350)).toBe(
-      'Stůl 3 (Jaroslav Foglar), místo 25, volné, 350 Kč',
+    const seat: HallSeat = { id: 25, label: 'A3/5', table_id: 3, svg_id: 'seat-A3-5' };
+    expect(seatDescription(seat, { id: 3, label: 'A3', name: 'Jaroslav Foglar' }, 'free', 350)).toBe(
+      'Stůl A3 (Jaroslav Foglar), místo 5, volné, 350 Kč',
     );
-    expect(seatDescription(seat, undefined, 'taken', 350)).toBe('Stůl 3, místo 25, obsazené');
+    expect(seatDescription(seat, { id: 3, label: 'A3', name: 'A3' }, 'taken', 350)).toBe('Stůl A3, místo 5, obsazené');
+    expect(seatDescription(seat, undefined, 'taken', 350)).toBe('Stůl A3, místo 5, obsazené');
   });
 });
 

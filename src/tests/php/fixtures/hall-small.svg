@@ -14,18 +14,18 @@
 	<image href="https://evil.example/track.png" width="1" height="1"/>
 	<image xlink:href="data:image/png;base64,iVBORw0KGgo=" width="1" height="1"/>
 	<a href="javascript:alert(1)"><text x="0" y="0">odkaz</text></a>
-	<g id="table-1" corel:layer="stoly">
+	<g id="table-A1" corel:layer="stoly">
 		<rect class="fil0" x="40" y="60" width="120" height="40"/>
-		<text id="table-1-name" x="100" y="85">Jaroslav  Foglar
+		<text id="table-A1-name" x="100" y="85">Jaroslav  Foglar
 			Jestřáb</text>
-		<circle id="seat-1" class="fil1" fill="#000" style="fill:red" cx="60" cy="50" r="8" onclick="steal()"/>
-		<circle id="seat-2" cx="100" cy="50" r="8"/>
-		<g id="seat-3"><rect class="fil1" x="132" y="42" width="16" height="16"/><path fill="#333" d="M132 42h16"/></g>
+		<circle id="seat-A1-1" class="fil1" fill="#000" style="fill:red" cx="60" cy="50" r="8" onclick="steal()"/>
+		<circle id="seat-A1-2" cx="100" cy="50" r="8"/>
+		<g id="seat-A1-3"><rect class="fil1" x="132" y="42" width="16" height="16"/><path fill="#333" d="M132 42h16"/></g>
 	</g>
-	<g id="table-2">
+	<g id="table-B2">
 		<rect class="fil0" x="240" y="60" width="120" height="40"/>
-		<circle id="seat-4" cx="260" cy="50" r="8"/>
-		<circle id="seat-5" cx="300" cy="50" r="8"/>
-		<circle id="seat-10" cx="340" cy="50" r="8"/>
+		<circle id="seat-B2-1" cx="260" cy="50" r="8"/>
+		<circle id="seat-B2-2" cx="300" cy="50" r="8"/>
+		<circle id="seat-B2-10" cx="340" cy="50" r="8"/>
 	</g>
 </svg>

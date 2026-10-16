@@ -90,7 +90,7 @@ final class ReservationAdminTest extends DatabaseTestCase
 		self::assertSame([$alice], array_column($this->admin->search('paid'), 'id'));
 		self::assertCount(1, $this->admin->search(null, 'BOB'));
 		self::assertCount(1, $this->admin->search(null, (string) $alice));
-		self::assertSame('1/1', $this->admin->search(null, 'alice')[0]['seat_labels']);
+		self::assertSame('A1/1', $this->admin->search(null, 'alice')[0]['seat_labels']);
 	}
 
 

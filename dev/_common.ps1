@@ -345,7 +345,7 @@ FLUSH PRIVILEGES;
     Invoke-DbSql $bootstrap | Out-Null
 }
 
-# Recreates the application database: schema + defaults + demo hall plan (+ test data), or a raw SQL dump.
+# Recreates the application database: schema + defaults + hall plan (+ test data), or a raw SQL dump.
 # schema.sql and defaults.sql are also what a new production installation imports (it starts without a plan).
 function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
     Reset-Database $DbName
@@ -355,7 +355,7 @@ function Reset-AppDatabase([string]$Import, [switch]$NoSeed) {
         foreach ($file in @('schema.sql', 'defaults.sql')) {
             Import-DbFile (Join-Path $DbFilesDir $file) $DbName
         }
-        Import-HallPlan (Join-Path $DbFilesDir 'demo-hall.svg')
+        Import-HallPlan (Join-Path $DbFilesDir 'hall-plan.svg')
         if (-not $NoSeed) { Import-DbFile (Join-Path $DbFilesDir 'seed.sql') $DbName }
     }
     Write-Ok 'Database ready'

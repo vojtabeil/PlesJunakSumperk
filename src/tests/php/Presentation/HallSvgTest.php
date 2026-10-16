@@ -25,7 +25,7 @@ final class HallSvgTest extends DatabaseTestCase
 
 	public function testSendsThePlanAsAFile(): void
 	{
-		$svg = '<svg xmlns="http://www.w3.org/2000/svg"><g id="table-1"><circle id="seat-101" r="5"/></g></svg>';
+		$svg = '<svg xmlns="http://www.w3.org/2000/svg"><g id="table-A1"><circle id="seat-A1-1" r="5"/></g></svg>';
 		(new HallSync($this->db, $this->reservationAdmin(), $this->eventLog(), $this->actor()))
 			->apply(HallPlanParser::parse($svg), 'sal.svg', []);
 

@@ -16,12 +16,12 @@ final class HallPlanParserTest extends TestCase
 
 		self::assertTrue($plan->isValid(), implode("\n", $plan->errors));
 		self::assertSame([
-			1 => ['svg_id' => 'table-1', 'name' => 'Jaroslav Foglar Jestřáb'],
-			2 => ['svg_id' => 'table-2', 'name' => null],
+			'A1' => ['svg_id' => 'table-A1', 'name' => 'Jaroslav Foglar Jestřáb'],
+			'B2' => ['svg_id' => 'table-B2', 'name' => null],
 		], $plan->tables);
-		self::assertSame([1, 2, 3, 4, 5, 10], array_keys($plan->seats));
-		self::assertSame(['svg_id' => 'seat-3', 'table' => 1], $plan->seats[3]);
-		self::assertSame(2, $plan->seats[10]['table']);
+		self::assertSame(['A1/1', 'A1/2', 'A1/3', 'B2/1', 'B2/2', 'B2/10'], array_keys($plan->seats), 'Hall order, numbers sorted naturally');
+		self::assertSame(['svg_id' => 'seat-A1-3', 'table' => 'A1'], $plan->seats['A1/3']);
+		self::assertSame('B2', $plan->seats['B2/10']['table']);
 	}
 
 
@@ -44,8 +44,8 @@ final class HallPlanParserTest extends TestCase
 	{
 		$svg = HallPlanParser::parse(self::fixture())->svg;
 
-		self::assertMatchesRegularExpression('~<circle id="seat-1" cx="60" cy="50" r="8" class="seat"/>~', $svg);
-		self::assertStringContainsString('<g id="seat-3" class="seat"><rect x="132" y="42" width="16" height="16"/><path d="M132 42h16"/></g>', $svg);
+		self::assertMatchesRegularExpression('~<circle id="seat-A1-1" cx="60" cy="50" r="8" class="seat"/>~', $svg);
+		self::assertStringContainsString('<g id="seat-A1-3" class="seat"><rect x="132" y="42" width="16" height="16"/><path d="M132 42h16"/></g>', $svg);
 		self::assertStringContainsString('<rect class="fil0" x="40"', $svg, 'Other shapes keep their classes');
 	}
 
@@ -55,16 +55,16 @@ final class HallPlanParserTest extends TestCase
 		// CorelDRAW writes each line and each font run as a <text> with the same id.
 		$plan = HallPlanParser::parse(<<<'SVG'
 			<svg xmlns="http://www.w3.org/2000/svg">
-				<g id="table-36"><rect id="seat-240"/></g>
-				<text x="10" y="100" id="table-36-name">Eduard Marek</text>
-				<text x="10" y="120" id="table-36-name">-Hrozný</text>
-				<text x="40" y="120" id="table-36-name">š-</text>
-				<text id="label-seat-240">240</text><text id="label-seat-240">240</text>
+				<g id="table-A36"><rect id="seat-A36-5"/></g>
+				<text x="10" y="100" id="table-A36-name">Eduard Marek</text>
+				<text x="10" y="120" id="table-A36-name">-Hrozný</text>
+				<text x="40" y="120" id="table-A36-name">š-</text>
+				<text id="label-seat-A36-5">5</text><text id="label-seat-A36-5">5</text>
 			</svg>
 			SVG);
 
 		self::assertTrue($plan->isValid(), implode("\n", $plan->errors));
-		self::assertSame('Eduard Marek -Hroznýš-', $plan->tables[36]['name']);
+		self::assertSame('Eduard Marek -Hroznýš-', $plan->tables['A36']['name']);
 	}
 
 
@@ -72,17 +72,19 @@ final class HallPlanParserTest extends TestCase
 	{
 		$plan = HallPlanParser::parse(<<<'SVG'
 			<svg xmlns="http://www.w3.org/2000/svg">
-				<g id="table-1"><circle id="seat-1"/><circle id="seat-1"/></g>
-				<circle id="seat-2"/>
-				<g id="table-3"><rect/></g>
+				<g id="table-A1"><circle id="seat-A1-1"/><circle id="seat-A1-1"/><circle id="seat-A2-1"/></g>
+				<circle id="seat-A1-2"/>
+				<g id="table-A3"><rect/></g>
+				<g id="table-A2"><circle id="seat-A2-2"/></g>
 			</svg>
 			SVG);
 
 		self::assertFalse($plan->isValid());
 		self::assertSame([
-			'Id „seat-1“ je v plánku víckrát.',
-			'Místo 2 neleží v žádném stole (skupině s id table-<číslo>).',
-			'Stůl 3 nemá žádná místa.',
+			'Id „seat-A1-1“ je v plánku víckrát.',
+			'Místo A2/1 leží ve stole A1, ne ve stole A2.',
+			'Místo A1/2 neleží v žádném stole (skupině s id table-A1).',
+			'Stůl A3 nemá žádná místa.',
 		], $plan->errors);
 	}
 
@@ -93,7 +95,7 @@ final class HallPlanParserTest extends TestCase
 			self::assertSame(['Soubor není platný obrázek SVG.'], HallPlanParser::parse($input)->errors, "Input: $input");
 		}
 		self::assertSame(
-			['Plánek neobsahuje žádná místa (tvary s id seat-<číslo>).'],
+			['Plánek neobsahuje žádná místa (tvary s id seat-<stůl>-<číslo>, např. seat-A1-5).'],
 			HallPlanParser::parse('<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>')->errors,
 		);
 	}

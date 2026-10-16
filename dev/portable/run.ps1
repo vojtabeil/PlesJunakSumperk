@@ -242,7 +242,7 @@ function Stop-Db {
     Write-Ok 'MariaDB stopped'
 }
 
-# Schema + defaults + demo hall plan + test data, the same as dev\init-db.cmd.
+# Schema + defaults + hall plan + test data, the same as dev\init-db.cmd.
 function Import-SampleData {
     Write-Step 'Loading the sample data'
     $sql = @"
@@ -259,7 +259,7 @@ FLUSH PRIVILEGES;
     Write-Info 'Importing the hall plan'
     Push-Location $Root
     try {
-        $r = Invoke-Native $PhpExe @('-c', $PhpIniArg, 'web\bin\import-hall.php', 'sample\demo-hall.svg', '--cancel')
+        $r = Invoke-Native $PhpExe @('-c', $PhpIniArg, 'web\bin\import-hall.php', 'sample\hall-plan.svg', '--cancel')
         if ($r.Code -ne 0) { throw "Hall plan import failed:`n$($r.Output)" }
     } finally { Pop-Location }
     Import-DbFile (Join-Path $SampleDir 'seed.sql') $DbName

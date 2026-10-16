@@ -182,7 +182,7 @@
 		<h2 id="seats-title">Všechna místa{if $seatFilter} – {$seatFilter|seatStatus}{/if}</h2>
 		<form class="filter-form" method="get" action="{link this}">
 			<input type="hidden" name="seats" value="{$seatFilter}">
-			<label>Hledat <input type="search" name="seatSearch" value="{$presenter->seatSearch}" placeholder="místo (3/5) nebo jméno"></label>
+			<label>Hledat <input type="search" name="seatSearch" value="{$presenter->seatSearch}" placeholder="místo (A1/5) nebo jméno"></label>
 			<button class="button">Hledat</button>
 			<a n:if="$seatFilter || $presenter->seatSearch" n:href="this, seats: '', seatSearch: ''">zrušit filtr</a>
 		</form>

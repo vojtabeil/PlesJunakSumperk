@@ -14,10 +14,11 @@ use DOMNode;
  * Reads an SVG of the hall (exported from CorelDRAW) and sanitizes it, because it is served from
  * the site and inlined into the seat picker.
  *
- * Conventions of the drawing (doc/plan.md, section 6.2):
- *   id="seat-87"        a seat (chair shape or group); the number is its identity (label "<table>/87")
- *   id="table-12"       a group of a table; the seats inside it belong to the table
- *   id="table-12-name"  optional text with the name of the table
+ * Conventions of the drawing (doc/hall-plan.md):
+ *   id="table-A1"         a group of a table (1-3 capital letters and a number); its seats lie inside it
+ *   id="seat-A1-5"        a seat (chair shape or group), numbered from 1 at every table (label "A1/5")
+ *   id="table-A1-name"    optional text with the name of the table
+ *   id="label-seat-A1-5"  optional text with the seat number (styled by the seat picker)
  * Everything else is decoration.
  */
 final class HallPlanParser
@@ -31,6 +32,9 @@ final class HallPlanParser
 		'text', 'tspan', 'textPath', 'title', 'desc', 'style', 'linearGradient', 'radialGradient', 'stop',
 		'pattern', 'clipPath', 'mask', 'marker', 'image',
 	];
+
+	/** Label of a table in the ids: 1-3 capital letters and a number (A1, B12). */
+	private const Table = '[A-Z]{1,3}[0-9]{1,3}';
 
 	/** Presentation of a seat comes from the site's CSS (its state), not from the drawing. */
 	private const SeatPresentation = ['class', 'style', 'fill', 'stroke', 'fill-opacity', 'stroke-opacity', 'opacity'];
@@ -57,7 +61,7 @@ final class HallPlanParser
 
 
 	/**
-	 * @return array{array<int, array{svg_id: string, name: ?string}>, array<int, array{svg_id: string, table: int}>, list<string>}
+	 * @return array{array<string, array{svg_id: string, name: ?string}>, array<string, array{svg_id: string, table: string}>, list<string>}
 	 */
 	private static function read(DOMElement $root): array
 	{
@@ -67,50 +71,57 @@ final class HallPlanParser
 			if ($id === '') {
 				continue;
 			}
-			if (preg_match('~^table-(\d+)-name$~', $id, $m)) {
+			if (preg_match('~^table-(' . self::Table . ')-name$~D', $id, $m)) {
 				// CorelDRAW writes every line (and font run) of a text as its own <text> with the same id.
-				$names[(int) $m[1]][] = [$element->getAttribute('y'), $element->textContent];
+				$names[$m[1]][] = [$element->getAttribute('y'), $element->textContent];
 				continue;
 			}
 			if (isset($seen[$id])) {
 				// Repeated ids of decoration (texts split by CorelDRAW) do not matter; seats and tables must be unique.
-				if (preg_match('~^(seat|table)-\d+$~', $id)) {
+				if (preg_match('~^(seat-' . self::Table . '-[0-9]+|table-' . self::Table . ')$~D', $id)) {
 					$errors[] = "Id „{$id}“ je v plánku víckrát.";
 				}
 				continue;
 			}
 			$seen[$id] = true;
 
-			if (preg_match('~^table-(\d+)$~', $id, $m) && (int) $m[1] > 0) {
-				$tables[(int) $m[1]] = ['svg_id' => $id, 'name' => null];
-			} elseif (preg_match('~^seat-(\d+)$~', $id, $m) && (int) $m[1] > 0) {
+			if (preg_match('~^table-(' . self::Table . ')$~D', $id, $m)) {
+				$tables[$m[1]] = ['svg_id' => $id, 'name' => null];
+			} elseif (preg_match('~^seat-(' . self::Table . ')-([0-9]{1,3})$~D', $id, $m) && (int) $m[2] > 0) {
+				$label = $m[1] . '/' . (int) $m[2];
 				$table = self::tableOf($element);
-				if ($table === null) {
-					$errors[] = "Místo {$m[1]} neleží v žádném stole (skupině s id table-<číslo>).";
+				if ($table !== $m[1]) {
+					$errors[] = $table === null
+						? "Místo {$label} neleží v žádném stole (skupině s id table-{$m[1]})."
+						: "Místo {$label} leží ve stole {$table}, ne ve stole {$m[1]}.";
 					continue;
 				}
-				$seats[(int) $m[1]] = ['svg_id' => $id, 'table' => $table];
+				if (isset($seats[$label])) {
+					$errors[] = "Místo {$label} je v plánku víckrát.";
+					continue;
+				}
+				$seats[$label] = ['svg_id' => $id, 'table' => $table];
 				self::markSeat($element);
 			}
 		}
 
-		foreach ($names as $number => $parts) {
+		foreach ($names as $label => $parts) {
 			$name = self::joinTextParts($parts);
-			if (isset($tables[$number]) && $name !== '') {
-				$tables[$number]['name'] = mb_substr($name, 0, 255);
+			if (isset($tables[$label]) && $name !== '') {
+				$tables[$label]['name'] = mb_substr($name, 0, 255);
 			}
 		}
 		if ($seats === []) {
-			$errors[] = 'Plánek neobsahuje žádná místa (tvary s id seat-<číslo>).';
+			$errors[] = 'Plánek neobsahuje žádná místa (tvary s id seat-<stůl>-<číslo>, např. seat-A1-5).';
 		}
-		foreach (array_diff_key($tables, array_flip(array_column($seats, 'table'))) as $number => $table) {
-			$errors[] = "Stůl {$number} nemá žádná místa.";
+		foreach (array_diff_key($tables, array_flip(array_column($seats, 'table'))) as $label => $table) {
+			$errors[] = "Stůl {$label} nemá žádná místa.";
 		}
-		ksort($tables);
-		ksort($seats);
+		// Hall order: A1, A2, ..., A10, B1; seats by table and number ("A1/2" before "A1/10").
+		uksort($tables, strnatcmp(...));
+		uksort($seats, strnatcmp(...));
 		return [$tables, $seats, $errors];
 	}
-
 
 	/**
 	 * One text from the parts CorelDRAW split it into: parts on the same line (same y) are joined
@@ -129,12 +140,12 @@ final class HallPlanParser
 	}
 
 
-	/** Number of the table group the seat lies in, or null. */
-	private static function tableOf(DOMElement $seat): ?int
+	/** Label of the table group the seat lies in, or null. */
+	private static function tableOf(DOMElement $seat): ?string
 	{
 		for ($node = $seat->parentNode; $node instanceof DOMElement; $node = $node->parentNode) {
-			if (preg_match('~^table-(\d+)$~', $node->getAttribute('id'), $m)) {
-				return (int) $m[1];
+			if (preg_match('~^table-(' . self::Table . ')$~D', $node->getAttribute('id'), $m)) {
+				return $m[1];
 			}
 		}
 		return null;

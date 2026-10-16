@@ -12,6 +12,9 @@
 # Automatic backups made by CorelDRAW
 Backup_*.cdr
 
+# Python caches (resource/design/tools)
+__pycache__/
+
 # Legacy site copy (original-web): credentials, personal data and logs stay local
 /resource/original-web/mysql/
 /resource/original-web/ftp/include/.env

@@ -23,13 +23,13 @@
 			<option n:foreach="$actors as $key => $label" value="{$key}" selected="{$presenter->actorType === $key}">{$label}</option>
 		</select>
 	</label>
-	<label>Místo <input type="text" name="seat" value="{$presenter->seat}" placeholder="3/5" size="6"></label>
+	<label>Místo <input type="text" name="seat" value="{$presenter->seat}" placeholder="A1/5" size="6"></label>
 	<label>Rezervace / VS <input type="text" name="reservation" value="{$presenter->reservation}" placeholder="12 nebo 20260012" size="10"></label>
 	<button class="button">Filtrovat</button>
 	<a n:if="$filterActive" n:href="this, from: '', to: '', category: '', actorType: '', seat: '', reservation: '', page: 1">zrušit filtr</a>
 </form>
 
-<p n:if="$unknownReference" class="flash flash--error">Takové místo nebo rezervace neexistuje (místo zadejte jako „stůl/místo“, např. 3/5).</p>
+<p n:if="$unknownReference" class="flash flash--error">Takové místo nebo rezervace neexistuje (místo zadejte jako „stůl/místo“, např. A1/5).</p>
 
 <section class="card">
 	<p class="muted">Záznamů: {$total}</p>

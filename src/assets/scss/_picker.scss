@@ -194,7 +194,8 @@
 }
 
 // --- The SVG plan: CSS paints the drawing in the look of the site ----------------
-// Shapes are found by the ids of the drawing conventions (table-N-desk, label-table-N, ...); any SVG primitive works.
+// Shapes are found by the ids of the drawing conventions (doc/hall-plan.md: table-A1-desk, table-A1-name, ...); any SVG
+// primitive works. Sizes are in the units of the drawing (CorelDRAW export, viewBox about 20000 wide).
 
 .hall-plan {
   // Numbers and labels drawn over the seats must not catch clicks.
@@ -217,19 +218,10 @@
     font-weight: 800;
   }
 
+  // The name of the table is written on the desk.
   [id^='table-'][id$='-name'],
   [id^='table-'][id$='-name'] * {
-    fill: var(--muted);
-  }
-
-  [id^='extra-chair-'],
-  [id^='extra-chair-'] * {
-    fill: var(--taken);
-    stroke: none;
-  }
-
-  #vino-area {
-    fill: var(--yellow);
+    fill: #fff;
   }
 
   #parket {
@@ -265,7 +257,7 @@
     animation: seat-pop 0.3s ease-out;
     fill: var(--yellow);
     stroke: var(--text);
-    stroke-width: 24px;
+    stroke-width: 14px;
   }
 
   // Not only colour: taken seats are lighter and their numbers fainter.
@@ -281,7 +273,7 @@
 
   &:focus-visible {
     stroke: var(--text);
-    stroke-width: 36px;
+    stroke-width: 20px;
   }
 }
 

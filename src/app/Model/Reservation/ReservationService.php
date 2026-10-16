@@ -48,7 +48,7 @@ final class ReservationService
 		return [
 			'tables' => array_map(
 				static fn(array $row): array => ['id' => (int) $row['id'], 'label' => (string) $row['label'], 'name' => $row['name']],
-				$this->db->query('SELECT id, label, name FROM hall_tables WHERE active = 1 ORDER BY id')->fetchAll(),
+				$this->db->query('SELECT id, label, name FROM hall_tables WHERE active = 1 ORDER BY sort_order, id')->fetchAll(),
 			),
 			'seats' => array_map(
 				static fn(array $row): array => [
@@ -57,7 +57,7 @@ final class ReservationService
 					'table_id' => $row['table_id'] !== null ? (int) $row['table_id'] : null,
 					'svg_id' => (string) $row['svg_id'],
 				],
-				$this->db->query('SELECT id, label, table_id, svg_id FROM seats WHERE active = 1 ORDER BY id')->fetchAll(),
+				$this->db->query('SELECT id, label, table_id, svg_id FROM seats WHERE active = 1 ORDER BY sort_order, id')->fetchAll(),
 			),
 		];
 	}
@@ -471,7 +471,7 @@ final class ReservationService
 	private function reservationSeatLabels(int $reservationId): array
 	{
 		$stmt = $this->db->prepare(
-			'SELECT s.label FROM seat_bookings b JOIN seats s ON s.id = b.seat_id WHERE b.reservation_id = ? ORDER BY s.id',
+			'SELECT s.label FROM seat_bookings b JOIN seats s ON s.id = b.seat_id WHERE b.reservation_id = ? ORDER BY s.sort_order, s.id',
 		);
 		$stmt->execute([$reservationId]);
 		return $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -509,7 +509,7 @@ final class ReservationService
 			return [];
 		}
 		$placeholders = implode(',', array_fill(0, count($seatIds), '?'));
-		$stmt = $this->db->prepare("SELECT id, label FROM seats WHERE id IN ($placeholders) ORDER BY id");
+		$stmt = $this->db->prepare("SELECT id, label FROM seats WHERE id IN ($placeholders) ORDER BY sort_order, id");
 		$stmt->execute($seatIds);
 		return array_map(
 			static fn(array $row): array => ['id' => (int) $row['id'], 'label' => (string) $row['label']],

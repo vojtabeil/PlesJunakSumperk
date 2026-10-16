@@ -167,7 +167,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 		self::assertSame('confirmed', $reservation['status']);
 		self::assertSame('Alice Nováková', $reservation['name']);
 		self::assertSame(950, (int) $reservation['total_price']);
-		self::assertSame(['1/1', '1/2'], $reservation['seat_labels']);
+		self::assertSame(['A1/1', 'A1/2'], $reservation['seat_labels']);
 		self::assertNull($service->state(self::Alice)['reservation'], 'The draft is gone after confirming');
 		self::assertSame([101, 102], $service->state(self::Bob)['taken']);
 	}
@@ -302,7 +302,7 @@ final class ReservationServiceTest extends DatabaseTestCase
 	public function testHallLayoutKeepsLabelsAsStrings(): void
 	{
 		$layout = $this->reservations()->hallLayout();
-		self::assertSame('1', $layout['tables'][0]['label']);
+		self::assertSame('A1', $layout['tables'][0]['label']);
 		self::assertSame(101, $layout['seats'][0]['id']);
 		self::assertCount(8, $layout['seats']);
 	}

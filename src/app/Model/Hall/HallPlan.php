@@ -9,8 +9,8 @@ namespace App\Model\Hall;
 final class HallPlan
 {
 	/**
-	 * @param array<int, array{svg_id: string, name: ?string}> $tables table number => table
-	 * @param array<int, array{svg_id: string, table: int}> $seats seat number => seat
+	 * @param array<string, array{svg_id: string, name: ?string}> $tables table label ("A1") => table, in hall order
+	 * @param array<string, array{svg_id: string, table: string}> $seats seat label ("A1/5") => seat, in hall order
 	 * @param list<string> $errors Czech messages; a plan with errors cannot be used
 	 */
 	public function __construct(
