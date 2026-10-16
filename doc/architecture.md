@@ -5,7 +5,7 @@
 | Path | Purpose |
 |---|---|
 | `src/` | The application: a self-contained Nette project with its own `composer.json`, `package.json`, `vendor/`, `node_modules/` and `var/`. The release package is built from it. |
-| `doc/` | `plan.md` (decisions, open questions, backlog), `deploy.md` (deployment on Lebeda), `hall-plan.md` (how the hall plan is drawn), this file, `legacy/` (notes on the old site). |
+| `doc/` | `plan.md` (decisions, open questions, backlog), `deploy.md` (deployment on Lebeda), `hall-plan.md` (how the hall plan is drawn), `security-audit.md` (findings, not fixed yet), this file, `legacy/` (notes on the old site). |
 | `resource/original/` | Old site as served over HTTP (frontend only), local URL `/original/`. Notes: `doc/legacy/original.md`, `doc/legacy/original-backend.md`. |
 | `resource/original-web/` | Complete FTP backup of the old site incl. PHP sources; credentials and dumps are git-ignored. Notes: `doc/legacy/original-web.md`, comparison with the new site: `doc/legacy/feature-comparison.md`. |
 | `resource/design/` | CorelDRAW drawings of the hall plan (`hall-plan-2026.cdr` = the current one, `hall-plan-2025.cdr` archive) and `tools/` (Python: organizer's PDF -> SVG -> CorelDRAW, see `doc/hall-plan.md`); `Backup_*.cdr` are git-ignored. |
