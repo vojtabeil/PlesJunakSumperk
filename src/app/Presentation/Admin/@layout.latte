@@ -13,28 +13,28 @@
 <header class="admin-header">
 	<a class="admin-brand" n:href="Dashboard:default">Administrace plesu</a>
 	{if $user->isLoggedIn()}
+		{* Settings = the section with its own tabs (Accessory/settingsTabs.latte): event and prices, tables for sale, dangerous zone. *}
+		{var $inSettings = $presenter->isLinkCurrent('Settings:*') || $presenter->isLinkCurrent('Tables:*') || $presenter->isLinkCurrent('Danger:*')}
 		<nav class="admin-nav" aria-label="Hlavní menu">
 			<a n:href="Dashboard:default" n:class="$presenter->isLinkCurrent('Dashboard:*') ? 'is-current'">Přehled</a>
 			<a n:href="Reservation:default" n:class="$presenter->isLinkCurrent('Reservation:*') ? 'is-current'">Rezervace</a>
 			<a n:href="Customer:default" n:class="$presenter->isLinkCurrent('Customer:*') ? 'is-current'">Zákazníci</a>
 			<a n:href="Payment:default" n:class="$presenter->isLinkCurrent('Payment:*') ? 'is-current'">Platby</a>
+			<a n:href="Crew:default" n:class="$presenter->isLinkCurrent('Crew:*') ? 'is-current'">Z-lístky</a>
 			<a n:href="Site:default" n:class="$presenter->isLinkCurrent('Site:*') ? 'is-current'">Stav webu</a>
+			<a n:href="Settings:default" n:class="$inSettings ? 'is-current'">Nastavení</a>
 			<a n:href="Log:default" n:class="$presenter->isLinkCurrent('Log:*') ? 'is-current'">Log</a>
 		</nav>
 		<form class="admin-search" method="get" action="{plink Search:default}" role="search">
 			<label for="admin-search" class="visually-hidden">Hledat</label>
 			<input id="admin-search" type="search" name="q" placeholder="Hledat: jméno, e-mail, č. rezervace, VS, místo A1/5">
 		</form>
+		{* Only the account: the other sections are in the menu, the dashboard and the settings tabs. *}
 		<details class="admin-user">
 			<summary>{$adminName}</summary>
 			<div class="admin-user-menu">
-				<a n:href="Settings:default">Nastavení</a>
+				<a n:href="Account:default">Změnit heslo</a>
 				<a n:href="User:default">Administrátoři</a>
-				<a n:href="Crew:default">Z-lístky</a>
-				<a n:href="Check:default">Kontrola vstupenek</a>
-				<a n:href="Export:guests">Seznam hostů (CSV)</a>
-				<a n:href="Account:default">Můj účet</a>
-				<a n:href="Danger:default" class="menu-danger">Nebezpečná zóna</a>
 				<a n:href="Sign:out">Odhlásit</a>
 			</div>
 		</details>
@@ -42,30 +42,29 @@
 </header>
 
 {if $user->isLoggedIn()}
-	{* Phones: the main sections as a bottom tab bar (the top menu is hidden there). *}
+	{* Phones: the main sections as a bottom tab bar (the top menu is hidden there), the rest and the account under Více. *}
 	<nav class="admin-tabbar" aria-label="Hlavní menu">
 		<a n:href="Dashboard:default" n:class="$presenter->isLinkCurrent('Dashboard:*') ? 'is-current'">Přehled</a>
 		<a n:href="Reservation:default" n:class="$presenter->isLinkCurrent('Reservation:*') ? 'is-current'">Rezervace</a>
 		<a n:href="Payment:default" n:class="$presenter->isLinkCurrent('Payment:*') ? 'is-current'">Platby</a>
 		<a n:href="Site:default" n:class="$presenter->isLinkCurrent('Site:*') ? 'is-current'">Stav webu</a>
 		<details class="admin-more">
-			<summary n:class="$presenter->isLinkCurrent('Customer:*') || $presenter->isLinkCurrent('Log:*') ? 'is-current'">Více</summary>
+			<summary n:class="$inSettings || $presenter->isLinkCurrent('Customer:*') || $presenter->isLinkCurrent('Crew:*') || $presenter->isLinkCurrent('Log:*')
+				|| $presenter->isLinkCurrent('Account:*') || $presenter->isLinkCurrent('User:*') ? 'is-current'">Více</summary>
 			<div class="admin-more-menu">
 				<a n:href="Customer:default">Zákazníci</a>
-				<a n:href="Log:default">Log</a>
-				<a n:href="Settings:default">Nastavení</a>
-				<a n:href="User:default">Administrátoři</a>
 				<a n:href="Crew:default">Z-lístky</a>
 				<a n:href="Check:default">Kontrola vstupenek</a>
-				<a n:href="Export:guests">Seznam hostů (CSV)</a>
-				<a n:href="Account:default">Můj účet</a>
-				<a n:href="Danger:default" class="menu-danger">Nebezpečná zóna</a>
+				<a n:href="Settings:default">Nastavení</a>
+				<a n:href="Log:default">Log</a>
+				<span class="admin-more-account">{$adminName}</span>
+				<a n:href="Account:default">Změnit heslo</a>
+				<a n:href="User:default">Administrátoři</a>
 				<a n:href="Sign:out">Odhlásit</a>
 			</div>
 		</details>
 	</nav>
 {/if}
-
 <main class="admin-main">
 	<div n:foreach="$flashes as $flash" class="flash flash--{$flash->type}" role="status">{$flash->message}</div>
 	{include content}

@@ -17,7 +17,7 @@
 	{* 1. The three kinds of tickets as stacked bars, darker = further along *}
 	{var $partLabels = [
 		'paid' => 'Zaplaceno', 'partial' => 'Částečně zaplaceno', 'unpaid' => 'Rezervováno, nezaplaceno', 'held' => 'Právě se vybírá',
-		'picked_up' => 'Vyzvednuto', 'waiting' => 'K vyzvednutí', 'free' => 'Volné',
+		'picked_up' => 'Vyzvednuto', 'waiting' => 'K vyzvednutí', 'free' => 'Volné', 'unavailable' => 'Mimo prodej',
 	]}
 	<section class="card tickets-card" aria-labelledby="tickets-title">
 		<div class="tickets-head">
@@ -55,6 +55,11 @@
 					<a n:tag-if="$kind === 'seat'" n:href="this, seats: free" n:class="$kind === 'seat' && $seatFilter === 'free' ? 'is-current'">
 						<span class="swatch ticket-bar-part--free"></span>{$partLabels['free']} <strong>{$bar['free']}</strong>
 					</a>
+				</li>				<li n:if="$kind === 'seat' && $seatsUnavailable">
+					<a n:href="this, seats: unavailable" n:class="$seatFilter === 'unavailable' ? 'is-current'" title="Stoly vyřazené z prodeje (Stoly v prodeji)">
+						<span class="swatch ticket-bar-part--unavailable"></span>{$partLabels['unavailable']} <strong>{$seatsUnavailable}</strong>
+					</a>
+					<a n:href="Tables:default" class="muted">změnit</a>
 				</li>
 			</ul>
 		</div>
@@ -195,7 +200,8 @@
 			<tbody>
 				<tr n:foreach="$seatRows as $seat">
 					<td data-label="Místo"><strong>{$seat['label']}</strong> <span class="muted">stůl {$seat['table']}</span></td>
-					<td data-label="Stav"><span class="badge badge--seat-{$seat['status']}">{$seat['status']|seatStatus}</span></td>
+					<td data-label="Stav"><span class="badge badge--seat-{$seat['status']}">{$seat['status']|seatStatus}</span>
+						<span n:if="!$seat['table_available'] && $seat['status'] !== 'unavailable'" class="muted">stůl mimo prodej</span></td>
 					<td data-label="Rezervace">
 						{if $seat['reservation_id']}
 							<a n:href="Reservation:detail $seat['reservation_id']">č. {$seat['reservation_id']} {$seat['name']}</a>
@@ -216,14 +222,15 @@
 
 {* 5. Other sections *}
 <nav class="tiles" aria-label="Další části administrace">
-	<a class="tile" n:href="Reservation:default"><strong>Rezervace</strong><span>seznam, hledání, detail a zásahy</span></a>
+	<a class="tile" n:href="Reservation:default"><strong>Rezervace</strong><span>seznam s filtry a řazením, detail a zásahy</span></a>
 	<a class="tile" n:href="Customer:default"><strong>Zákazníci</strong><span>lidé podle e-mailu a jejich rezervace</span></a>
 	<a class="tile" n:href="Payment:default"><strong>Platby z Fio</strong><span>všechny platby, spárované i k vyřešení</span></a>
-	<a class="tile" n:href="Log:default"><strong>Log</strong><span>všechny události, filtr podle data, místa a typu</span></a>
 	<a class="tile" n:href="Crew:default"><strong>Z-lístky</strong><span>vstup zdarma pro tým: přidat, vytisknout, poslat e-mailem</span></a>
+	<a class="tile" n:href="Check:default"><strong>Kontrola vstupenek</strong><span>aplikace pro telefon u vchodu, funguje i offline</span></a>
 	<a class="tile" n:href="Export:guests"><strong>Seznam hostů</strong><span>CSV pro vstup (Excel)</span></a>
-	<a class="tile" n:href="User:default"><strong>Administrátoři</strong><span>účty organizátorů</span></a>
 	<a class="tile" n:href="Site:default"><strong>Stav webu</strong><span>testování, VIP, prodej, konec; odkazy a texty stránek</span></a>
+	<a class="tile" n:href="Tables:default"><strong>Stoly v prodeji</strong><span>které stoly jsou v plánku k prodeji</span></a>
 	<a class="tile" n:href="Settings:default"><strong>Nastavení</strong><span>akce, ceny, limity, platby</span></a>
+	<a class="tile" n:href="Log:default"><strong>Log</strong><span>všechny události, filtr podle data, místa a typu</span></a>
 </nav>
 {/block}

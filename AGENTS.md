@@ -135,6 +135,10 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
   Tables are groups `id="table-A1"`, seats inside them `id="seat-A1-5"` numbered from 1 at every table (label `A1/5`);
   the database keeps no coordinates, only `svg_id`. Tables and seats are matched by label across uploads (ids stay),
   `sort_order` is the hall order (natural sort of the labels) - order seats by it, never by id.
+  Tables can be taken out of sale in Stoly v prodeji (`Admin:Tables`, `TableAvailability`, `hall_tables.available`, kept
+  across uploads): the seat picker hides them (`hallLayout` lists their seats no more, `state()` leaves their bookings out),
+  `hold` refuses their seats, free seats and the sale's capacity leave them out (`SeatOverview` status `unavailable`);
+  reservations already holding their seats stay, only held seats are released.
   `HallPlanParser` sanitizes the upload (allowlist of SVG elements, no scripts or external references);
   `HallSync::apply` cancels reservations of removed seats only when they match what the admin confirmed in
   the preview; removed seats and tables become `active = 0`. The seat picker loads `/plan-salu.svg` and

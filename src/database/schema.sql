@@ -44,6 +44,7 @@ CREATE TABLE reservations (
 -- Tables in the hall: label = the table's name in the plan (group table-A1 -> "A1"), its identity across
 -- plan uploads; svg_id = id of its group in the SVG; sort_order = order in the hall (natural sort of labels).
 -- Removed from the plan = active 0 (kept for the history). Shapes and positions are only in the SVG.
+-- available 0 = not for sale (switched in the administration, kept across plan uploads): hidden from the seat picker.
 CREATE TABLE hall_tables (
     id         SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     label      VARCHAR(16) NOT NULL,
@@ -51,6 +52,7 @@ CREATE TABLE hall_tables (
     svg_id     VARCHAR(64) NULL,
     sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     active     TINYINT(1) NOT NULL DEFAULT 1,
+    available  TINYINT(1) NOT NULL DEFAULT 1,
     UNIQUE KEY uq_hall_tables_label (label)
 ) ENGINE=InnoDB;
 

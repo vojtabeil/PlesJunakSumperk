@@ -64,6 +64,8 @@ final class DashboardPresenter extends BasePresenter
 		$this->reservations->releaseExpiredHolds();
 		$stats = $this->reservationAdmin->stats();
 		$counts = $this->seatOverview->counts();
+		// Capacity of the sale: seats of the tables for sale and seats sold at tables taken out of sale since.
+		$forSale = array_sum(array_intersect_key($counts, array_flip(SeatOverview::ForSale)));
 		$filter = isset(SeatOverview::Statuses[$this->seats]) ? $this->seats : null;
 
 		$t = $this->template;
@@ -75,7 +77,7 @@ final class DashboardPresenter extends BasePresenter
 		$t->bars = [
 			'seat' => ['label' => 'Místa u stolů', 'sold' => $stats['reserved']] + StackedBar::build(
 				['paid' => $counts['paid'], 'partial' => $counts['partial'], 'unpaid' => $counts['unpaid'], 'held' => $counts['held']],
-				array_sum($counts),
+				$forSale,
 			),
 			'standing' => ['label' => 'Na stání', 'sold' => $stats['standing']] + StackedBar::build(
 				['paid' => $standing['paid'], 'partial' => $standing['partial'], 'unpaid' => $standing['unpaid']],
@@ -93,7 +95,8 @@ final class DashboardPresenter extends BasePresenter
 			'standing' => $this->tickets->listing('standing'),
 			'crew' => $this->tickets->listing('crew'),
 		];
-		$t->seatTotal = array_sum($counts);
+		$t->seatTotal = $forSale;
+		$t->seatsUnavailable = $counts['unavailable'];
 		$t->seatRows = $this->seatOverview->seats($filter, $this->seatSearch);
 		$t->seatFilter = $filter;
 		$t->paymentProblems = $this->payments->problemCount();

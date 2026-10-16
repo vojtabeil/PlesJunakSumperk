@@ -32,6 +32,10 @@ balcony C1-C5; at each table the left column of chairs top-down, then the right 
 the lower one). Colours of seats in the drawing do not matter: the upload removes them (`HallPlanParser`), the site
 paints seats by their state. The upload also removes scripts and external references.
 
+Tables can be taken out of sale without changing the drawing: administration -> Stoly v prodeji (click a table in the
+plan or untick it, it greys out at once). They disappear from the seat picker; reservations already holding their seats
+stay. The choice is kept when a new drawing is uploaded.
+
 Tables and seats are identified by their labels: uploading a changed drawing keeps the ids of the seats that stay,
 seats missing from the new drawing are switched off and the reservations holding them are cancelled after a
 confirmation (see the preview in the administration).

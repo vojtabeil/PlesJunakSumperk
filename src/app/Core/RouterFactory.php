@@ -21,6 +21,7 @@ final class RouterFactory
 		$router->addRoute('admin/nebezpecne[/<action plan>]', 'Admin:Danger:default');
 		// Z-lístky (free passes of the crew).
 		$router->addRoute('admin/z-listky[/<action add|edit|print>][/<id \d+>]', 'Admin:Crew:default');
+		$router->addRoute('admin/stoly', 'Admin:Tables:default');
 		$router->withModule('Admin')
 			->addRoute('admin/<presenter=Dashboard>/<action=default>[/<id \d+>]');
 		$router->addRoute('api/<op>', 'Front:Api:default');

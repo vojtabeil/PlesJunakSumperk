@@ -18,6 +18,9 @@ final class DashboardTemplate extends BaseTemplate
 
 	public int $seatTotal;
 
+	/** Free seats at tables out of sale (not in the sale's capacity). */
+	public int $seatsUnavailable;
+
 	/** @var list<array<string, mixed>> */
 	public array $seatRows;
 

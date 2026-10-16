@@ -1,0 +1,6 @@
+{* Tabs of the Nastavení section (Settings, Tables, Danger), at the top of each of its pages. *}
+<nav class="tabs" aria-label="Nastavení">
+	<a n:href="Settings:default" n:class="$presenter->isLinkCurrent('Settings:*') ? 'is-current'">Akce, ceny a platby</a>
+	<a n:href="Tables:default" n:class="$presenter->isLinkCurrent('Tables:*') ? 'is-current'">Stoly v prodeji</a>
+	<a n:href="Danger:default" n:class="'tabs-danger', $presenter->isLinkCurrent('Danger:*') ? 'is-current'">Nebezpečná zóna</a>
+</nav>

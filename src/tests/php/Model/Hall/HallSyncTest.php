@@ -121,6 +121,7 @@ final class HallSyncTest extends DatabaseTestCase
 		);
 	}
 
+
 	private function sync(): HallSync
 	{
 		return new HallSync($this->db, $this->reservationAdmin(), $this->eventLog(), $this->actor());

@@ -17,7 +17,12 @@ final class SeatOverview
 		'unpaid' => 'Rezervované, nezaplacené',
 		'partial' => 'Částečně zaplacené',
 		'paid' => 'Zaplacené',
+		// Not for sale: a free seat at a table out of sale (TableAvailability); a sold one keeps its status.
+		'unavailable' => 'Mimo prodej',
 	];
+
+	/** Statuses of the seats for sale (the capacity of the sale; unavailable is not). */
+	public const ForSale = ['free', 'held', 'unpaid', 'partial', 'paid'];
 
 
 	public function __construct(
@@ -27,13 +32,13 @@ final class SeatOverview
 
 
 	/**
-	 * @return list<array{id: int, label: string, table: string, status: string, reservation_id: ?int,
-	 *     name: ?string, channel: ?string, changed_at: ?string}>
+	 * @return list<array{id: int, label: string, table: string, table_available: bool, status: string,
+	 *     reservation_id: ?int, name: ?string, channel: ?string, changed_at: ?string}>
 	 */
 	public function seats(?string $status = null, string $query = ''): array
 	{
 		$rows = $this->db->query(
-			'SELECT s.id, s.label, t.label AS table_label, b.state, b.updated_at,
+			'SELECT s.id, s.label, t.label AS table_label, COALESCE(t.available, 1) AS table_available, b.state, b.updated_at,
 				r.id AS reservation_id, r.name, r.status, r.channel, r.updated_at AS reservation_updated_at,
 				-- A free seat has no booking; its last change is the last logged event (e.g. a cancellation).
 				(SELECT MAX(e.created_at) FROM event_log_seats es JOIN event_log e ON e.id = es.event_id
@@ -50,12 +55,13 @@ final class SeatOverview
 		$seatLabel = preg_match('~^[a-z]{0,3}\d+\s*/\s*\d+$~', $query) ? preg_replace('~\s+~', '', $query) : null;
 		$result = [];
 		foreach ($rows as $row) {
-			$seatStatus = self::status($row['state'], $row['status']);
-			$isFinished = $seatStatus !== 'free' && $seatStatus !== 'held';
+			$seatStatus = self::status($row['state'], $row['status'], (bool) $row['table_available']);
+			$isFinished = !in_array($seatStatus, ['free', 'held', 'unavailable'], true);
 			$item = [
 				'id' => (int) $row['id'],
 				'label' => (string) $row['label'],
 				'table' => (string) ($row['table_label'] ?? ''),
+				'table_available' => (bool) $row['table_available'],
 				'status' => $seatStatus,
 				// Drafts (seat being selected) are not shown as reservations.
 				'reservation_id' => $isFinished ? (int) $row['reservation_id'] : null,
@@ -89,10 +95,10 @@ final class SeatOverview
 
 
 	/** @param string|null $bookingState null = the seat has no booking */
-	public static function status(?string $bookingState, ?string $reservationStatus): string
+	public static function status(?string $bookingState, ?string $reservationStatus, bool $tableAvailable = true): string
 	{
 		return match (true) {
-			$bookingState === null => 'free',
+			$bookingState === null => $tableAvailable ? 'free' : 'unavailable',
 			$bookingState === 'held' => 'held',
 			$reservationStatus === 'paid' => 'paid',
 			$reservationStatus === 'partially_paid' => 'partial',

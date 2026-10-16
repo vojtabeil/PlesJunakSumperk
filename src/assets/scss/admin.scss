@@ -73,6 +73,7 @@ h2 {
   text-decoration: none;
 }
 
+
 .admin-nav {
   display: flex;
   flex-wrap: wrap;
@@ -458,6 +459,8 @@ $state-colors: (
   waiting: #86afd8,
   picked_up: #1d3d72,
   free: #e3e9f2,
+  // Out of sale: grey, outside the ramp (a table taken out of sale in Stoly v prodeji).
+  unavailable: #b9c0cc,
 );
 
 @each $state, $color in $state-colors {
@@ -749,6 +752,17 @@ $state-colors: (
       background: var(--navy);
       border-color: var(--navy);
     }
+
+    // Nebezpečná zóna among the settings tabs.
+    &.tabs-danger {
+      color: var(--error);
+      border-color: var(--error);
+    }
+
+    &.tabs-danger.is-current {
+      color: #fff;
+      background: var(--error);
+    }
   }
 }
 
@@ -1004,6 +1018,15 @@ h3 {
   }
 }
 
+// The account part of Více: the name of the organizer above its links.
+.admin-more-account {
+  margin-top: 0.4rem;
+  padding: 0.7rem 1rem 0.3rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+
 // Collapsible table of all seats on the dashboard.
 .seat-details > summary {
   cursor: pointer;
@@ -1033,11 +1056,6 @@ h3 {
 }
 
 // Dangerous zone (replacing the hall plan, deleting test reservations).
-.menu-danger {
-  color: var(--error) !important;
-  font-weight: 700;
-}
-
 .danger-card {
   border-color: var(--error);
   border-left-width: 6px;
@@ -1260,3 +1278,75 @@ h3 {
   font-size: 0.9rem;
 }
 
+
+// --- Stoly v prodeji: the inline plan, unticked tables grey out (admin/table-availability.ts) -------
+.table-availability {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+
+  @media (min-width: 1100px) {
+    grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr);
+  }
+}
+
+.table-availability-summary {
+  margin: 0;
+  font-weight: 600;
+}
+
+.hall-availability {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: #fff;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 75vh;
+  }
+
+  // Seats have no colour of their own in the stored plan (the seat picker colours them).
+  .seat,
+  .seat * {
+    fill: var(--seat-free);
+  }
+
+  .is-choosable {
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      outline: none;
+      opacity: 0.8;
+    }
+  }
+
+  .is-unavailable {
+    opacity: 0.25;
+
+    .seat,
+    .seat * {
+      fill: #8a94a8;
+    }
+  }
+}
+
+.table-availability-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.25rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+
+  label {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: baseline;
+    cursor: pointer;
+  }
+}

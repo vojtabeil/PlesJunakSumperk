@@ -44,6 +44,11 @@ final class EventFormatter
 				isset($d['moved_seats']) ? "přesunutá místa {$d['moved_seats']}" : null,
 				isset($d['cancelled']) ? "zrušeno rezervací {$d['cancelled']}" : null,
 			],
+			'hall.availability' => [
+				!empty($d['unavailable']) && is_array($d['unavailable']) ? 'mimo prodej: ' . implode(', ', $d['unavailable']) : null,
+				!empty($d['available']) && is_array($d['available']) ? 'znovu v prodeji: ' . implode(', ', $d['available']) : null,
+				!empty($d['released']) ? "uvolněno vybíraných míst {$d['released']}" : null,
+			],
 			'reservation.paid_manually' => [isset($d['amount']) ? $money($d['amount']) . ' hotově' : null],
 			'payment.matched', 'payment.partial', 'payment.overpaid', 'payment.unmatched', 'payment.assigned', 'payment.ignored', 'payment.settled', 'payment.unignored', 'payment.unassigned' => [
 				isset($d['amount']) ? $money($d['amount']) : null,

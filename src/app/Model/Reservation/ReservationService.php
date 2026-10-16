@@ -39,16 +39,22 @@ final class ReservationService
 
 	/**
 	 * Tables and seats of the hall plan. Shapes and positions are only in the SVG (HallSync::plan());
-	 * the seat picker finds a seat's shape by its svg_id.
-	 * @return array{tables: list<array{id: int, label: string, name: ?string}>, seats: list<array{id: int, label: string, table_id: ?int, svg_id: string}>}
+	 * the seat picker finds a seat's shape by its svg_id and hides the tables out of sale (available false),
+	 * whose seats are not listed.
+	 * @return array{tables: list<array{id: int, label: string, name: ?string, available: bool}>, seats: list<array{id: int, label: string, table_id: ?int, svg_id: string}>}
 	 */
 	public function hallLayout(): array
 	{
 		// query() uses the text protocol, so numeric columns arrive as strings.
 		return [
 			'tables' => array_map(
-				static fn(array $row): array => ['id' => (int) $row['id'], 'label' => (string) $row['label'], 'name' => $row['name']],
-				$this->db->query('SELECT id, label, name FROM hall_tables WHERE active = 1 ORDER BY sort_order, id')->fetchAll(),
+				static fn(array $row): array => [
+					'id' => (int) $row['id'],
+					'label' => (string) $row['label'],
+					'name' => $row['name'],
+					'available' => (bool) $row['available'],
+				],
+				$this->db->query('SELECT id, label, name, available FROM hall_tables WHERE active = 1 ORDER BY sort_order, id')->fetchAll(),
 			),
 			'seats' => array_map(
 				static fn(array $row): array => [
@@ -57,7 +63,10 @@ final class ReservationService
 					'table_id' => $row['table_id'] !== null ? (int) $row['table_id'] : null,
 					'svg_id' => (string) $row['svg_id'],
 				],
-				$this->db->query('SELECT id, label, table_id, svg_id FROM seats WHERE active = 1 ORDER BY sort_order, id')->fetchAll(),
+				$this->db->query(
+					'SELECT s.id, s.label, s.table_id, s.svg_id FROM seats s LEFT JOIN hall_tables t ON t.id = s.table_id
+					WHERE s.active = 1 AND COALESCE(t.available, 1) = 1 ORDER BY s.sort_order, s.id',
+				)->fetchAll(),
 			),
 		];
 	}
@@ -74,7 +83,13 @@ final class ReservationService
 
 		$taken = [];
 		$mine = [];
-		foreach ($this->db->query('SELECT seat_id, reservation_id FROM seat_bookings ORDER BY seat_id')->fetchAll() as $row) {
+		// Only seats of tables for sale: the picker shows no others and counts the free ones from these.
+		$bookings = $this->db->query(
+			'SELECT b.seat_id, b.reservation_id FROM seat_bookings b
+			JOIN seats s ON s.id = b.seat_id LEFT JOIN hall_tables t ON t.id = s.table_id
+			WHERE COALESCE(t.available, 1) = 1 ORDER BY b.seat_id',
+		)->fetchAll();
+		foreach ($bookings as $row) {
 			if ($draftId && (int) $row['reservation_id'] === $draftId) {
 				$mine[] = (int) $row['seat_id'];
 			} else {
@@ -210,12 +225,22 @@ final class ReservationService
 				throw new ReservationError("Na jednu rezervaci lze koupit nejvýše $max lístků.");
 			}
 
+			$table = $this->db->prepare(
+				'SELECT COALESCE(t.available, 1) FROM seats s LEFT JOIN hall_tables t ON t.id = s.table_id WHERE s.id = ? AND s.active = 1',
+			);
+			$table->execute([$seatId]);
+			$available = $table->fetchColumn();
+			if ($available !== false && (int) $available === 0) {
+				throw new ReservationError('Toto místo není v prodeji.');
+			}
+
 			// The primary key on seat_id lets only one reservation have the seat (a duplicate does not
-			// abort the transaction); a seat not in the hall plan inserts nothing.
+			// abort the transaction); a seat not in the hall plan or at a table out of sale inserts nothing.
 			try {
 				$stmt = $this->db->prepare(
 					"INSERT INTO seat_bookings (seat_id, reservation_id, state, held_at)
-					SELECT id, ?, 'held', NOW() FROM seats WHERE id = ? AND active = 1",
+					SELECT s.id, ?, 'held', NOW() FROM seats s LEFT JOIN hall_tables t ON t.id = s.table_id
+					WHERE s.id = ? AND s.active = 1 AND COALESCE(t.available, 1) = 1",
 				);
 				$stmt->execute([$draftId, $seatId]);
 			} catch (\PDOException $e) {

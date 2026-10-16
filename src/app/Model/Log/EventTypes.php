@@ -63,6 +63,7 @@ final class EventTypes
 
 		'site.mode_changed' => ['admin', 'Změna stavu webu'],
 		'hall.replaced' => ['admin', 'Nový plánek sálu'],
+		'hall.availability' => ['admin', 'Stoly v prodeji / mimo prodej'],
 		'settings.changed' => ['admin', 'Změna nastavení'],
 		'tester.link_regenerated' => ['admin', 'Nový testerský odkaz'],
 		'vip.link_regenerated' => ['admin', 'Nový VIP odkaz'],

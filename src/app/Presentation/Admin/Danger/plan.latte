@@ -3,6 +3,7 @@
 {block title}Plánek sálu – Nebezpečná zóna{/block}
 
 {block content}
+{include '../Accessory/settingsTabs.latte'}
 <p><a n:href="default">← Nebezpečná zóna</a></p>
 <div class="page-head">
 	<h1>Plánek sálu</h1>
@@ -16,6 +17,7 @@
 				<p><strong>{$plan['file_name']}</strong>, použitý {$plan['applied_at']|date:'j. n. Y H:i'}{if $plan['applied_by']} ({$plan['applied_by']}){/if}.</p>
 				<p><a class="button" n:href="svg, stahnout: 1">Stáhnout současný plánek (SVG)</a></p>
 				<p class="muted">Je to jediná kopie: před nahráním nového si ho stáhněte.</p>
+				<p class="muted">Jen vyřadit některé stoly z prodeje jde bez nového plánku: <a n:href="Tables:default">Stoly v prodeji</a>.</p>
 				<img class="hall-preview" n:attr="src: $presenter->link('svg')" alt="Současný plánek sálu">
 			{else}
 				<p class="error-text">Plánek zatím není nahraný, místa u stolů nejde prodávat.</p>

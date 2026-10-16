@@ -39,7 +39,7 @@ final class SeatOverviewTest extends DatabaseTestCase
 		$service->hold('c', 202);
 
 		$overview = new SeatOverview($this->db);
-		self::assertSame(['free' => 4, 'held' => 1, 'unpaid' => 1, 'partial' => 0, 'paid' => 2], $overview->counts());
+		self::assertSame(['free' => 4, 'held' => 1, 'unpaid' => 1, 'partial' => 0, 'paid' => 2, 'unavailable' => 0], $overview->counts());
 
 		$held = $overview->seats('held');
 		self::assertSame(['A2/2'], array_column($held, 'label'));

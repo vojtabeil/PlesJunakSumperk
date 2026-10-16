@@ -5,6 +5,8 @@ export interface HallTable {
   label: string;
   /** Name of the table (scout personality), null when the plan has none. */
   name: string | null;
+  /** False = out of sale (administration -> Stoly): hidden from the map, its seats are not in the layout. */
+  available?: boolean;
 }
 export interface HallSeat {
   id: number;

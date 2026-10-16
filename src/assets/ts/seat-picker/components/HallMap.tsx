@@ -94,6 +94,18 @@ export function HallMap({ layout, state, prices, disabled, onToggle, awake, onAw
     };
   }, [layout.svg]);
 
+  /** Tables out of sale disappear from the map (the hall keeps its frame: the box is measured before). */
+  useEffect(() => {
+    for (const table of layout.tables) {
+      for (const id of [`table-${table.label}`, `table-${table.label}-name`, `label-table-${table.label}`]) {
+        const element = find(svg, id);
+        if (element) {
+          element.style.display = table.available === false ? 'none' : '';
+        }
+      }
+    }
+  }, [svg, layout.tables]);
+
   /** Shape of each seat in the drawing (and its number label label-<svg id>, e.g. label-seat-A1-5, if the drawing has it). */
   const shapes = useMemo(() => {
     const map = new Map<number, { shape: SVGElement; label: SVGElement | null }>();

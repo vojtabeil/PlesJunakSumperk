@@ -30,7 +30,10 @@ final class ReservationAdmin
 	public function stats(): array
 	{
 		$seats = $this->db->query(
-			"SELECT (SELECT COUNT(*) FROM seats WHERE active = 1) AS total,
+			// Free = seats nobody has at tables for sale; seats of tables out of sale count only when sold.
+			"SELECT (SELECT COUNT(*) FROM seats s LEFT JOIN hall_tables t ON t.id = s.table_id
+					WHERE s.active = 1 AND COALESCE(t.available, 1) = 1
+					AND NOT EXISTS (SELECT 1 FROM seat_bookings x WHERE x.seat_id = s.id)) AS free,
 				COALESCE(SUM(state = 'reserved'), 0) AS reserved,
 				COALESCE(SUM(state = 'held'), 0) AS held
 			FROM seat_bookings",
@@ -48,7 +51,7 @@ final class ReservationAdmin
 		)->fetch();
 
 		$stats = array_map('intval', $seats + $reservations);
-		$stats['free'] = $stats['total'] - $stats['reserved'] - $stats['held'];
+		$stats['total'] = $stats['free'] + $stats['reserved'] + $stats['held'];
 		$stats['standing_capacity'] = $this->settings->int('standing_capacity');
 		return $stats;
 	}

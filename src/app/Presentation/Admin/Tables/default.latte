@@ -1,0 +1,52 @@
+{templateType App\Presentation\Admin\Tables\TablesTemplate}
+
+{block title}Stoly v prodeji{/block}
+
+{block content}
+<h1>Nastavení</h1>
+{include '../Accessory/settingsTabs.latte'}
+<div class="page-head">
+	<h2>Stoly v prodeji</h2>
+	<a n:href="Danger:plan">nový plánek sálu</a>
+</div>
+
+{if !$tables}
+	<p class="empty"><strong>Plánek sálu zatím není nahraný.</strong> <a n:href="Danger:plan">Nahrát plánek</a></p>
+{else}
+	<p class="muted">Stoly mimo prodej zmizí z plánku na webu a jejich místa si nikdo nevybere. Rezervace, které už místa u nich mají,
+		zůstávají platné; uvolní se jen místa, která si někdo právě vybírá. Kliknutím na stůl v plánku ho vyřadíte nebo vrátíte.</p>
+
+	<form n:name="availabilityForm" class="table-availability" data-table-availability>
+		<section class="card table-availability-plan" aria-labelledby="plan-title">
+			<div class="page-head">
+				<h2 id="plan-title">Náhled</h2>
+				<p class="table-availability-summary" data-summary aria-live="polite"></p>
+			</div>
+			<div class="hall-availability" n:if="$planSvg">{$planSvg|noescape}</div>
+		</section>
+
+		<section class="card" aria-labelledby="list-title">
+			<div class="page-head">
+				<h2 id="list-title">Stoly</h2>
+				<span>
+					<button type="button" class="button button--small" data-select="all">Vše do prodeje</button>
+					<button type="button" class="button button--small" data-select="none">Nic</button>
+				</span>
+			</div>
+			<ul class="table-availability-list">
+				<li n:foreach="$tables as $t">
+					<label>
+						<input n:name="available:$t['label']" data-table="{$t['label']}" data-seats="{$t['seats']}" data-sold="{$t['reserved']}">
+						<strong>{$t['label']}</strong>{if $t['name'] && $t['name'] !== $t['label']} {$t['name']}{/if}
+						<span class="muted">{$t['seats']} míst</span>
+						<span n:if="$t['reserved']" class="badge badge--seat-unpaid" title="Rezervace u vyřazeného stolu zůstávají platné">prodáno {$t['reserved']}</span>
+						<span n:if="!$t['available']" class="badge badge--seat-unavailable">mimo prodej</span>
+					</label>
+				</li>
+			</ul>
+			<p class="muted" data-sold-warning hidden>U některých stolů mimo prodej už jsou prodaná místa: rezervace zůstanou platné.</p>
+			<button n:name="save" class="button">Uložit</button>
+		</section>
+	</form>
+{/if}
+{/block}
