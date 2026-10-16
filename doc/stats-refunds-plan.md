@@ -115,3 +115,4 @@ CSV hlavičky a kódování.
    svého dne odečtou (ve sloupci „zrušeno“ u téhož dne).
 4. **Statistiky nejsou v hlavním menu,** jen v dlaždicích dole na přehledu a u malého grafu.
 5. **Vstup na plese po čtvrthodinách se nedělá;** počty prošlých vstupem zůstávají v bloku Lístky.
+6. **Malý graf na přehledu byl po zavedení odebrán** (16. 10. 2026); prodej po dnech je jen na stránce Statistiky.

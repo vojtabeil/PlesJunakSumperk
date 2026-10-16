@@ -56,12 +56,6 @@ final class DashboardTemplate extends BaseTemplate
 	/** @var list<array<string, mixed>> the newest reservations (ReservationAdmin::search) */
 	public array $latestReservations;
 
-	/** @var array<string, mixed> sales of the last 14 days (BarChart::build) */
-	public array $recentChart;
-
-	/** Tickets sold in the last 7 days. */
-	public int $recentWeek;
-
 	/** A hall plan is uploaded (without it seats cannot be sold). */
 	public bool $hasPlan;
 }

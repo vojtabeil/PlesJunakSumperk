@@ -14,10 +14,8 @@ use App\Model\Reservation\ReservationAdmin;
 use App\Model\Reservation\ReservationService;
 use App\Model\Reservation\SeatOverview;
 use App\Model\Settings\Settings;
-use App\Model\Stats\SalesStats;
 use App\Model\Ticket\Tickets;
 use App\Presentation\Admin\Accessory\ImportPaymentsForm;
-use App\Presentation\Admin\Accessory\BarChart;
 use App\Presentation\Admin\Accessory\TicketBars;
 use App\Presentation\Admin\BasePresenter;
 use Nette\Application\Attributes\Persistent;
@@ -49,7 +47,6 @@ final class DashboardPresenter extends BasePresenter
 		private readonly ReservationService $reservations,
 		private readonly SeatOverview $seatOverview,
 		private readonly TicketBars $ticketBars,
-		private readonly SalesStats $salesStats,
 		private readonly Settings $settings,
 		private readonly PaymentRepository $payments,
 		private readonly PaymentImporter $importer,
@@ -74,15 +71,6 @@ final class DashboardPresenter extends BasePresenter
 		$t->stats = $stats;
 		$t->entrance = $summary['entrance'];
 		$t->bars = $summary['bars'];
-		// Sales of the last 14 days (today on the right) and of the last 7.
-		$days = $this->salesStats->daily($this->clock->now()->modify('-13 days'));
-		$days = array_slice($days, -14);
-		$t->recentChart = BarChart::build(array_map(static fn(array $day): array => [
-			'label' => '',
-			'title' => date('j. n.', (int) strtotime($day['date'])) . ': ' . ($day['seats'] + $day['standing']) . ' lístků',
-			'parts' => ['seat' => $day['seats'], 'standing' => $day['standing']],
-		], $days));
-		$t->recentWeek = array_sum(array_map(static fn(array $day): int => $day['seats'] + $day['standing'], array_slice($days, -7)));
 		$t->latestReservations = $this->reservationAdmin->search(limit: self::LatestReservations);
 		$t->hasPlan = $this->hallSync->plan() !== null;
 		$t->eventCountdown = $this->settings->eventDate()?->countdown($this->clock->now());

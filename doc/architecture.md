@@ -36,7 +36,7 @@
 | `app/Model/Log/` | Event log of everything that happens (`EventLog::record`, actor from `Actor`: customer/admin/cron/system), `EventTypes` (Czech labels, categories), `EventLogRepository` (filters by date, seat, type, actor, reservation), `EventFormatter`. |
 | `app/Model/Admin/` | Organizer accounts (`AdminUsers`), login with lockout + per-request DB check (`Authenticator` as `IdentityHandler`), `SetupConfig`. |
 | `app/Model/Export/` | `Csv` (CSV for Czech Excel), `GuestListCsv`. |
-| `app/Model/Stats/` | `SalesStats`: sales by day, money, occupancy by table for the Statistiky page and the dashboard chart. |
+| `app/Model/Stats/` | `SalesStats`: sales by day, money, occupancy by table for the Statistiky page. |
 | `app/Model/Hall/` | Hall plan (SVG): `HallPlanParser` (tables / seats by id, sanitization), `HallSync` (the only version in `hall_plan`, preview of changes and affected reservations, apply), `HallUploads` (upload waiting for confirmation in `var/temp`), `TableAvailability` (tables for sale / out of sale). |
 | `app/Model/Crew/` | Z-lístky (free passes of the crew): `CrewMembers` (one person = one ticket with a free-text role; add, bulk import, edit, delete, pick-up), `CrewSchedule` (crew timetable from the setting `crew_schedule`), `CrewError`. |
 | `app/Model/Ticket/` | `Tickets` (one ticket per seat and standing ticket, issued on confirmation, and one per crew member; random 6-hex `code`, secret `print_token`), `TicketCheck` (entrance: lookup by code or reservation number, use, use the whole reservation, undo, statistics), `TicketLinks` (check / print URLs, QR PNG and SVG), `UnpaidTickets` (tickets of unpaid reservations stay hidden; on the print page a logged-in administrator reveals one with a reason printed on it and logged). |

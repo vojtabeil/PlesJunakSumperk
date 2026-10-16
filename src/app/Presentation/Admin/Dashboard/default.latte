@@ -15,17 +15,10 @@
 </div>
 
 <div class="overview">
-	{* 1. The three kinds of tickets as stacked bars, darker = further along; sales of the last days *}
+	{* 1. The three kinds of tickets as stacked bars, darker = further along *}
 	<section class="card tickets-card" aria-labelledby="tickets-title">
 		{include '../Accessory/ticketBars.latte', bars: $bars, entrance: $entrance, seatsUnavailable: $seatsUnavailable, seatFilter: $seatFilter}
 
-		<div class="sales-spark" n:if="$recentChart['bars']">
-			<div class="ticket-bar-head">
-				<h3>Prodej za {count($recentChart['bars'])} dní</h3>
-				<span><strong>{$recentWeek}</strong> lístků za 7 dní · <a n:href="Statistics:default">Statistiky →</a></span>
-			</div>
-			{include '../Accessory/barChart.latte', chart: $recentChart, height: 70, description: "Prodané lístky za posledních " . count($recentChart['bars']) . " dní"}
-		</div>
 		<p class="muted">
 			Zaplaceno {$stats['paid_amount']|price} · čeká na platbu {$stats['unpaid_amount']|price} ·
 			<a n:href="Check:default">Kontrola vstupenek</a>

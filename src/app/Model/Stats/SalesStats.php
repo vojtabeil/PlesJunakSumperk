@@ -13,7 +13,7 @@ use PDO;
 
 
 /**
- * Numbers of the Statistiky page (and the small chart of the dashboard). Test reservations are never counted;
+ * Numbers of the Statistiky page. Test reservations are never counted;
  * money in hellers. A day of sale is the day the reservation was made (confirmed): only reservations valid now
  * count there, a cancelled one is shown in the "cancelled" column of its day.
  */
