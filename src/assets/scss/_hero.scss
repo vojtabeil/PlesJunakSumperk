@@ -88,6 +88,13 @@
   }
 }
 
+// The button in the header bar is for phones only; wider screens have the one in the hero.
+.pill.header-action {
+  @include above($breakpoint-tablet) {
+    display: none;
+  }
+}
+
 // Facts as patches: rounded tiles in two columns on phones, round badges on wide screens.
 .badges {
   display: grid;
