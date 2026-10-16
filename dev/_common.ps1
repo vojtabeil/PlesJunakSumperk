@@ -466,6 +466,43 @@ function Stop-Watchers {
     }
 }
 
+# --- Packages (release.ps1, portable.ps1) ------------------------------------------
+# Copies the application into a package folder and installs the PHP dependencies without
+# dev packages. The dev tools (app/Presentation/Dev, /dev/* pages) only with -WithDevTools.
+# Never copies tests, asset sources or local config.
+function Copy-AppPackage([string]$Web, [switch]$WithDevTools) {
+    New-Item -ItemType Directory -Force $Web | Out-Null
+    Copy-Item (Join-Path $SrcDir 'app') (Join-Path $Web 'app') -Recurse
+    if (-not $WithDevTools) { Remove-Item (Join-Path $Web 'app\Presentation\Dev') -Recurse -Force }
+
+    New-Item -ItemType Directory -Force (Join-Path $Web 'config') | Out-Null
+    foreach ($file in @('common.neon', 'services.neon')) {
+        Copy-Item (Join-Path $SrcDir "config\$file") (Join-Path $Web "config\$file")
+    }
+    Copy-Item (Join-Path $SrcDir 'www') (Join-Path $Web 'www') -Recurse
+    foreach ($dir in @('var\temp', 'var\log')) {
+        New-Item -ItemType Directory -Force (Join-Path $Web $dir) | Out-Null
+    }
+
+    Write-Step 'Installing PHP dependencies without dev packages'
+    Copy-Item (Join-Path $SrcDir 'composer.json'), (Join-Path $SrcDir 'composer.lock') $Web
+    $r = Invoke-Native $PhpExe @('-c', $PhpIni, $ComposerPhar, 'install', '--no-dev', '--optimize-autoloader',
+        '--no-interaction', '--no-progress', "--working-dir=$Web")
+    if ($r.Code -ne 0) { throw "composer install failed:`n$($r.Output)" }
+    Remove-Item (Join-Path $Web 'composer.json'), (Join-Path $Web 'composer.lock')
+}
+
+# Packs a folder of dist/ into a ZIP next to it (the folder is the top-level entry of the ZIP).
+function New-DistZip([string]$Folder) {
+    $zip = "$Folder.zip"
+    if (Test-Path $zip) { Remove-Item $zip -Force }
+    # Windows bsdtar (System32) creates ZIP; a GNU tar from Git Bash on PATH would not.
+    $r = Invoke-Native (Join-Path $env:SystemRoot 'System32\tar.exe') @('-a', '-c', '-f', $zip,
+        '-C', (Split-Path -Parent $Folder), (Split-Path -Leaf $Folder))
+    if ($r.Code -ne 0) { throw "Creating ZIP failed: $($r.Output)" }
+    return $zip
+}
+
 # --- Release verification -------------------------------------------------------
 # Serves the package from a separate PHP server in production mode (APP_ENV=production)
 # against the local database and checks what the hosting would serve.

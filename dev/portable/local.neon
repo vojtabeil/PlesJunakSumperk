@@ -1,0 +1,32 @@
+# Configuration of the portable version (dev\portable.cmd). scripts/run.ps1 fills in the ports
+# and writes it to web/config/local.neon on every start - manual changes there are overwritten.
+
+parameters:
+	database:
+		host: 127.0.0.1
+		port: {DB_PORT}
+		name: ples
+		user: ples
+		password: ples
+
+	# Everything goes to the bundled Mailpit, nothing is delivered.
+	mail:
+		host: 127.0.0.1
+		port: {SMTP_PORT}
+		secure: ''
+		user: ''
+		password: ''
+		from: ples@junak-sumperk.cz
+		fromName: Šumperský skautský ples
+		replyTo: ''
+
+	# Fake bank: payments are created at /dev/bank.
+	bank:
+		driver: mock
+		token: ''
+
+	cron:
+		key: ''
+
+	setup:
+		password: skaut-sumperk

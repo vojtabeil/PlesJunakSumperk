@@ -10,10 +10,11 @@
 | `resource/original-web/` | Complete FTP backup of the old site incl. PHP sources; credentials and dumps are git-ignored. Notes: `doc/legacy/original-web.md`, comparison with the new site: `doc/legacy/feature-comparison.md`. |
 | `resource/design/` | CorelDRAW drawings (hall plan); `Backup_*.cdr` are git-ignored. |
 | `dev/` | Local environment: PowerShell scripts, `env.cmd` (tool environment), `router.php` (PHP built-in server), wrappers of the portable tools. |
+| `dev/portable/` | Files of the portable version (`dev\portable.cmd`): `run.ps1` (start / stop / reset inside the package), `router.php`, `local.neon` template, the `.cmd` launchers and `CTI-ME.txt`. |
 | `setup.cmd`, `start.cmd`, `stop.cmd`, `check.cmd` | Everyday commands; the rest is in `dev/`. |
 | `.tools/` | Portable PHP, MariaDB, Mailpit, Adminer, Composer, Bun, TypeScript 7, Dart Sass (git-ignored). |
 | `.devdata/` | Local DB data, captured e-mails, logs, PID files, sessions, temp files, package caches (git-ignored). |
-| `dist/` | Release packages (git-ignored). |
+| `dist/` | Release packages, static demos and portable versions (git-ignored). |
 
 ## Application (`src/`)
 

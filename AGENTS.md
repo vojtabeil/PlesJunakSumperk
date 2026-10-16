@@ -48,6 +48,7 @@ Read `doc/architecture.md` before larger changes and keep it up to date when add
 | `check.cmd` | `tsc`, `bun test`, PHPUnit, PHPStan (level 6). Run before every commit. |
 | `dev\release.cmd` | Release package `dist/ples-<version>/` (+ ZIP): `web/` to upload (no dev tools, tests, sources, maps, dev dependencies or local config) and `install/` (SQL + `doc/deploy.md`). Verifies the package first like a new installation: fresh database `ples_release` from `install/*.sql`, production mode, checks of the first run, the testing stage and the public sale (MariaDB must run). |
 | `dev\demo.cmd` | Static demo of the reservation page for a customer: `dist/ples-ukazka-<time>/` + ZIP to upload to any static web (FTP, any folder). Pages rendered from the real templates and the local database (`bin/export-demo.php`, changes rolled back), the seat picker on the in-browser demo API (`front-demo.tsx`, `seat-picker/demo-api.ts`; about a third of the seats sold, nothing sent), then a sample "Moje rezervace" with a made-up account. Checks all links. |
+| `dev\portable.cmd` | Portable version for internal testing `dist/ples-portable-<version>/` (+ ZIP, about 55 MB): unzip anywhere on Windows 10/11 (no installation, admin rights or internet) and run `Start.cmd` (this computer) or `Start-LAN.cmd` (local network too); `Stop.cmd`, `Reset-data.cmd` (back to the sample data), `CTI-ME.txt`. Contains the web with the dev tools (Tracy on localhost, `/dev/bank`, `/dev/status`, Adminer), trimmed PHP + MariaDB + Mailpit from `.tools/` and the sample data (`init-db` + seed: public sale, `admin` / `admin`) loaded on the first start. Runtime scripts in `dev/portable/` (`run.ps1` generates `php.ini`, `my.ini`, `local.neon` on every start; own ports 8800/3317/1125/8825, next free one when taken). Verified by unpacking the ZIP into a path with a space and diacritics, starting, HTTP checks and stopping. |
 | `dev\init-db.cmd` | Recreates `ples` (schema + seed). `-Test` recreates `ples_test`, `-NoSeed`, `-Import dump.sql`, `-Clean` (wipe data dir). |
 | `dev\php.cmd`, `dev\composer.cmd`, `dev\bun.cmd`, `dev\tsc.cmd`, `dev\sass.cmd` | Run the portable tools with the project environment (run them from `src/`). |
 
@@ -173,6 +174,9 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
   After a change run `dev\init-db.cmd` and `dev\init-db.cmd -Test`.
 - PHPUnit tests that touch the DB extend `App\Tests\Support\DatabaseTestCase` (fresh fixture per test,
   fresh services so cached settings never leak).
+- `php.exe` reads its command line in the ANSI code page and cannot load extensions from a path with diacritics:
+  the portable version runs PHP in its folder with relative arguments and `extension_dir` (`dev/portable/run.ps1`).
+  `tar.exe` cannot take such paths either. MariaDB and Mailpit are fine.
 - In PowerShell 5.1, native program arguments lose embedded double quotes, and stderr output
   from native programs can abort a script; use `Invoke-Native` from `dev/_common.ps1`.
 - The Composer class map is optimized: after moving or renaming classes run `..\dev\composer.cmd dump-autoload`

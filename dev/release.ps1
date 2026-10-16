@@ -36,22 +36,11 @@ Write-Step 'Building assets'
 
 Write-Step "Assembling $outDir"
 if (Test-Path $outDir) { Remove-Item $outDir -Recurse -Force }
-New-Item -ItemType Directory -Force $web, $install | Out-Null
+New-Item -ItemType Directory -Force $install | Out-Null
 
-Copy-Item (Join-Path $SrcDir 'app') (Join-Path $web 'app') -Recurse
-Remove-Item (Join-Path $web 'app\Presentation\Dev') -Recurse -Force
-
-New-Item -ItemType Directory -Force (Join-Path $web 'config') | Out-Null
-foreach ($file in @('common.neon', 'services.neon', 'local.neon.example')) {
-    Copy-Item (Join-Path $SrcDir "config\$file") (Join-Path $web "config\$file")
-}
-
-Copy-Item (Join-Path $SrcDir 'www') (Join-Path $web 'www') -Recurse
+Copy-AppPackage $web
+Copy-Item (Join-Path $SrcDir 'config\local.neon.example') (Join-Path $web 'config\local.neon.example')
 Get-ChildItem (Join-Path $web 'www\build') -Filter '*.map' | Remove-Item -Force
-
-foreach ($dir in @('var\temp', 'var\log')) {
-    New-Item -ItemType Directory -Force (Join-Path $web $dir) | Out-Null
-}
 
 # Deny direct access to everything outside www/ (when the hosting serves web/ itself).
 $deny = "Require all denied`n"
@@ -70,12 +59,6 @@ Write-Utf8NoBom (Join-Path $web '.htaccess') @'
 </IfModule>
 '@
 
-Write-Step 'Installing PHP dependencies without dev packages'
-Copy-Item (Join-Path $SrcDir 'composer.json'), (Join-Path $SrcDir 'composer.lock') $web
-$r = Invoke-Native $PhpExe @('-c', $PhpIni, $ComposerPhar, 'install', '--no-dev', '--optimize-autoloader',
-    '--no-interaction', '--no-progress', "--working-dir=$web")
-if ($r.Code -ne 0) { throw "composer install failed:`n$($r.Output)" }
-Remove-Item (Join-Path $web 'composer.json'), (Join-Path $web 'composer.lock')
 Write-Utf8NoBom (Join-Path $web 'vendor\.htaccess') $deny
 Write-Utf8NoBom (Join-Path $web 'VERSION') "$version`n"
 
@@ -99,11 +82,7 @@ if (-not $SkipVerify) {
 }
 
 Write-Step 'Creating ZIP'
-$zip = Join-Path $distDir "ples-$version.zip"
-if (Test-Path $zip) { Remove-Item $zip -Force }
-# Windows bsdtar (System32) creates ZIP; a GNU tar from Git Bash on PATH would not.
-$r = Invoke-Native (Join-Path $env:SystemRoot 'System32\tar.exe') @('-a', '-c', '-f', $zip, '-C', $distDir, "ples-$version")
-if ($r.Code -ne 0) { throw "Creating ZIP failed: $($r.Output)" }
+$zip = New-DistZip $outDir
 Write-Ok $zip
 Write-Host ''
 Write-Host "Done. Upload $web, follow $install\deploy.md." -ForegroundColor Green

@@ -23,6 +23,7 @@ Outgoing e-mails are never delivered locally; they are captured by Mailpit at ht
 Less frequent commands are in `dev/`:
 
 - `dev\release.cmd` - package for the hosting; see [doc/deploy.md](doc/deploy.md).
+- `dev\portable.cmd` - ZIP with the whole site, database and sample data for internal testing on any Windows (`Start.cmd` inside).
 - `dev\init-db.cmd` - reset the database (`-Test` for the PHPUnit database, `-Import dump.sql` for a dump).
 - `dev\build.cmd` - one-off build of the assets (`start.cmd` rebuilds them on change).
 - `dev\php.cmd`, `dev\composer.cmd`, `dev\bun.cmd`, `dev\tsc.cmd`, `dev\sass.cmd` - portable tools; run them from `src/`.

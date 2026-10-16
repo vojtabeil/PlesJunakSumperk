@@ -1,0 +1,55 @@
+Šumperský skautský ples – přenosná verze pro interní testování
+================================================================
+
+Celý web (rezervace, administrace, platby, vstupenky, kontrola u vchodu) běží
+z této složky na jakémkoli 64bitovém Windows 10 nebo 11. Nic se neinstaluje,
+nejsou potřeba práva správce ani internet. Složku lze přesunout kamkoli
+(plocha, flashka); vše se ukládá do podsložky data\.
+
+POZOR: jen pro testování. Obsahuje zkušební banku, ladicí nástroje a známá
+hesla – nikdy ji nevystavujte do internetu.
+
+
+Spuštění
+--------
+  Start.cmd         web jen pro tento počítač, otevře prohlížeč
+  Start-LAN.cmd     web i pro ostatní zařízení v síti (telefon, jiný počítač);
+                    adresy se vypíšou v okně. Windows se může jednou zeptat
+                    na povolení ve firewallu – povolte pro soukromé sítě.
+  Stop.cmd          vypne databázi, e-maily i web
+  Reset-data.cmd    smaže všechna data (rezervace, platby, e-maily) a začne
+                    znovu s ukázkovými daty
+
+První spuštění trvá déle (vytváří se databáze s ukázkovými daty).
+
+
+Adresy (čísla portů vypíše Start.cmd; když je port obsazený, použije další volný)
+-------
+  Web            http://127.0.0.1:8800/
+  Administrace   http://127.0.0.1:8800/admin   přihlášení admin / admin
+  Kontrola       http://127.0.0.1:8800/admin/kontrola
+                 aplikace pro kontrolu vstupenek u vchodu (QR kódy)
+  Zkušební banka http://127.0.0.1:8800/dev/bank
+                 vytvořte platbu, pak v administraci Platby -> „Načíst platby z banky“
+  E-maily        http://127.0.0.1:8825/   (Mailpit – všechny odeslané e-maily
+                 skončí tady, nikam se neodesílají)
+  Databáze       http://127.0.0.1:8800/adminer   uživatel ples, heslo ples
+  Diagnostika    http://127.0.0.1:8800/dev/status
+
+Web je po spuštění ve fázi „veřejný prodej“ (změna: administrace -> Stav webu).
+
+Na tomto počítači běží web v ladicím režimu (při chybě se ukáže Tracy s
+podrobnostmi). Ostatní zařízení v síti dostanou ostrý režim: bez Tracy,
+bez zkušební banky, diagnostiky a Admineru.
+
+Kontrola na telefonu přes síť (Start-LAN.cmd): prohlížeč povolí kameru jen
+přes https, takže čtečka QR kódů nepůjde a kód vstupenky se zadává ručně.
+Na tomto počítači (127.0.0.1) kamera funguje.
+
+
+Když něco nefunguje
+-------------------
+  - Záznamy jsou v data\logs\ (mariadb.err, php.log, mailpit.err.log)
+    a ve web\var\log\ (chyby aplikace).
+  - Pomůže Stop.cmd a znovu Start.cmd, případně Reset-data.cmd.
+  - Verze balíčku je v souboru version.txt.
