@@ -31,6 +31,14 @@ final class ReservationPresenter extends BasePresenter
 	#[Persistent]
 	public string $problem = '';
 
+	/** One of ReservationAdmin::Channels ('' = all). */
+	#[Persistent]
+	public string $channel = '';
+
+	/** Key of ReservationAdmin::Sorts, "-key" = descending. */
+	#[Persistent]
+	public string $sort = ReservationAdmin::DefaultSort;
+
 	/** @var array<string, mixed> */
 	private array $reservation;
 
@@ -49,8 +57,16 @@ final class ReservationPresenter extends BasePresenter
 
 	public function renderDefault(): void
 	{
-		$this->template->reservations = $this->reservationAdmin->search($this->status ?: null, $this->q, $this->problem ?: null);
+		$this->sort = ReservationAdmin::normalizeSort($this->sort);
+		$this->template->reservations = $this->reservationAdmin->search(
+			$this->status ?: null,
+			$this->q,
+			$this->problem ?: null,
+			$this->sort,
+			$this->channel ?: null,
+		);
 		$this->template->problemLabel = ReservationAdmin::Problems[$this->problem] ?? null;
+		$this->template->sort = $this->sort;
 	}
 
 
@@ -84,13 +100,27 @@ final class ReservationPresenter extends BasePresenter
 		foreach (ReservationAdmin::Statuses as $status) {
 			$statuses[$status] = TemplateExtension::formatStatus($status);
 		}
-		$form->addSelect('status', 'Stav', $statuses)->setDefaultValue($this->status);
+		$form->addSelect('status', 'Stav', $statuses)->setDefaultValue(isset($statuses[$this->status]) ? $this->status : '');
+		$channels = ['' => 'všechny', 'public' => 'veřejný prodej', 'vip' => 'VIP', 'test' => 'testovací'];
+		$form->addSelect('channel', 'Prodej', $channels)->setDefaultValue(isset($channels[$this->channel]) ? $this->channel : '');
+		$sorts = [];
+		foreach (ReservationAdmin::Sorts as $key => [$label]) {
+			$sorts["-$key"] = "$label – sestupně";
+			$sorts[$key] = "$label – vzestupně";
+		}
+		$form->addSelect('sort', 'Řadit', $sorts)->setDefaultValue(ReservationAdmin::normalizeSort($this->sort));
 		$form->addText('q', 'Hledat')
 			->setHtmlAttribute('placeholder', 'e-mail, jméno nebo číslo')
 			->setDefaultValue($this->q);
 		$form->addSubmit('filter', 'Filtrovat');
 		$form->onSuccess[] = function (Form $form, \stdClass $data): void {
-			$this->redirect('default', ['status' => (string) $data->status, 'q' => trim((string) $data->q), 'problem' => '']);
+			$this->redirect('default', [
+				'status' => (string) $data->status,
+				'channel' => (string) $data->channel,
+				'sort' => (string) $data->sort,
+				'q' => trim((string) $data->q),
+				'problem' => '',
+			]);
 		};
 		return $form;
 	}

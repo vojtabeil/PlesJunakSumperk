@@ -92,16 +92,52 @@ final class ReservationAdmin
 
 
 	/**
-	 * Finished and cancelled reservations (drafts only when asked for), newest first.
+	 * Sort keys of the reservation list (key => Czech label, SQL expression); "-key" sorts descending.
+	 * Date = confirmation (the draft's start for drafts).
+	 */
+	public const Sorts = [
+		'date' => ['Datum', 'COALESCE(r.confirmed_at, r.created_at)'],
+		'id' => ['Číslo', 'r.id'],
+		'name' => ['Jméno', 'COALESCE(r.name, r.email)'],
+		'tickets' => ['Počet lístků', 'COUNT(s.id) + r.standing_tickets'],
+		'price' => ['Cena', 'r.total_price'],
+		'status' => ['Stav', "CASE r.status WHEN 'draft' THEN 0 WHEN 'confirmed' THEN 1 WHEN 'partially_paid' THEN 2 WHEN 'paid' THEN 3 ELSE 4 END"],
+	];
+
+	public const DefaultSort = '-date';
+
+	public const Channels = ['test', 'vip', 'public'];
+
+
+	/** A valid sort ("key" or "-key"), otherwise the default. */
+	public static function normalizeSort(string $sort): string
+	{
+		return preg_match('/^-?([a-z]+)$/D', $sort, $m) && isset(self::Sorts[$m[1]]) ? $sort : self::DefaultSort;
+	}
+
+
+	/**
+	 * Finished and cancelled reservations (drafts only when asked for), newest first unless sorted otherwise.
 	 * @return list<array<string, mixed>>
 	 */
-	public function search(?string $status = null, string $query = '', ?string $problem = null): array
+	public function search(
+		?string $status = null,
+		string $query = '',
+		?string $problem = null,
+		string $sort = self::DefaultSort,
+		?string $channel = null,
+		?int $limit = null,
+	): array
 	{
 		$where = ["r.status <> 'draft'"];
 		$params = [];
 		if ($status !== null && in_array($status, self::Statuses, true)) {
 			$where = ['r.status = ?'];
 			$params[] = $status;
+		}
+		if ($channel !== null && in_array($channel, self::Channels, true)) {
+			$where[] = 'r.channel = ?';
+			$params[] = $channel;
 		}
 		if ($problem !== null && isset(self::Problems[$problem])) {
 			$where[] = $this->problemCondition($problem);
@@ -120,10 +156,19 @@ final class ReservationAdmin
 			LEFT JOIN seats s ON s.id = b.seat_id
 			WHERE ' . implode(' AND ', $where) . '
 			GROUP BY r.id
-			ORDER BY r.id DESC',
+			ORDER BY ' . $this->orderBy($sort) . ($limit !== null ? ' LIMIT ' . max(0, $limit) : ''),
 		);
 		$stmt->execute($params);
 		return $stmt->fetchAll();
+	}
+
+
+	/** ORDER BY of a sort key; ties are broken by the number in the same direction. */
+	private function orderBy(string $sort): string
+	{
+		$sort = self::normalizeSort($sort);
+		$direction = str_starts_with($sort, '-') ? 'DESC' : 'ASC';
+		return self::Sorts[ltrim($sort, '-')][1] . " $direction, r.id $direction";
 	}
 
 

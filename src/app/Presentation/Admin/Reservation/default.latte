@@ -10,8 +10,12 @@
 
 <form n:name="filterForm" class="filter-form">
 	<label n:name="status">Stav <select n:name="status"></select></label>
+	<label n:name="channel">Prodej <select n:name="channel"></select></label>
+	<label n:name="sort">Řadit <select n:name="sort"></select></label>
 	<label n:name="q">Hledat <input n:name="q"></label>
 	<button n:name="filter" class="button">Filtrovat</button>
+	<a n:if="$presenter->status || $presenter->channel || $presenter->q || $presenter->problem || $sort !== App\Model\Reservation\ReservationAdmin::DefaultSort"
+		n:href="this, status: '', channel: '', q: '', problem: '', sort: null">zrušit filtr</a>
 </form>
 
 <p n:if="$problemLabel" class="flash flash--info">
@@ -20,6 +24,6 @@
 
 <section class="card">
 	<p class="muted">Počet: {count($reservations)}</p>
-	{include 'table.latte', reservations: $reservations}
+	{include 'table.latte', reservations: $reservations, sort: $sort}
 </section>
 {/block}

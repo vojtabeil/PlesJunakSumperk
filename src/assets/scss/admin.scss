@@ -212,6 +212,16 @@ h2 {
     font-weight: 600;
   }
 
+  // Column header that sorts the list (again = the other direction).
+  .sort-link {
+    color: inherit;
+    white-space: nowrap;
+
+    &.is-current {
+      color: var(--text);
+    }
+  }
+
   .num {
     text-align: right;
     font-variant-numeric: tabular-nums;

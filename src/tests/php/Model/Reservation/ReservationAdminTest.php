@@ -94,6 +94,25 @@ final class ReservationAdminTest extends DatabaseTestCase
 	}
 
 
+	public function testSearchSortsFiltersByChannelAndLimits(): void
+	{
+		$zita = $this->confirmed('zita@example.com', [101, 102], name: 'Zita');
+		$adam = $this->confirmed('adam@example.com', [201], name: 'Adam');
+		$eva = $this->confirmed('eva@example.com', [202, 203, 204], name: 'Eva');
+		$this->db->prepare('UPDATE reservations SET confirmed_at = ? WHERE id = ?')->execute(['2026-01-03 10:00:00', $zita]);
+		$this->db->prepare('UPDATE reservations SET confirmed_at = ? WHERE id = ?')->execute(['2026-01-01 10:00:00', $adam]);
+		$this->db->prepare('UPDATE reservations SET confirmed_at = ?, channel = ? WHERE id = ?')->execute(['2026-01-02 10:00:00', 'vip', $eva]);
+
+		self::assertSame([$zita, $eva, $adam], array_column($this->admin->search(), 'id'), 'Newest confirmation first');
+		self::assertSame([$adam, $eva, $zita], array_column($this->admin->search(sort: 'name'), 'id'));
+		self::assertSame([$eva, $zita, $adam], array_column($this->admin->search(sort: '-price'), 'id'));
+		self::assertSame([$adam, $zita, $eva], array_column($this->admin->search(sort: 'tickets'), 'id'));
+		self::assertSame([$zita, $eva, $adam], array_column($this->admin->search(sort: 'bogus; DROP'), 'id'), 'Unknown sort = default');
+		self::assertSame([$eva], array_column($this->admin->search(channel: 'vip'), 'id'));
+		self::assertSame([$zita, $eva], array_column($this->admin->search(limit: 2), 'id'));
+	}
+
+
 	public function testSettingsSaveReportsOnlyChanges(): void
 	{
 		$settings = $this->settings();

@@ -14,6 +14,9 @@ final class ReservationTemplate extends BaseTemplate
 
 	public ?string $problemLabel;
 
+	/** Current sort of the list (ReservationAdmin::Sorts key, "-key" = descending). */
+	public string $sort;
+
 	/** @var array<string, mixed> */
 	public array $reservation;
 

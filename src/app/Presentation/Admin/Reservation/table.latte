@@ -1,20 +1,22 @@
-{* Reservation table, shared by the list and the dashboard. Parameter: $reservations *}
-{parameters array $reservations}
+{* Reservation table, shared by the list and the dashboard. Parameters: $reservations, $sort (null = headers without sorting links) *}
+{parameters array $reservations, ?string $sort = null}
 <div class="table-scroll" n:if="$reservations">
 	<table class="data-table data-table--cards">
 		<thead>
 			<tr>
-				<th scope="col">Č.</th>
-				<th scope="col">Jméno / e-mail</th>
+				{include sortHeader, sort: $sort, key: id, label: 'Č.'}
+				{include sortHeader, sort: $sort, key: date, label: 'Datum'}
+				{include sortHeader, sort: $sort, key: name, label: 'Jméno / e-mail'}
 				<th scope="col">Místa</th>
 				<th scope="col" class="num">Bez míst.</th>
-				<th scope="col" class="num">Cena</th>
-				<th scope="col">Stav</th>
+				{include sortHeader, sort: $sort, key: price, label: 'Cena', class: num}
+				{include sortHeader, sort: $sort, key: status, label: 'Stav'}
 			</tr>
 		</thead>
 		<tbody>
 			<tr n:foreach="$reservations as $r">
 				<td data-label="Číslo"><a n:href="Reservation:detail $r['id']">{$r['id']}</a></td>
+				<td data-label="Datum">{($r['confirmed_at'] ?? $r['created_at'])|date:'j. n. H:i'}</td>
 				<td data-label="Jméno">
 					<a n:href="Reservation:detail $r['id']">{$r['name'] ?? '–'}</a><br>
 					<span class="muted">{$r['email']}</span>
@@ -32,3 +34,16 @@
 </div>
 <p n:if="!$reservations" class="empty"><strong>Žádné rezervace.</strong>
 	Rezervace se tu objeví, jakmile si někdo koupí lístky. Pokud máte zapnutý filtr, zkuste ho zrušit.</p>
+
+{* Column header: a link that sorts by the column, again = the other direction; numbers, dates and prices start descending. *}
+{define sortHeader, ?string $sort, string $key, string $label, ?string $class = null}
+	{if $sort === null}
+		<th scope="col" class={$class}>{$label}</th>
+	{else}
+		{var $current = ltrim($sort, '-') === $key}
+		{var $next = $current ? ($sort === $key ? "-$key" : $key) : (in_array($key, [id, date, price], true) ? "-$key" : $key)}
+		<th scope="col" class={$class} aria-sort="{if $current}{$sort === $key ? ascending : descending}{else}none{/if}">
+			<a n:href="this, sort: $next" n:class="sort-link, $current ? is-current">{$label}{if $current}{$sort === $key ? ' ▲' : ' ▼'}{/if}</a>
+		</th>
+	{/if}
+{/define}

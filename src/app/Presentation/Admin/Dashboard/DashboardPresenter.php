@@ -23,13 +23,16 @@ use Nette\Application\UI\Form;
 
 
 /**
- * Start page of the administration: what needs attention, chart of all seats,
+ * Start page of the administration: what needs attention, chart of all seats, the latest reservations,
  * table of all seats, links to the other sections.
  * @property-read DashboardTemplate $template
  */
 final class DashboardPresenter extends BasePresenter
 {
 	use ImportPaymentsForm;
+
+	/** Reservations shown on the dashboard, newest first; the rest is in the reservation list. */
+	private const LatestReservations = 8;
 
 	/** Seat table filter: one of SeatOverview::Statuses, '' = all. */
 	#[Persistent]
@@ -82,6 +85,7 @@ final class DashboardPresenter extends BasePresenter
 				['picked_up' => $crew['picked_up'], 'waiting' => $crew['total'] - $crew['picked_up']],
 			),
 		];
+		$t->latestReservations = $this->reservationAdmin->search(limit: self::LatestReservations);
 		$t->hasPlan = $this->hallSync->plan() !== null;
 		$t->siteMode = $this->settings->mode();
 		$t->ticketLists = [

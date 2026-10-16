@@ -47,6 +47,9 @@ final class DashboardTemplate extends BaseTemplate
 	/** @var array<string, list<array<string, mixed>>> full lists of the tickets by kind (Tickets::listing) */
 	public array $ticketLists;
 
+	/** @var list<array<string, mixed>> the newest reservations (ReservationAdmin::search) */
+	public array $latestReservations;
+
 	/** A hall plan is uploaded (without it seats cannot be sold). */
 	public bool $hasPlan;
 }

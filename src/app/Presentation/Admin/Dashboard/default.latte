@@ -99,7 +99,16 @@
 	</section>
 </div>
 
-{* 2. Full lists of the three kinds of tickets, folded *}
+{* 2. The latest reservations; the full list with filters and sorting is one click away *}
+<section class="card" aria-labelledby="latest-title">
+	<div class="page-head">
+		<h2 id="latest-title"><a n:href="Reservation:default">Poslední rezervace</a></h2>
+		<a n:href="Reservation:default">Všechny rezervace ({$stats['confirmed'] + $stats['partially_paid'] + $stats['paid'] + $stats['cancelled']}) →</a>
+	</div>
+	{include '../Reservation/table.latte', reservations: $latestReservations}
+</section>
+
+{* 3. Full lists of the three kinds of tickets, folded *}
 <section class="card ticket-lists" aria-labelledby="ticket-lists-title">
 	<h2 id="ticket-lists-title">Seznamy lístků</h2>
 
@@ -165,7 +174,7 @@
 	{include '../Accessory/channelBadge.latte', channel: $t['channel']}
 {/define}
 
-{* 3. Table of all seats *}
+{* 4. Table of all seats *}
 <section class="card" aria-labelledby="seats-title">
 <details id="seat-table" class="seat-details" n:attr="open: $seatFilter || $presenter->seatSearch">
 	<summary>Tabulka všech míst ({$seatTotal}){if $seatFilter} – {$seatFilter|seatStatus}{/if}</summary>
@@ -205,7 +214,7 @@
 </details>
 </section>
 
-{* 4. Other sections *}
+{* 5. Other sections *}
 <nav class="tiles" aria-label="Další části administrace">
 	<a class="tile" n:href="Reservation:default"><strong>Rezervace</strong><span>seznam, hledání, detail a zásahy</span></a>
 	<a class="tile" n:href="Customer:default"><strong>Zákazníci</strong><span>lidé podle e-mailu a jejich rezervace</span></a>
