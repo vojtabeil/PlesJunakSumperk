@@ -913,16 +913,17 @@ h3 {
   font-size: 0.9rem;
 }
 
-// --- Phones: compact header, bottom tab bar -------------------------------------
+// --- Phones: compact header, the menu behind a hamburger ------------------------
 
 @include below($breakpoint-tablet) {
   .admin-header {
+    position: relative;
     gap: 0.5rem 1rem;
     padding: 0.5rem 16px;
 
     .admin-nav,
     .admin-user {
-      display: none; // both are in the tab bar ("Více")
+      display: none; // both are in the hamburger menu
     }
   }
 
@@ -937,10 +938,6 @@ h3 {
     input {
       width: 100%;
     }
-  }
-
-  .admin-main {
-    padding-bottom: 5.5rem; // room for the tab bar
   }
 
   // Dashboard: what needs attention first, then the chart.
@@ -964,80 +961,115 @@ h3 {
   }
 }
 
-.admin-tabbar {
+// Hamburger (phones only): a button with three bars, the menu drops down under the header over the page.
+.admin-burger {
   display: none;
 
   @include below($breakpoint-tablet) {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 30;
+    display: block;
+  }
+
+  > summary {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    padding-bottom: env(safe-area-inset-bottom);
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    cursor: pointer;
+    list-style: none;
+    border-radius: var(--radius-small);
 
-    > a,
-    summary {
-      display: grid;
-      place-items: center;
-      min-height: 3.25rem;
-      padding: 0.25rem;
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-align: center;
-      color: var(--muted);
-      text-decoration: none;
-      cursor: pointer;
-      list-style: none;
-
-      &.is-current {
-        color: var(--navy);
-        box-shadow: inset 0 3px 0 var(--navy);
-      }
-    }
-
-    summary::-webkit-details-marker {
+    &::-webkit-details-marker {
       display: none;
     }
+
+    &:focus-visible {
+      outline: 2px solid #fff;
+    }
+  }
+
+  &[open] > summary {
+    background: var(--navy-dark);
   }
 }
 
-.admin-more {
-  position: relative;
+// Three bars; a cross while the menu is open.
+.admin-burger-icon,
+.admin-burger-icon::before,
+.admin-burger-icon::after {
+  display: block;
+  width: 1.4rem;
+  height: 2px;
+  background: #fff;
+  border-radius: 1px;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.admin-more-menu {
-  position: absolute;
-  right: 0.5rem;
-  bottom: calc(100% + 0.5rem);
-  display: grid;
-  min-width: 13rem;
-  padding: 0.4rem 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+.admin-burger-icon {
+  position: relative;
 
-  a {
-    padding: 0.7rem 1rem;
+  &::before,
+  &::after {
+    position: absolute;
+    left: 0;
+    content: '';
+  }
+
+  &::before {
+    top: -7px;
+  }
+
+  &::after {
+    top: 7px;
+  }
+
+  [open] > summary & {
+    background: transparent;
+
+    &::before {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    &::after {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+  }
+}
+
+.admin-burger-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: 30;
+  display: grid;
+  max-height: calc(100vh - 4rem);
+  padding: 0.4rem 0;
+  overflow-y: auto;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+
+  .admin-header & a {
+    padding: 0.8rem 16px;
     color: var(--text);
     text-decoration: none;
+
+    &.is-current {
+      font-weight: 700;
+      color: var(--navy);
+      box-shadow: inset 4px 0 0 var(--navy);
+    }
   }
 }
 
-// The account part of Více: the name of the organizer above its links.
-.admin-more-account {
+// The account part of the menu: the name of the organizer above its links.
+.admin-burger-account {
   margin-top: 0.4rem;
-  padding: 0.7rem 1rem 0.3rem;
+  padding: 0.8rem 16px 0.3rem;
   font-size: 0.85rem;
   color: var(--muted);
   border-top: 1px solid var(--border);
 }
-
 // Collapsible table of all seats on the dashboard.
 .seat-details > summary {
   cursor: pointer;
