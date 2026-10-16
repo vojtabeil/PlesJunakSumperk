@@ -36,6 +36,11 @@ final class EventFormatter
 					default => null,
 				},
 			],
+			'reservation.bot_blocked' => [match ($d['reason'] ?? null) {
+				'trap' => 'vyplněné skryté pole',
+				'fast' => 'odesláno za ' . ($d['seconds'] ?? '?') . ' s po výběru',
+				default => null,
+			}],
 			'reservation.cancelled' => [isset($d['reason']) ? "důvod: {$d['reason']}" : null],
 			'hall.replaced' => [
 				isset($d['file']) ? (string) $d['file'] : null,

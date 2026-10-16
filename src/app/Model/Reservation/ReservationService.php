@@ -313,9 +313,13 @@ final class ReservationService
 	 * Turns the draft into a binding reservation. Returns the reservation id.
 	 * @param string|null $email null = keep the e-mail set before (setEmail)
 	 */
-	public function confirm(string $owner, string $name, string $phone, bool $consent, ?string $email = null): int
+	/**
+	 * Finishes the draft of this browser. $trap is the hidden field of the form: a person leaves it empty.
+	 */
+	public function confirm(string $owner, string $name, string $phone, bool $consent, ?string $email = null, string $trap = ''): int
 	{
 		$this->assertSaleOpen();
+		$this->assertNotBot($owner, $trap);
 		$email = $email !== null ? self::validEmail($email) : null;
 		$name = trim((string) preg_replace('/\s+/u', ' ', $name));
 		$phone = trim($phone);
@@ -400,6 +404,34 @@ final class ReservationService
 	private function holdSeconds(): int
 	{
 		return $this->settings->int('hold_seconds', 120);
+	}
+
+
+	/**
+	 * Simple protection against scripts that confirm reservations: the hidden field of the form must stay empty
+	 * (a person does not see it, a simple robot fills every field) and the order must not be confirmed sooner than
+	 * the setting bot_min_seconds after the first ticket was chosen (0 = off). Logged, the message asks to try again.
+	 */
+	private function assertNotBot(string $owner, string $trap): void
+	{
+		$reason = null;
+		$seconds = null;
+		if (trim($trap) !== '') {
+			$reason = 'trap';
+		} else {
+			$minSeconds = $this->settings->int('bot_min_seconds', 0);
+			$draft = $minSeconds > 0 ? $this->currentDraft($owner) : null;
+			if ($draft !== null) {
+				$stmt = $this->db->prepare('SELECT TIMESTAMPDIFF(SECOND, created_at, NOW()) FROM reservations WHERE id = ?');
+				$stmt->execute([(int) $draft['id']]);
+				$seconds = (int) $stmt->fetchColumn();
+				$reason = $seconds < $minSeconds ? 'fast' : null;
+			}
+		}
+		if ($reason !== null) {
+			$this->eventLog->record('reservation.bot_blocked', null, array_filter(['reason' => $reason, 'seconds' => $seconds], static fn($v): bool => $v !== null));
+			throw new ReservationError('Rezervaci se nepodařilo dokončit. Zkontrolujte prosím údaje a odešlete ji znovu.');
+		}
 	}
 
 

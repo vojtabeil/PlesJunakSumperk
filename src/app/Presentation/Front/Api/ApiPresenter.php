@@ -98,6 +98,7 @@ final class ApiPresenter extends Presenter
 							(string) ($input['phone'] ?? ''),
 							($input['consent'] ?? false) === true,
 							(string) ($input['email'] ?? ''),
+							(string) ($input['extra'] ?? ''),
 						);
 						$this->mailer->sendConfirmation($id);
 						$token = (string) ($this->reservations->findFinished($id)['access_token'] ?? '');

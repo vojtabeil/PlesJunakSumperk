@@ -114,6 +114,7 @@ export function CheckoutForm({ store, email, disabled }: Props) {
       name: String(valueOf('name')),
       phone: String(valueOf('phone')),
       consent: true,
+      extra: (form.current?.elements.namedItem('extra') as HTMLInputElement | null)?.value ?? '',
     });
   };
 
@@ -198,6 +199,12 @@ export function CheckoutForm({ store, email, disabled }: Props) {
         aria-describedby={describedBy('phone')}
         onBlur={() => check('phone')}
       />
+
+      {/* Against robots: hidden from people and screen readers, out of the tab order; a simple robot fills it in. */}
+      <div class="trap-field" aria-hidden="true">
+        <label for="extra">Nevyplňujte</label>
+        <input type="text" id="extra" name="extra" tabIndex={-1} autoComplete="off" />
+      </div>
 
       {errors.consent && <span id="consent-error" class="field-error">{errors.consent}</span>}
       <label class="checkbox">

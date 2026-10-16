@@ -15,6 +15,8 @@ export interface ConfirmInput {
   name: string;
   phone: string;
   consent: boolean;
+  /** The hidden field of the form: empty from a person, filled by a simple robot (the server refuses it). */
+  extra: string;
 }
 
 /** Typing in the form extends the hold at most this often. */

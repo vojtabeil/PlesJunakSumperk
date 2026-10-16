@@ -180,6 +180,8 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
 - E-mails are sent after the reservation is committed; a failure is logged and stored in
   `reservations.email_error`, it never rolls back the reservation.
 - POST requests to `/api/*` require the `X-CSRF-Token` header (token printed into the page).
+- Against simple robots `confirm` refuses a filled hidden field of the order form (`extra`, class `trap-field`) and an
+  order confirmed sooner than the setting `bot_min_seconds` after the draft started (logged `reservation.bot_blocked`).
 - JSON printed into a `<script>` must use `Json::encode(..., htmlSafe: true)`.
 - Event info, prices and limits are rows in the `settings` table, not code.
   The date of the ball is `event_day` (YYYY-MM-DD) + `event_time` (HH:MM); `Settings::all()` adds `event_date`, its text

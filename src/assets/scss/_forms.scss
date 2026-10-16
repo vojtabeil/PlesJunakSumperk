@@ -118,3 +118,13 @@ textarea {
   font-weight: 400;
   color: var(--muted);
 }
+
+// Field against robots in the order form (CheckoutForm): out of sight and out of reach, not display: none
+// (some robots skip hidden fields).
+.trap-field {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

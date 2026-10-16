@@ -21,6 +21,7 @@ final class EventTypes
 	/** action => [category, label] */
 	public const Types = [
 		'reservation.confirmed' => ['reservation', 'Rezervace potvrzena'],
+		'reservation.bot_blocked' => ['reservation', 'Objednávka zastavena jako robot'],
 		'reservation.paid_manually' => ['reservation', 'Označeno jako zaplacené (hotově)'],
 		'reservation.cancelled' => ['reservation', 'Rezervace zrušena'],
 		'reservation.note' => ['reservation', 'Změna poznámky'],

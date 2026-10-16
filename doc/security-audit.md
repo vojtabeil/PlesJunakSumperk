@@ -38,6 +38,10 @@ Celkově: žádný kritický problém, jeden vážnější (XSS přes plánek s�
 - **Dopad:** skript otevře mnoho relací (token CSRF dostane s každou), v každé drží 10 míst a prodlužuje je – místa zůstanou
   obsazená po celou dobu útoku. Potvrzením falešných rezervací rozešle náš potvrzovací e-mail na libovolné adresy s
   vlastním textem ve jménu; rezervace drží místa, dokud je organizátor ručně nezruší.
+- **Částečně opraveno (16. 10. 2026):** formulář objednávky má skryté pole, které člověk nevidí a jednoduchý robot vyplní,
+  a objednávku nejde potvrdit dřív než za `bot_min_seconds` (výchozí 3 s) od výběru prvního lístku
+  (`ReservationService::assertNotBot`, zápis `reservation.bot_blocked` do logu). Chytrého robota to nezastaví; zbytek
+  níže zůstává jako možnost.
 - **Oprava:** omezit celkovou dobu držení míst jedné rozpracované rezervace (30–45 minut), omezit počet rozpracovaných
   rezervací a potvrzení z jedné IP, volitelně skryté pole proti robotům a automatické rušení rezervací dlouho po splatnosti.
 

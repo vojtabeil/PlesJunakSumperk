@@ -31,6 +31,9 @@ INSERT INTO settings (name, value) VALUES
     ('max_ticket', '10'),
     -- How long the seats a visitor chose stay held for them (15 minutes).
     ('hold_seconds', '900'),
+    -- Protection against robots: an order confirmed sooner than this many seconds after the first chosen ticket
+    -- is refused (0 = off; see also the hidden field of the order form).
+    ('bot_min_seconds', '3'),
     ('price_seat', '350'),
     ('price_standing', '250'),
     ('standing_capacity', '50'),

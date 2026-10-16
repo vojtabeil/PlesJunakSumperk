@@ -76,7 +76,7 @@ describe('store', () => {
     const visited: string[] = [];
     const store = createStore(api, (url) => visited.push(url));
 
-    await store.confirm({ email: 'jana@example.com', name: 'Jana', phone: '', consent: true });
+    await store.confirm({ email: 'jana@example.com', name: 'Jana', phone: '', consent: true, extra: '' });
     expect(visited).toEqual(['/hotovo/3']);
   });
 
