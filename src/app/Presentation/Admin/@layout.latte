@@ -46,7 +46,7 @@
 				<span class="admin-burger-account">{$adminName}</span>
 				<a n:href="Account:default" n:class="$presenter->isLinkCurrent('Account:*') ? 'is-current'">Změnit heslo</a>
 				<a n:href="User:default" n:class="$presenter->isLinkCurrent('User:*') ? 'is-current'">Administrátoři</a>
-				<a n:href="Sign:out">Odhlásit</a>
+				<button form="frm-signOutForm" type="submit" name="send" class="admin-menu-button">Odhlásit</button>
 			</nav>
 		</details>
 		<details class="admin-user">
@@ -54,7 +54,7 @@
 			<div class="admin-user-menu">
 				<a n:href="Account:default">Změnit heslo</a>
 				<a n:href="User:default">Administrátoři</a>
-				<a n:href="Sign:out">Odhlásit</a>
+				<form n:name="signOutForm" class="admin-signout"><button n:name="send" class="admin-menu-button">Odhlásit</button></form>
 			</div>
 		</details>
 	{/if}

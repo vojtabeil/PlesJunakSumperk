@@ -1569,3 +1569,26 @@ g:hover > .bar-chart-hit {
   min-width: 6rem;
   height: 0.6rem;
 }
+
+// "Odhlásit" is a POST form (no GET link): its button looks like the links of the menus.
+.admin-signout {
+  display: contents;
+}
+
+.admin-menu-button {
+  padding: 0.4rem 1rem;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+
+  &:hover {
+    background: var(--surface-alt);
+  }
+
+  .admin-burger-menu & {
+    padding: 0.8rem 16px;
+  }
+}

@@ -9,6 +9,7 @@ use App\Model\Log\Actor;
 use App\Model\Log\EventLogRepository;
 use App\Presentation\Accessory\FormFactory;
 use App\Presentation\Admin\Accessory\AdminApps;
+use Nette\Application\UI\Form;
 use Nette\Application\UI\Presenter;
 
 
@@ -67,5 +68,19 @@ abstract class BasePresenter extends Presenter
 	{
 		$this->template->adminName = (string) ($this->getUser()->getIdentity()?->getData()['name'] ?? '');
 		$this->template->apps = $this->getUser()->isLoggedIn() ? $this->apps->links() : [];
+	}
+
+
+	/** "Odhlásit" in the menus: a POST form (a GET link could log the organizer out from another site). */
+	protected function createComponentSignOutForm(): Form
+	{
+		$form = $this->formFactory->create();
+		$form->addSubmit('send', 'Odhlásit');
+		$form->onSuccess[] = function (): void {
+			$this->getUser()->logout(clearIdentity: true);
+			$this->flashMessage('Byli jste odhlášeni.', 'info');
+			$this->redirect('Sign:in');
+		};
+		return $form;
 	}
 }

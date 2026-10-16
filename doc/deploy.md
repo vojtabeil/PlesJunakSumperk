@@ -59,7 +59,7 @@ Copy `config/local.neon.example` to `config/local.neon` on the server and fill i
 | `mail` | SMTP of the sending mailbox, e.g. Seznam: `host: smtp.seznam.cz`, `port: 465`, `secure: ssl`, `user`/`password` of `ples@junak-sumperk.cz`; `from` must be that address |
 | `bank` | `driver: fio`, `token: <Fio token>` (step 6); until then `driver: mock` is safe |
 | `setup.password` | **a new secret** for the first-run wizard (default `skaut-sumperk`) |
-| `cron.key` | a long random string, e.g. 40 letters and digits (step 7) |
+| `cron.key` | a long random string, at least 32 (e.g. 40) letters and digits (step 7) |
 
 The release always runs in production mode (it contains the file `VERSION`): no debugger,
 no `/dev/*` pages, errors only in `var/log/`.
@@ -115,10 +115,14 @@ The token gives read access to **all** movements of the account. Fio allows one 
 
 ## 7. Automatic import of payments
 
-Call `https://<site>/cron/payments?key=<cron.key>` every 10 minutes:
+Call `https://<site>/cron/payments` every 10 minutes with the key in the header `X-Cron-Key`:
 
-- hosting cron (if available): `curl -fsS "https://<site>/cron/payments?key=..."`, or
-- an external scheduler (e.g. cron-job.org) with that URL.
+- hosting cron (if available): `curl -fsS -H "X-Cron-Key: ..." "https://<site>/cron/payments"`, or
+- an external scheduler (e.g. cron-job.org) with that URL and a custom header `X-Cron-Key`.
+
+The key must have at least 32 characters, otherwise `/cron/payments` does not exist (404). Use the header, not
+`?key=...` in the URL: a URL with the key ends up in the access logs of the hosting and of the scheduler and in error
+logs. The query parameter still works for a scheduler that cannot send headers.
 
 The answer is a short text summary; errors return HTTP 503 with the reason.
 

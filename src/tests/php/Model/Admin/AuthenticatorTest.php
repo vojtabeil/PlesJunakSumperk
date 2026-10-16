@@ -71,7 +71,7 @@ final class AuthenticatorTest extends DatabaseTestCase
 	}
 
 
-	public function testAccountIsLockedAfterTooManyFailures(): void
+	public function testAccountIsLockedAfterTooManyFailuresWithoutSayingSo(): void
 	{
 		for ($i = 0; $i < Authenticator::MaxFailures; $i++) {
 			try {
@@ -79,9 +79,25 @@ final class AuthenticatorTest extends DatabaseTestCase
 			} catch (AuthenticationException) {
 			}
 		}
+		self::assertContains('admin.locked', $this->loggedActions());
 
-		$this->expectExceptionMessage('Příliš mnoho neúspěšných pokusů');
+		// The right password is refused too, with the same message as a wrong password or an unknown login.
+		$this->expectExceptionMessage('Nesprávné přihlašovací jméno nebo heslo.');
 		$this->authenticator->authenticate('jana', 'spravne-heslo');
+	}
+
+
+	public function testAttemptsAreCountedBeforeThePasswordIsChecked(): void
+	{
+		$id = (int) $this->users->findByLogin('jana')['id'];
+		$counts = [];
+		for ($i = 0; $i <= Authenticator::MaxFailures; $i++) {
+			$counts[] = $this->users->countLoginAttempt($id, Authenticator::MaxFailures, Authenticator::LockSeconds);
+		}
+		self::assertSame([1, 2, 3, 4, 5, null], $counts, 'Each request takes a try in one statement; the sixth is locked');
+
+		$this->db->exec('UPDATE admin_users SET last_failed_at = NOW() - INTERVAL 16 MINUTE');
+		self::assertSame(1, $this->users->countLoginAttempt($id, Authenticator::MaxFailures, Authenticator::LockSeconds), 'An expired lock starts again');
 	}
 
 

@@ -30,8 +30,9 @@ parameters:
 		driver: mock
 		token: ''
 
-	# Automatic payment import: GET https://<site>/cron/payments?key=<key> every 10 minutes.
-	# Use a long random string; empty = disabled.
+	# Automatic payment import: GET https://<site>/cron/payments every 10 minutes with the header
+	# "X-Cron-Key: <key>" (not ?key= in the URL, it would end up in logs). At least 32 random letters and digits;
+	# empty or shorter = disabled.
 	cron:
 		key: ''
 

@@ -162,11 +162,36 @@ final class AdminUsers
 	}
 
 
-	public function recordFailedLogin(int $id): void
+	/**
+	 * Counts a login attempt before its password is checked, in one statement, so parallel requests cannot try more
+	 * than $maxFailures passwords per lock period. A failure older than the lock period starts the count again;
+	 * a successful login resets it (recordLogin).
+	 * @return int|null attempts counted in the current period, or null while the account is locked
+	 */
+	public function countLoginAttempt(int $id, int $maxFailures, int $lockSeconds): ?int
 	{
-		$this->db->prepare(
-			'UPDATE admin_users SET failed_logins = failed_logins + 1, last_failed_at = NOW() WHERE id = ?',
-		)->execute([$id]);
+		// MySQL evaluates SET from left to right: failed_logins still sees the previous last_failed_at.
+		$stmt = $this->db->prepare(
+			'UPDATE admin_users
+			SET failed_logins = IF(last_failed_at IS NULL OR last_failed_at < NOW() - INTERVAL ? SECOND, 1, failed_logins + 1),
+				last_failed_at = NOW()
+			WHERE id = ? AND NOT (failed_logins >= ? AND last_failed_at >= NOW() - INTERVAL ? SECOND)',
+		);
+		$stmt->execute([$lockSeconds, $id, $maxFailures, $lockSeconds]);
+		if ($stmt->rowCount() === 0) {
+			return null;
+		}
+		$count = $this->db->prepare('SELECT failed_logins FROM admin_users WHERE id = ?');
+		$count->execute([$id]);
+		return (int) $count->fetchColumn();
+	}
+
+
+	/** Hash of an existing account: verifying against it costs the same as a real login (unknown logins). */
+	public function anyPasswordHash(): ?string
+	{
+		$hash = $this->db->query('SELECT password_hash FROM admin_users ORDER BY id LIMIT 1')->fetchColumn();
+		return $hash !== false ? (string) $hash : null;
 	}
 
 

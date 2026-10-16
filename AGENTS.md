@@ -116,7 +116,8 @@ production mode (Nette debug detection: no Tracy, no `/dev/*`) and `dev/router.p
   matched to it as overpaid (`payment.after_cancel`, no e-mail). Full refund resolves its overpaid payments.
 - Statistiky (`Admin:Statistics`, `SalesStats`): no test reservations; a day of sale = the day the reservation was made
   (valid ones only, cancelled shown on their day); every block has its CSV (`Csv`: UTF-8 BOM, semicolons, quoted,
-  formula-safe). Charts are server-side SVG (`Accessory/BarChart` + `barChart.latte`), no chart library.- Payments may be imported only manually (no cron on the hosting): keep the dashboard button and
+  formula-safe). Charts are server-side SVG (`Accessory/BarChart` + `barChart.latte`), no chart library.
+- Payments may be imported only manually (no cron on the hosting): keep the dashboard button and
   the "last import" information working.
 - Secrets (Fio token, cron key, setup password, tester and VIP tokens) never appear in exceptions, logs or the event log.
 - Event log: every reservation, payment, e-mail and admin action is logged **in the model**

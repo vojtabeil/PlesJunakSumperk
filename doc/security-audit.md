@@ -2,7 +2,8 @@
 
 Stav k 16. 10. 2026 (commit `2af71e2` a odebrání grafu z přehledu). Audit kódu ve čtyřech oblastech:
 přihlašování a přístupy, veřejné API a rezervace, XSS a nahrávání plánku, konfigurace a nasazení.
-Nález 1 je ověřený pokusem (parser i prohlížeč), ostatní vycházejí z rozboru kódu. **Zatím nic není opravené.**
+Nález 1 je ověřený pokusem (parser i prohlížeč), ostatní vycházejí z rozboru kódu. **Opravené jsou body 4–6**
+(16. 10. 2026), ostatní zatím ne.
 
 Celkově: žádný kritický problém, jeden vážnější (XSS přes plánek sálu) a dva středně závažné.
 
@@ -42,16 +43,18 @@ Celkově: žádný kritický problém, jeden vážnější (XSS přes plánek s�
 
 ## Menší nálezy
 
-4. **Klíč pro cron v lozích** – `Cron/CronPresenter` bere klíč z adresy (`?key=`), takže končí v přístupových lozích
-   serveru i ve výpisech Tracy. Posílat ho v hlavičce `X-Cron-Key` (už podporované), dokumentovat ji jako hlavní cestu
-   a vyžadovat klíč aspoň 32 znaků.
-5. **Přihlášení** (`Model/Admin/Authenticator.php`):
-   - hláška „příliš mnoho pokusů“ prozradí, že účet existuje, a umožní skutečného administrátora na 15 minut zablokovat;
-   - limit 5 pokusů jde obejít paralelními požadavky (čtení a zápis počtu nejsou atomické);
-   - na PHP 8.3 jde podle doby odpovědi poznat existující účet (falešný hash má jinou náročnost než skutečné; na 8.4 ne).
-   Oprava: stejná hláška pro zamčený i neznámý účet, atomické navýšení počtu pokusů, falešný hash generovat za běhu.
-6. **Odhlášení odkazem (GET)** – `Admin/Sign/SignPresenter::actionOut`; cizí stránka může organizátora odhlásit.
-   Převést na POST formulář.
+4. **[Opraveno] Klíč pro cron v lozích** – `Cron/CronPresenter` bral klíč hlavně z adresy (`?key=`), takže končil
+   v přístupových lozích serveru i ve výpisech Tracy. Teď má přednost hlavička `X-Cron-Key` a dokumentace ji uvádí jako
+   hlavní cestu; klíč kratší než 32 znaků se bere jako nenastavený, cron pak neexistuje (`CronPresenter::keyMatches`).
+5. **[Opraveno] Přihlášení** (`Model/Admin/Authenticator.php`):
+   - hláška „příliš mnoho pokusů“ prozrazovala, že účet existuje – teď zamčený účet odpovídá stejně jako špatné heslo
+     (na přihlašovací stránce je obecná poznámka o zablokování po 5 pokusech);
+   - limit 5 pokusů šel obejít paralelními požadavky – teď se pokus započítá jedním příkazem ještě před ověřením hesla
+     (`AdminUsers::countLoginAttempt`);
+   - na PHP 8.3 šlo podle doby odpovědi poznat existující účet – falešný hash je teď hash existujícího účtu (stejná
+     náročnost), dokud žádný není, vytvoří se za běhu.
+6. **[Opraveno] Odhlášení odkazem (GET)** – `Admin/Sign/SignPresenter::actionOut` šlo vyvolat z cizí stránky. Teď je
+   odhlášení POST formulář `signOutForm` v `Admin/BasePresenter` (s ochranou CSRF); adresa `/admin/sign/out` vrací 404.
 7. **Chybí Content-Security-Policy, HTTPS přesměrování a HSTS** (`www/.htaccess`, `config/common.neon`). CSP by
    zastavila nález 1. Ověřit, zda hosting Lebeda vynucuje HTTPS; jinak přidat přesměrování a HSTS (cookie relace jsou
    `secure` jen přes HTTPS).

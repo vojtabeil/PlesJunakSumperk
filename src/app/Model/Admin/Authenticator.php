@@ -14,8 +14,10 @@ use Nette\Security\SimpleIdentity;
 
 
 /**
- * Login of organizers. After MaxFailures wrong passwords the account is locked for LockSeconds.
- * Messages are shown to the user (Czech) and never reveal whether the login exists.
+ * Login of organizers. After MaxFailures wrong passwords the account is locked for LockSeconds (counted atomically
+ * before the password is checked, so parallel requests do not get more tries). Messages are shown to the user
+ * (Czech) and never reveal whether the login exists: a locked account answers like a wrong password, and every
+ * path verifies one bcrypt hash of the same cost.
  *
  * As IdentityHandler it re-checks the account against the DB on every request: a deleted
  * account or a changed password (session_version) logs the user out immediately.
@@ -27,9 +29,6 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 	public const Role = 'admin';
 
 	private const InvalidCredentials = 'Nesprávné přihlašovací jméno nebo heslo.';
-
-	/** Valid bcrypt hash of a random string, verified for unknown logins to keep timing equal. */
-	private const DummyHash = '$2y$12$0dzo6iQBXaEx2QIunet7P.rVyXI5H5K52wlJ/bG6umC0LijyaoSea';
 
 
 	/** Logins of non-existent accounts are logged at most once per this many seconds. */
@@ -48,7 +47,7 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 	{
 		$account = $this->users->findByLogin(trim($user));
 		if ($account === null) {
-			$this->passwords->verify($password, self::DummyHash);
+			$this->passwords->verify($password, $this->dummyHash());
 			// Anybody can try unknown logins without a lockout, so they must not flood the log.
 			if (!$this->eventLog->recordedWithin('admin.login_unknown', self::UnknownLoginLogSeconds)) {
 				$this->eventLog->record('admin.login_unknown', details: ['login' => mb_substr(trim($user), 0, 64)]);
@@ -57,18 +56,16 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 		}
 
 		$id = (int) $account['id'];
-		$locked = (int) $account['failed_logins'] >= self::MaxFailures
-			&& $account['seconds_since_failure'] !== null
-			&& (int) $account['seconds_since_failure'] < self::LockSeconds;
-		if ($locked) {
-			throw new AuthenticationException('Příliš mnoho neúspěšných pokusů. Zkuste to znovu za 15 minut.');
+		$attempts = $this->users->countLoginAttempt($id, self::MaxFailures, self::LockSeconds);
+		$valid = $this->passwords->verify($password, (string) $account['password_hash']);
+		if ($attempts === null) {
+			// Locked: the same answer (and time) as a wrong password, even for the right one.
+			throw new AuthenticationException(self::InvalidCredentials);
 		}
-
-		if (!$this->passwords->verify($password, (string) $account['password_hash'])) {
-			$this->users->recordFailedLogin($id);
+		if (!$valid) {
 			// Not attributed to the account: whoever typed the password is not known.
 			$this->eventLog->record('admin.login_failed', details: ['login' => $account['login']]);
-			if ((int) $account['failed_logins'] + 1 === self::MaxFailures) {
+			if ($attempts === self::MaxFailures) {
 				$this->eventLog->record('admin.locked', details: ['login' => $account['login']]);
 			}
 			throw new AuthenticationException(self::InvalidCredentials);
@@ -81,6 +78,7 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 		$this->eventLog->record('admin.login', adminId: $id);
 		return $this->identity($account);
 	}
+
 
 
 	/** Only the id and the session version are kept in the session. */
@@ -109,5 +107,15 @@ final class Authenticator implements NetteAuthenticator, IdentityHandler
 			'name' => $account['name'],
 			'version' => (int) $account['session_version'],
 		]);
+	}
+
+
+	/**
+	 * Hash verified for unknown logins: an existing account's (same cost as a real login), or one made now with the
+	 * current cost while there is no account yet.
+	 */
+	private function dummyHash(): string
+	{
+		return $this->users->anyPasswordHash() ?? $this->passwords->hash(bin2hex(random_bytes(16)));
 	}
 }

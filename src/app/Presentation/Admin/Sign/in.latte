@@ -6,5 +6,6 @@
 <section class="card card--narrow card--centered">
 	<h1>Přihlášení organizátora</h1>
 	{control signInForm}
+	<p class="muted">Po {App\Model\Admin\Authenticator::MaxFailures} chybných pokusech se přihlášení k účtu na 15 minut zablokuje.</p>
 </section>
 {/block}

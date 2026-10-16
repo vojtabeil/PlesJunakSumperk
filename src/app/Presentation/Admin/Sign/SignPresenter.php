@@ -25,13 +25,6 @@ final class SignPresenter extends BasePresenter
 	}
 
 
-	public function actionOut(): void
-	{
-		$this->getUser()->logout(clearIdentity: true);
-		$this->flashMessage('Byli jste odhlášeni.', 'info');
-		$this->redirect('in');
-	}
-
 
 	protected function createComponentSignInForm(): Form
 	{
