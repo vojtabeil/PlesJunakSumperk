@@ -56,6 +56,7 @@ services:
 	- App\Model\Payment\VariableSymbol
 
 	- App\Presentation\Accessory\FormFactory
+	- App\Presentation\Admin\Accessory\AdminApps(debugMode: %debugMode%, mailpitUrl: %mailpit%)
 	- App\Presentation\Front\VisitorGate
 
 	# Presenter with a scalar argument has to be configured explicitly.

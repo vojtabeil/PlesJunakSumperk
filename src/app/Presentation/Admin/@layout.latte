@@ -64,6 +64,7 @@
 	<div n:foreach="$flashes as $flash" class="flash flash--{$flash->type}" role="status">{$flash->message}</div>
 	{include content}
 </main>
+{include 'Accessory/apps.latte', apps: $apps, variant: rail}
 <script src="{$basePath}/{asset('build/admin.js')}" type="module"></script>
 </body>
 </html>

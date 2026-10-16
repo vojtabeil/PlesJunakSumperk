@@ -1,0 +1,16 @@
+{* Links to the other applications (AdminApps) as icons: a rail at the right edge of wide screens (@layout.latte),
+   a row under the table of all seats on narrower ones (Dashboard). Parameters: $apps, $variant (rail | inline) *}
+{parameters array $apps, string $variant}
+<nav n:if="$apps" class="admin-apps admin-apps--{$variant}" aria-label="Další aplikace">
+	<a n:foreach="$apps as $app" class="admin-app" href="{$app['url']}" target="_blank" title="{$app['title']}">
+		<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+			{switch $app['key']}
+				{case web}<path d="M3 11 12 4l9 7M5 9.5V20h5v-6h4v6h5V9.5"/>
+				{case check}<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18v3"/>
+				{case bank}<path d="M3 10 12 4l9 6M5 10v8M9.7 10v8M14.3 10v8M19 10v8M3 21h18"/>
+				{case mail}<path d="M3 6h18v12H3zM3 7l9 6 9-6"/>
+			{/switch}
+		</svg>
+		<span class="admin-app-label">{$app['label']}</span>
+	</a>
+</nav>

@@ -220,6 +220,9 @@
 	<p n:if="!$seatRows" class="empty"><strong>Žádná místa neodpovídají filtru.</strong> <a n:href="this, seats: '', seatSearch: ''">Zobrazit všechna místa</a></p>
 </details>
 </section>
+{* Narrower screens have no room for the rail of other applications at the right edge: the same links here. *}
+{include '../Accessory/apps.latte', apps: $apps, variant: inline}
+
 
 {* 5. Other sections *}
 <nav class="tiles" aria-label="Další části administrace">

@@ -21,6 +21,9 @@ parameters:
 		fromName: Šumperský skautský ples
 		replyTo: ''
 
+	# Web of Mailpit, linked from the administration (debug mode only). Production: ''.
+	mailpit: http://127.0.0.1:8025
+
 	# Bank movements. mock = fake bank for testing (/dev/bank), fio = Fio API (production).
 	# Production: driver: fio and the read-only token ("Sledování účtu") from Fio internet banking.
 	bank:

@@ -20,6 +20,9 @@ parameters:
 		fromName: Šumperský skautský ples
 		replyTo: ''
 
+	# Its web, linked from the administration on this computer.
+	mailpit: http://127.0.0.1:{MAIL_PORT}
+
 	# Fake bank: payments are created at /dev/bank.
 	bank:
 		driver: mock

@@ -8,6 +8,7 @@ use App\Model\Admin\Authenticator;
 use App\Model\Log\Actor;
 use App\Model\Log\EventLogRepository;
 use App\Presentation\Accessory\FormFactory;
+use App\Presentation\Admin\Accessory\AdminApps;
 use Nette\Application\UI\Presenter;
 
 
@@ -20,10 +21,12 @@ abstract class BasePresenter extends Presenter
 	protected FormFactory $formFactory;
 	protected EventLogRepository $events;
 	protected Actor $actor;
+	private AdminApps $apps;
 
 
-	public function injectBase(FormFactory $formFactory, EventLogRepository $events, Actor $actor): void
+	public function injectBase(FormFactory $formFactory, EventLogRepository $events, Actor $actor, AdminApps $apps): void
 	{
+		$this->apps = $apps;
 		$this->formFactory = $formFactory;
 		$this->events = $events;
 		$this->actor = $actor;
@@ -63,5 +66,6 @@ abstract class BasePresenter extends Presenter
 	protected function beforeRender(): void
 	{
 		$this->template->adminName = (string) ($this->getUser()->getIdentity()?->getData()['name'] ?? '');
+		$this->template->apps = $this->getUser()->isLoggedIn() ? $this->apps->links() : [];
 	}
 }

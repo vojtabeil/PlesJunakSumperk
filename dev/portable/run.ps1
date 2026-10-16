@@ -178,7 +178,7 @@ default-character-set=utf8mb4
 
     # The template is UTF-8 (Czech sender name); only the ports are filled in.
     $neon = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'local.neon'), [Text.Encoding]::UTF8)
-    $neon = $neon.Replace('{DB_PORT}', "$($Ports.Db)").Replace('{SMTP_PORT}', "$($Ports.Smtp)")
+    $neon = $neon.Replace('{DB_PORT}', "$($Ports.Db)").Replace('{SMTP_PORT}', "$($Ports.Smtp)").Replace('{MAIL_PORT}', "$($Ports.Mail)")
     Write-Utf8NoBom (Join-Path $WebDir 'config\local.neon') $neon
 }
 

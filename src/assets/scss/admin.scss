@@ -1393,3 +1393,84 @@ h3 {
     cursor: pointer;
   }
 }
+
+// --- Other applications (Accessory/apps.latte) -----------------------------------
+// Wide screens: a rail of icons at the right edge, outside the 1200px column; narrower ones: a row under the
+// table of all seats on the dashboard.
+$apps-rail-from: 1340px;
+
+.admin-apps {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-app {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  svg {
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #fff;
+    background: var(--navy);
+  }
+}
+
+.admin-apps--rail {
+  position: fixed;
+  top: 50%;
+  right: 12px;
+  z-index: 20;
+  flex-direction: column;
+  transform: translateY(-50%);
+
+  .admin-app {
+    width: 2.9rem;
+    height: 2.9rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+
+  // Icons only; the name is in the tooltip (title) and for screen readers.
+  .admin-app-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (max-width: $apps-rail-from - 1px) {
+    display: none;
+  }
+}
+
+.admin-apps--inline {
+  flex-wrap: wrap;
+  margin: 1rem 0;
+
+  .admin-app {
+    padding: 0.45rem 1rem 0.45rem 0.75rem;
+    font-weight: 600;
+  }
+
+  @media (min-width: $apps-rail-from) {
+    display: none;
+  }
+}

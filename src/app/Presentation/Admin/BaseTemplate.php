@@ -27,4 +27,7 @@ abstract class BaseTemplate extends Template
 	public User $user;
 
 	public string $adminName;
+
+	/** @var list<array{key: string, label: string, title: string, url: string}> other applications (AdminApps) */
+	public array $apps;
 }
