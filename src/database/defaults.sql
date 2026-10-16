@@ -27,7 +27,7 @@ INSERT INTO settings (name, value) VALUES
     ('payment_days', '2'),
     ('contact_email', ''),
     ('contact_phone', ''),
-    ('payment_vs_prefix', '2026'),
+    ('payment_vs_prefix', '2027'),
     ('max_ticket', '10'),
     -- How long the seats a visitor chose stay held for them (15 minutes).
     ('hold_seconds', '900'),
