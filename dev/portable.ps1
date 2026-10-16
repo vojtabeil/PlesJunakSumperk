@@ -57,7 +57,7 @@ New-Item -ItemType Directory -Force $scripts | Out-Null
 foreach ($file in @('run.ps1', 'router.php', 'local.neon')) {
     Copy-Item (Join-Path $templates $file) (Join-Path $scripts $file)
 }
-foreach ($file in @('Start.cmd', 'Start-LAN.cmd', 'Stop.cmd', 'Reset-data.cmd', 'CTI-ME.txt')) {
+foreach ($file in @('Start.cmd', 'Start-LAN.cmd', 'Allow-LAN.cmd', 'Stop.cmd', 'Reset-data.cmd', 'CTI-ME.txt')) {
     Copy-Item (Join-Path $templates $file) (Join-Path $outDir $file)
 }
 Write-Utf8NoBom (Join-Path $outDir 'version.txt') "$version`r`n"

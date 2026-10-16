@@ -6,7 +6,9 @@
     so the folder may be moved or copied anywhere.
 
 .PARAMETER Action
-    start (default), stop, or reset (deletes all data and starts again with the sample data).
+    start (default), stop, reset (deletes all data and starts again with the sample data),
+    firewall (Windows Defender Firewall rule letting other devices in the local network reach the web port;
+    asks for administrator rights) or firewall-remove (deletes that rule).
 
 .PARAMETER Lan
     The site is reachable from the local network too (e.g. on a phone): the PHP server listens on all
@@ -17,7 +19,7 @@
     Does not open the browser.
 #>
 param(
-    [ValidateSet('start', 'stop', 'reset')][string]$Action = 'start',
+    [ValidateSet('start', 'stop', 'reset', 'firewall', 'firewall-remove')][string]$Action = 'start',
     [switch]$Lan,
     [switch]$NoBrowser
 )
@@ -368,7 +370,7 @@ function Start-All {
             Write-Host ("LAN:      http://{0}:{1}/  ({2})" -f $address.IPAddress, $ports.Web, $address.InterfaceAlias)
         }
         Write-Host '          Other devices get production mode (no Tracy, /dev pages or Adminer).'
-        Write-Host '          If they cannot connect, allow php.exe for private networks in Windows Firewall.'
+        Write-Host '          If they cannot connect, run Allow-LAN.cmd (Windows Defender Firewall, asks for admin rights).'
         Write-Host '          Phones over plain http get no camera in the check app (browsers require https):'
         Write-Host '          type the ticket code instead.'
     }
@@ -380,6 +382,61 @@ function Start-All {
     Write-Host 'Stop:     Stop.cmd'
 
     if (-not $NoBrowser) { Start-Process "$url/" }
+}
+
+# --- Windows Defender Firewall (Allow-LAN.cmd) ------------------------------------
+# Inbound TCP to the web port (the running instance's, else the default one) from private and domain
+# networks only: the package has known passwords and must not be reachable from public networks.
+$FirewallGroup = 'Ples portable'
+
+function Test-Admin {
+    ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+        [Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Get-FirewallRules {
+    @(Get-NetFirewallRule -Group $FirewallGroup -ErrorAction SilentlyContinue)
+}
+
+function Set-FirewallRule([switch]$Remove) {
+    if (-not (Test-Admin)) {
+        # Firewall rules need administrator rights: run this action again elevated (Windows asks).
+        Write-Step 'Asking for administrator rights'
+        $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", '-Action', $Action)
+        try {
+            Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList $arguments
+        } catch {
+            throw 'Administrator rights were not granted, the firewall was not changed.'
+        }
+    } else {
+        Get-FirewallRules | Remove-NetFirewallRule
+        if (-not $Remove) {
+            $port = $DefaultPorts.Web
+            if ((Test-Path $PortsFile) -and (Test-AnyRunning)) { $port = [int](Get-Content $PortsFile -Raw | ConvertFrom-Json).Web }
+            New-NetFirewallRule -DisplayName "Ples portable - web (TCP $port)" -Group $FirewallGroup -Direction Inbound `
+                -Protocol TCP -LocalPort $port -Action Allow -Profile Domain, Private | Out-Null
+        }
+        return
+    }
+
+    # Back in the normal window: report what the elevated run did.
+    $rules = Get-FirewallRules
+    if ($Remove) {
+        if ($rules) { throw 'The firewall rule is still there.' }
+        Write-Ok 'Firewall rule removed'
+        return
+    }
+    if (-not $rules) { throw 'The firewall rule was not created.' }
+    $ports = ($rules | Get-NetFirewallPortFilter).LocalPort -join ', '
+    Write-Ok "Firewall allows TCP $ports from private networks ($($rules[0].DisplayName))"
+    if ($ports -ne "$($DefaultPorts.Web)" -and -not (Test-AnyRunning)) {
+        Write-Host "    The site starts on port $($DefaultPorts.Web) unless it is taken; run Allow-LAN.cmd again after Start-LAN.cmd if it differs." -ForegroundColor Yellow
+    }
+    $public = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue | Where-Object NetworkCategory -eq 'Public')
+    foreach ($network in $public) {
+        Write-Host "    The network '$($network.Name)' is set as public: other devices there cannot connect." -ForegroundColor Yellow
+        Write-Host '    Make it private in Windows Settings -> Network -> (the network) -> Private network.' -ForegroundColor Yellow
+    }
 }
 
 # Child processes keep their temp files inside the folder too.
@@ -404,4 +461,6 @@ switch ($Action) {
         Clear-AppCache
         Start-All
     }
+    'firewall' { Set-FirewallRule }
+    'firewall-remove' { Set-FirewallRule -Remove }
 }

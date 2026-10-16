@@ -16,6 +16,11 @@ Spuštění
   Start-LAN.cmd     web i pro ostatní zařízení v síti (telefon, jiný počítač);
                     adresy se vypíšou v okně. Windows se může jednou zeptat
                     na povolení ve firewallu – povolte pro soukromé sítě.
+  Allow-LAN.cmd     když se ostatní zařízení nepřipojí: přidá výjimku do
+                    Windows Defender Firewall pro port webu (8800) v soukromých
+                    sítích. Zeptá se na práva správce. „Allow-LAN.cmd remove“
+                    výjimku zase odebere. Síť musí být ve Windows nastavená
+                    jako soukromá (Nastavení -> Síť -> Soukromá síť).
   Stop.cmd          vypne databázi, e-maily i web
   Reset-data.cmd    smaže všechna data (rezervace, platby, e-maily) a začne
                     znovu s ukázkovými daty
